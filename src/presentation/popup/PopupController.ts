@@ -223,6 +223,14 @@ export class PopupController {
     );
     PopupView.updateField("pdStatus", this.toStatusText(data?.pdStatus));
     PopupView.updateField("linkSpeed", data?.linkSpeed ?? null);
+    PopupView.updateField(
+      "remoteAccessIpv4Status",
+      this.toStatusText(data?.remoteAccessIpv4Status)
+    );
+    PopupView.updateField(
+      "remoteAccessIpv6Status",
+      this.toStatusText(data?.remoteAccessIpv6Status)
+    );
   }
 
   private async checkPendingErrors(): Promise<void> {
@@ -247,6 +255,8 @@ export class PopupController {
     PopupView.updateField("dhcpv6Status", null);
     PopupView.updateField("pdStatus", null);
     PopupView.updateField("linkSpeed", null);
+    PopupView.updateField("remoteAccessIpv4Status", null);
+    PopupView.updateField("remoteAccessIpv6Status", null);
     PopupView.clearLogs();
     this.persistedLogs = [];
     void this.persistUiState();

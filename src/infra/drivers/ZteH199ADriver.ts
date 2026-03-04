@@ -9,18 +9,37 @@ import {
 
 export class ZteH199ADriver extends Router {
   private readonly selectors = {
-    user: '#Frm_Username, input[name="Frm_Username"]',
-    pass: '#Frm_Password, input[name="Frm_Password"]',
+    // Login
+    username: '#Frm_Username, input[name="Frm_Username"]',
+    password: '#Frm_Password, input[name="Frm_Password"]',
     submit: '#LoginId, button[type="submit"]',
+
+    // Main menu
     internetTab: "#internet",
+    securityTab: "#security",
+
+    // WAN / Internet
+    wanContainer: "#internetConfig",
     linkSpeed: "#cLinkSpeed\\:0",
-    wanSection: "#internetConfig",
-    ppoeSection: "#instName_Internet\\:0",
+    pppoeEntry: "#instName_Internet\\:0",
     pppoeUsername:
       '#UserName\\:0, [id="UserName:0"], [name="UserName:0"], input[name*="UserName"]',
     ipMode:
       '#IpMode\\:0, [id="IpMode:0"], [name="IpMode:0"], select[name*="IpMode"]',
-  };
+    serviceListInternet: "#Servlist_INTERNET\\:0",
+    serviceListTr069: "#Servlist_TR069\\:0",
+    requestPd: "#IsPD1\\:0",
+    slaac: "#IsSLAAC\\:0",
+    dhcpv6: "#IsGUA\\:0",
+    pdAddress: "#IsPdAddr\\:0",
+
+    // Security → Remote access
+    localServiceControl: "#localServiceCtrl",
+    serviceControlBar: "#serviceCtlBar",
+    ipv4RemoteAccessToggle: "#Enable1\\:serviceCtl\\:0",
+    ipv6ServiceControlBar: "#IPv6serviceCtlBar",
+    ipv6RemoteAccessToggle: "#Enable1\\:IPv6serviceCtl\\:0",
+  } as const;
 
   constructor() {
     super("ZTE ZXHN H199A");
@@ -29,74 +48,134 @@ export class ZteH199ADriver extends Router {
   public authenticate(credentials: Credentials): void {
     const { username, password } = credentials;
 
-    const userField = DomService.getValueElement(this.selectors.user);
-    const passField = DomService.getValueElement(this.selectors.pass);
-    const submitBtn = DomService.getElement(this.selectors.submit, HTMLElement);
+    const usernameField = DomService.getValueElement(this.selectors.username);
+    const passwordField = DomService.getValueElement(this.selectors.password);
+    const submitButton = DomService.getElement(
+      this.selectors.submit,
+      HTMLElement
+    );
 
-    DomService.updateField(userField, username);
-    DomService.updateField(passField, password);
+    DomService.updateField(usernameField, username);
+    DomService.updateField(passwordField, password);
 
-    setTimeout(() => DomService.safeClick(submitBtn), 100);
+    setTimeout(() => DomService.safeClick(submitButton), 100);
   }
 
   public async extract(): Promise<ExtractionResult> {
     const data = {
       timestamp: new Date().toISOString(),
       ...(await this.extractWanData()),
+      ...(await this.extractRemoteAccessData()),
     };
 
     return ExtractionResultSchema.parse(data);
   }
 
-  public async extractWanData(): Promise<ExtractionResult> {
-    const internetTab = DomService.getElement(
+  private async clickMenuSectionAndWait(
+    sectionSelector: string,
+    waitForSelector?: string,
+    delayMs?: number
+  ): Promise<void> {
+    const section = DomService.getElement(sectionSelector, HTMLElement);
+    DomService.safeClick(section);
+    await new Promise((resolve) => setTimeout(resolve, delayMs ?? 500));
+    await this.waitForElement(waitForSelector ?? sectionSelector);
+  }
+
+  private async extractWanData(): Promise<ExtractionResult> {
+    await this.clickMenuSectionAndWait(
       this.selectors.internetTab,
-      HTMLElement
+      this.selectors.wanContainer
     );
-    DomService.safeClick(internetTab);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await this.waitForElement(this.selectors.wanSection);
-
-    const linkSpeed = (
+    const wanLinkSpeed = (
       DomService.getOptionalValue(this.selectors.linkSpeed) ?? ""
     ).trim();
 
-    const configSection = DomService.getElement(
-      this.selectors.wanSection,
+    await this.clickMenuSectionAndWait(
+      this.selectors.wanContainer,
+      this.selectors.pppoeEntry
+    );
+
+    const pppoeEntryElement = DomService.getElement(
+      this.selectors.pppoeEntry,
       HTMLElement
     );
-    DomService.safeClick(configSection);
+    DomService.safeClick(pppoeEntryElement);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    await this.waitForElement(this.selectors.ppoeSection);
+    const ppoeUsername = (
+      DomService.getOptionalValue(this.selectors.pppoeUsername) ?? ""
+    ).trim();
+    const internetStatus = DomService.getInputElement(
+      this.selectors.serviceListInternet
+    ).checked;
+    const tr069Status = DomService.getInputElement(
+      this.selectors.serviceListTr069
+    ).checked;
+    const requestPdStatus = DomService.getInputElement(
+      this.selectors.requestPd
+    ).checked;
+    const slaacStatus = DomService.getInputElement(
+      this.selectors.slaac
+    ).checked;
+    const dhcpv6Status = DomService.getInputElement(
+      this.selectors.dhcpv6
+    ).checked;
+    const pdStatus = DomService.getInputElement(
+      this.selectors.pdAddress
+    ).checked;
+    const ipModeValue = DomService.getOptionalValue(this.selectors.ipMode);
+    const ipVersion =
+      ipModeValue?.toLowerCase() === "both"
+        ? "IPv4/IPv6"
+        : (ipModeValue ?? null);
 
-    const ppoeSection = DomService.getElement(
-      this.selectors.ppoeSection,
-      HTMLElement
-    );
-    DomService.safeClick(ppoeSection);
-
-    const data = {
-      ppoeUsername: (
-        DomService.getOptionalValue(this.selectors.pppoeUsername) ?? ""
-      ).trim(),
-      internetStatus: DomService.getInputElement("#Servlist_INTERNET\\:0")
-        .checked,
-      tr069Status: DomService.getInputElement("#Servlist_TR069\\:0").checked,
-      ipVersion:
-        DomService.getOptionalValue(this.selectors.ipMode)?.toLowerCase() ===
-        "both"
-          ? "IPv4/IPv6"
-          : (DomService.getOptionalValue(this.selectors.ipMode) ?? null),
-      requestPdStatus: DomService.getInputElement("#IsPD1\\:0").checked,
-      slaacStatus: DomService.getInputElement("#IsSLAAC\\:0").checked,
-      dhcpv6Status: DomService.getInputElement("#IsGUA\\:0").checked,
-      pdStatus: DomService.getInputElement("#IsPdAddr\\:0").checked,
-      linkSpeed,
+    return {
+      ppoeUsername,
+      internetStatus,
+      tr069Status,
+      ipVersion,
+      requestPdStatus,
+      slaacStatus,
+      dhcpv6Status,
+      pdStatus,
+      linkSpeed: wanLinkSpeed,
     };
+  }
 
-    return data;
+  private async extractRemoteAccessData(): Promise<ExtractionResult> {
+    await this.clickMenuSectionAndWait(
+      this.selectors.internetTab,
+      this.selectors.securityTab
+    );
+
+    await this.clickMenuSectionAndWait(
+      this.selectors.securityTab,
+      this.selectors.localServiceControl
+    );
+
+    await this.clickMenuSectionAndWait(
+      this.selectors.localServiceControl,
+      this.selectors.serviceControlBar
+    );
+
+    const remoteAccessIpv4Status = DomService.getInputElement(
+      this.selectors.ipv4RemoteAccessToggle
+    ).checked;
+
+    await this.clickMenuSectionAndWait(
+      this.selectors.ipv6ServiceControlBar,
+      this.selectors.ipv6RemoteAccessToggle
+    );
+
+    const remoteAccessIpv6Status = DomService.getInputElement(
+      this.selectors.ipv6RemoteAccessToggle
+    ).checked;
+
+    return {
+      remoteAccessIpv4Status,
+      remoteAccessIpv6Status,
+    };
   }
 
   protected readonly loginSelectors = {
