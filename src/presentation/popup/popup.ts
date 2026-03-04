@@ -7,13 +7,13 @@ enum tabElement {
 }
 
 function setupTabs(): void {
-  const tabMain = document.getElementById("tabMain");
-  const tabLogs = document.getElementById("tabLogs");
-  const tabTopology = document.getElementById("tabTopology");
+  const tabMain = document.getElementById("popup-tab-main");
+  const tabLogs = document.getElementById("popup-tab-logs");
+  const tabTopology = document.getElementById("popup-tab-topology");
 
-  const panelMain = document.getElementById("panelMain");
-  const panelLogs = document.getElementById("panelLogs");
-  const panelTopology = document.getElementById("panelTopology");
+  const panelMain = document.getElementById("popup-panel-main");
+  const panelLogs = document.getElementById("popup-panel-logs");
+  const panelTopology = document.getElementById("popup-panel-topology");
 
   if (
     !tabMain ||
@@ -30,17 +30,17 @@ function setupTabs(): void {
     const isLogs = target === tabElement.LOGS;
     const isTopology = target === tabElement.TOPOLOGY;
 
-    tabMain.classList.toggle("active", isMain);
-    tabLogs.classList.toggle("active", isLogs);
-    tabTopology.classList.toggle("active", isTopology);
+    tabMain.classList.toggle("popup-tab--active", isMain);
+    tabLogs.classList.toggle("popup-tab--active", isLogs);
+    tabTopology.classList.toggle("popup-tab--active", isTopology);
 
     tabMain.setAttribute("aria-selected", String(isMain));
     tabLogs.setAttribute("aria-selected", String(isLogs));
     tabTopology.setAttribute("aria-selected", String(isTopology));
 
-    panelMain.classList.toggle("hidden", !isMain);
-    panelLogs.classList.toggle("hidden", !isLogs);
-    panelTopology.classList.toggle("hidden", !isTopology);
+    panelMain.classList.toggle("popup-hidden", !isMain);
+    panelLogs.classList.toggle("popup-hidden", !isLogs);
+    panelTopology.classList.toggle("popup-hidden", !isTopology);
   };
 
   tabMain.addEventListener("click", () => activate(tabElement.MAIN));
@@ -49,13 +49,13 @@ function setupTabs(): void {
 }
 
 function setupSectionToggles(): void {
-  const toggleWanSection = document.getElementById("toggleWanSection");
-  const wanSection = document.getElementById("wanSection");
+  const toggleWanSection = document.getElementById("popup-toggle-wan");
+  const wanSection = document.getElementById("popup-section-wan");
 
   const toggleRemoteAccessSection = document.getElementById(
-    "toggleRemoteAccessSection"
+    "popup-toggle-remote-access"
   );
-  const remoteAccessSection = document.getElementById("remoteAccessSection");
+  const remoteAccessSection = document.getElementById("popup-section-remote-access");
 
   if (
     !toggleWanSection ||

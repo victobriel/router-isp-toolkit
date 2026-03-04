@@ -62,28 +62,28 @@ export class PopupController {
   }
 
   private setupListeners(): void {
-    DomService.getElement("#btnCollect", HTMLElement).addEventListener(
+    DomService.getElement("#popup-btn-collect", HTMLElement).addEventListener(
       "click",
       () => this.handleCollect()
     );
-    DomService.getElement("#btnClear", HTMLElement).addEventListener(
+    DomService.getElement("#popup-btn-clear", HTMLElement).addEventListener(
       "click",
       () => this.handleClear()
     );
-    DomService.getElement("#btnSaveCredentials", HTMLElement).addEventListener(
+    DomService.getElement("#popup-btn-save-credentials", HTMLElement).addEventListener(
       "click",
       () => void this.handleSaveCredentials()
     );
     DomService.getElement(
-      "#btnBookmarkCredentials",
+      "#popup-btn-toggle-bookmarks",
       HTMLElement
     ).addEventListener("click", () => void this.handleBookmarkButton());
   }
 
   private async handleCollect(): Promise<void> {
     const user =
-      DomService.getValueElement("#inputUser").value.trim() || "admin";
-    const pass = DomService.getValueElement("#inputPass").value;
+      DomService.getValueElement("#popup-input-username").value.trim() || "admin";
+    const pass = DomService.getValueElement("#popup-input-password").value;
 
     const [tab] = await chrome.tabs.query({
       active: true,
@@ -414,7 +414,7 @@ export class PopupController {
 
   private async updateRouterModel(): Promise<boolean> {
     const routerModelElement = DomService.getElement(
-      "#routerModel",
+      "#popup-router-model",
       HTMLElement
     );
     const storageKey = this.getTabStorageKey(ROUTER_MODEL_STORAGE_KEY);
@@ -439,7 +439,7 @@ export class PopupController {
   }
 
   private setCollectButtonEnabled(enabled: boolean): void {
-    DomService.getElement("#btnCollect", HTMLButtonElement).disabled = !enabled;
+    DomService.getElement("#popup-btn-collect", HTMLButtonElement).disabled = !enabled;
   }
 
   private getTabStorageKey(baseKey: string): string | null {
@@ -449,13 +449,13 @@ export class PopupController {
 
   private async loadBookmarks(): Promise<void> {
     const container = DomService.getElement(
-      "#bookmarkListContainer",
+      "#popup-saved-credentials-container",
       HTMLElement
     );
-    const list = DomService.getElement("#bookmarkList", HTMLUListElement);
+    const list = DomService.getElement("#popup-saved-credentials-list", HTMLUListElement);
 
     if (!container || !list || !this.routerModel) {
-      if (container) container.classList.add("hidden");
+      if (container) container.classList.add("popup-hidden");
       if (list) list.innerHTML = "";
       return;
     }
@@ -471,7 +471,7 @@ export class PopupController {
     list.innerHTML = "";
 
     if (!modelEntry.credentials.length) {
-      container.classList.add("hidden");
+      container.classList.add("popup-hidden");
       return;
     }
 
@@ -494,32 +494,32 @@ export class PopupController {
       usernameValueSpan.textContent = cred.username;
       passwordValueSpan.textContent = cred.password;
 
-      usernameLabelSpan.className = "bookmark-item-label";
-      passwordLabelSpan.className = "bookmark-item-label";
-      usernameValueSpan.className = "bookmark-item-value";
-      passwordValueSpan.className = "bookmark-item-value";
-      usernameContainer.className = "bookmark-item-container";
-      passwordContainer.className = "bookmark-item-container";
+      usernameLabelSpan.className = "popup-saved-credential-label";
+      passwordLabelSpan.className = "popup-saved-credential-label";
+      usernameValueSpan.className = "popup-saved-credential-value";
+      passwordValueSpan.className = "popup-saved-credential-value";
+      usernameContainer.className = "popup-saved-credential-field";
+      passwordContainer.className = "popup-saved-credential-field";
 
       usernameContainer.append(usernameLabelSpan, usernameValueSpan);
       passwordContainer.append(passwordLabelSpan, passwordValueSpan);
 
       deleteButton.type = "button";
-      deleteButton.className = "bookmark-item-trash";
+      deleteButton.className = "popup-saved-credential-delete";
       deleteButton.title = `Delete saved credentials #${index + 1}`;
 
       deleteIcon.src = "assets/trash.svg";
       deleteIcon.alt = "Delete saved credentials";
-      deleteIcon.className = "icon";
+      deleteIcon.className = "popup-icon";
 
       deleteButton.appendChild(deleteIcon);
 
-      li.className = "bookmark-item";
+      li.className = "popup-saved-credential-item";
       li.append(usernameContainer, passwordContainer, deleteButton);
       li.title = `Use saved credentials #${index + 1}`;
       li.addEventListener("click", () => {
-        const userInput = DomService.getInputElement("#inputUser");
-        const passInput = DomService.getInputElement("#inputPass");
+        const userInput = DomService.getInputElement("#popup-input-username");
+        const passInput = DomService.getInputElement("#popup-input-password");
         DomService.updateField(userInput, cred.username);
         DomService.updateField(passInput, cred.password);
       });
@@ -539,8 +539,8 @@ export class PopupController {
 
     const first = modelEntry.credentials[0];
     if (first) {
-      const userInput = DomService.getInputElement("#inputUser");
-      const passInput = DomService.getInputElement("#inputPass");
+      const userInput = DomService.getInputElement("#popup-input-username");
+      const passInput = DomService.getInputElement("#popup-input-password");
       DomService.updateField(userInput, first.username);
       DomService.updateField(passInput, first.password);
     }
@@ -555,8 +555,8 @@ export class PopupController {
       return;
     }
 
-    const user = DomService.getValueElement("#inputUser").value.trim();
-    const pass = DomService.getValueElement("#inputPass").value;
+    const user = DomService.getValueElement("#popup-input-username").value.trim();
+    const pass = DomService.getValueElement("#popup-input-password").value;
 
     if (!user || !pass) {
       this.setStatus(
@@ -626,14 +626,14 @@ export class PopupController {
 
   private async handleBookmarkButton(): Promise<void> {
     const container = DomService.getElement(
-      "#bookmarkListContainer",
+      "#popup-saved-credentials-container",
       HTMLElement
     );
-    if (container.classList.contains("hidden")) {
+    if (container.classList.contains("popup-hidden")) {
       await this.loadBookmarks();
-      container.classList.remove("hidden");
+      container.classList.remove("popup-hidden");
     } else {
-      container.classList.add("hidden");
+      container.classList.add("popup-hidden");
     }
   }
 }

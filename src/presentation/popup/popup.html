@@ -12,283 +12,345 @@
     <link href="./popup.css" rel="stylesheet" />
   </head>
   <body>
-    <!-- HEADER -->
-    <header class="header">
+    <header class="popup-header">
       <h1>Router Inspector</h1>
     </header>
 
-    <!-- STATUS BAR -->
-    <div class="status-bar">
-      <span class="status-dot" id="statusDot"></span>
-      <span class="status-text" id="statusText"
+    <div class="popup-status-bar">
+      <span class="popup-status-dot" id="popup-status-dot"></span>
+      <span class="popup-status-text" id="popup-status-text"
         >Ready to collect router data</span
       >
     </div>
 
-    <!-- MODEL INDICATOR -->
-    <div class="model-bar">
-      <span class="model-label">Model</span>
-      <span class="model-value" id="routerModel">-</span>
+    <div class="popup-model-bar">
+      <span class="popup-model-label">Model</span>
+      <span class="popup-model-value" id="popup-router-model">-</span>
     </div>
 
-    <!-- CREDENTIALS -->
-    <section>
-      <p class="section-title">Credentials</p>
-      <div class="credentials-grid">
-        <div class="input-group">
-          <label class="input-label" for="inputUser">User</label>
+    <!-- CREDENTIALS SECTION -->
+    <section class="popup-section">
+      <p class="popup-section-title">Credentials</p>
+      <div class="popup-credentials-grid">
+        <div class="popup-input-group">
+          <label class="popup-label" for="popup-input-username">User</label>
           <input
-            class="input-field"
+            class="popup-input"
             type="text"
-            id="inputUser"
+            id="popup-input-username"
             placeholder="admin"
             value="admin"
             autocomplete="off"
           />
         </div>
-        <div class="input-group">
-          <label class="input-label" for="inputPass">Password</label>
+        <div class="popup-input-group">
+          <label class="popup-label" for="popup-input-password">Password</label>
           <input
-            class="input-field"
+            class="popup-input"
             type="password"
-            id="inputPass"
+            id="popup-input-password"
             autocomplete="off"
           />
         </div>
-        <div class="credentials-buttons">
-          <button class="btn btn-save" id="btnSaveCredentials">
-            <img src="assets/save.svg" class="icon" alt="Save" />
+        <div class="popup-credentials-actions">
+          <button
+            class="popup-btn popup-btn-save"
+            id="popup-btn-save-credentials"
+          >
+            <img src="assets/save.svg" class="popup-icon" alt="Save" />
           </button>
-          <button class="btn btn-bookmark" id="btnBookmarkCredentials">
-            <img src="assets/bookmark.svg" class="icon" alt="Bookmark" />
+          <button
+            class="popup-btn popup-btn-bookmark"
+            id="popup-btn-toggle-bookmarks"
+          >
+            <img src="assets/bookmark.svg" class="popup-icon" alt="Bookmark" />
           </button>
         </div>
       </div>
-      <div class="bookmark-list hidden" id="bookmarkListContainer">
-        <p class="bookmark-title">Saved credentials</p>
-        <ul class="bookmark-items" id="bookmarkList"></ul>
+      <div
+        class="popup-saved-credentials popup-hidden"
+        id="popup-saved-credentials-container"
+      >
+        <p class="popup-saved-credentials-title">Saved credentials</p>
+        <ul
+          class="popup-saved-credentials-list"
+          id="popup-saved-credentials-list"
+        ></ul>
       </div>
     </section>
 
-    <!-- MENU -->
-    <div class="tabs" role="tablist" aria-label="Popup sections">
+    <!-- TABS SECTION -->
+    <div class="popup-tabs" role="tablist" aria-label="Popup sections">
       <button
-        class="tab-btn active"
-        id="tabMain"
+        class="popup-tab popup-tab--active"
+        id="popup-tab-main"
         type="button"
         role="tab"
         aria-selected="true"
-        aria-controls="panelMain"
+        aria-controls="popup-panel-main"
       >
         Main
       </button>
       <button
-        class="tab-btn"
-        id="tabTopology"
+        class="popup-tab"
+        id="popup-tab-topology"
         type="button"
         role="tab"
         aria-selected="false"
-        aria-controls="panelTopology"
+        aria-controls="popup-panel-topology"
       >
         Topology
       </button>
       <button
-        class="tab-btn"
-        id="tabLogs"
+        class="popup-tab"
+        id="popup-tab-logs"
         type="button"
         role="tab"
         aria-selected="false"
-        aria-controls="panelLogs"
+        aria-controls="popup-panel-logs"
       >
         Logs
       </button>
     </div>
 
+    <!-- MAIN SECTION -->
     <div
-      class="tab-panel"
-      id="panelMain"
+      class="popup-panel"
+      id="popup-panel-main"
       role="tabpanel"
-      aria-labelledby="tabMain"
+      aria-labelledby="popup-tab-main"
     >
-      <!-- ACTIONS -->
-      <div class="actions">
-        <button class="btn btn-primary" id="btnCollect">
-          <img src="assets/play.svg" class="icon" alt="Play" />
+      <!-- ACTIONS SECTION -->
+      <div class="popup-actions">
+        <button class="popup-btn popup-btn-primary" id="popup-btn-collect">
+          <img src="assets/play.svg" class="popup-icon" alt="Play" />
           Start
         </button>
-        <button class="btn btn-clear" id="btnClear">
-          <img src="assets/trash.svg" class="icon" alt="Trash" />
+        <button class="popup-btn popup-btn-clear" id="popup-btn-clear">
+          <img src="assets/trash.svg" class="popup-icon" alt="Trash" />
         </button>
       </div>
 
       <!-- WAN SECTION -->
-      <section class="collapsible-section" id="wanSection">
-        <div class="section-header">
-          <p class="section-title">WAN</p>
+      <section class="popup-collapsible" id="popup-section-wan">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">WAN</p>
           <button
-            class="section-toggle"
-            id="toggleWanSection"
+            class="popup-collapsible-trigger"
+            id="popup-toggle-wan"
             type="button"
             aria-label="Toggle WAN section"
             aria-expanded="true"
-            aria-controls="sectionWanBody"
+            aria-controls="popup-section-wan-body"
           >
-            <span class="section-toggle-icon">▾</span>
+            <span class="popup-collapsible-icon">▾</span>
           </button>
         </div>
-
-        <!-- WAN BODY -->
-        <div class="section-body data-grid" id="sectionWanBody">
-          <div class="data-card data-card-full">
-            <p class="card-label">PPPoE</p>
-            <p class="card-value empty" id="val-pppoeUsername">-</p>
+        <div
+          class="popup-collapsible-body popup-data-grid"
+          id="popup-section-wan-body"
+        >
+          <div class="popup-data-card popup-data-card--full">
+            <p class="popup-card-label">PPPoE</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-pppoeUsername"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">Internet</p>
-            <p class="card-value empty" id="val-internetStatus">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">Internet</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-internetStatus"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">TR-069</p>
-            <p class="card-value empty" id="val-tr069Status">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">TR-069</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-tr069Status"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">Link Speed</p>
-            <p class="card-value empty" id="val-linkSpeed">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">Link Speed</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-linkSpeed"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-2">
-            <p class="card-label">IP Version</p>
-            <p class="card-value empty" id="val-ipVersion">-</p>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">IP Version</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-ipVersion"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-2">
-            <p class="card-label">DHCPv6 Status</p>
-            <p class="card-value empty" id="val-dhcpv6Status">-</p>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">DHCPv6 Status</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpv6Status"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">PD Status</p>
-            <p class="card-value empty" id="val-requestPdStatus">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">PD Status</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-requestPdStatus"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">SLAAC Status</p>
-            <p class="card-value empty" id="val-slaacStatus">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">SLAAC Status</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-slaacStatus"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-3">
-            <p class="card-label">Gua PD Status</p>
-            <p class="card-value empty" id="val-pdStatus">-</p>
+          <div class="popup-data-card popup-data-card--1-3">
+            <p class="popup-card-label">Gua PD Status</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-pdStatus"
+            >
+              -
+            </p>
           </div>
         </div>
       </section>
 
-      <!-- REMOTE ACCESS -->
-      <section class="collapsible-section" id="remoteAccessSection">
-        <div class="section-header">
-          <p class="section-title">Remote Access</p>
+      <section class="popup-collapsible" id="popup-section-remote-access">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">Remote Access</p>
           <button
-            class="section-toggle"
-            id="toggleRemoteAccessSection"
+            class="popup-collapsible-trigger"
+            id="popup-toggle-remote-access"
             type="button"
-            aria-label="Toggle WAN section"
+            aria-label="Toggle Remote Access section"
             aria-expanded="true"
-            aria-controls="sectionWanBody"
+            aria-controls="popup-section-remote-access-body"
           >
-            <span class="section-toggle-icon">▾</span>
+            <span class="popup-collapsible-icon">▾</span>
           </button>
         </div>
-
-        <div class="section-body data-grid" id="sectionRemoteAccessBody">
-          <div class="data-card data-card-1-2">
-            <p class="card-label">Remote access - IPv4</p>
-            <p class="card-value empty" id="val-remoteAccessIpv4Status">-</p>
+        <div
+          class="popup-collapsible-body popup-data-grid"
+          id="popup-section-remote-access-body"
+        >
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Remote access - IPv4</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-remoteAccessIpv4Status"
+            >
+              -
+            </p>
           </div>
-          <div class="data-card data-card-1-2">
-            <p class="card-label">Remote access - IPv6</p>
-            <p class="card-value empty" id="val-remoteAccessIpv6Status">-</p>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Remote access - IPv6</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-remoteAccessIpv6Status"
+            >
+              -
+            </p>
           </div>
         </div>
       </section>
     </div>
 
-    <!-- TOPOLOGY -->
+    <!-- TOPOLOGY SECTION -->
     <div
-      class="tab-panel hidden"
-      id="panelTopology"
+      class="popup-panel popup-hidden"
+      id="popup-panel-topology"
       role="tabpanel"
-      aria-labelledby="tabTopology"
+      aria-labelledby="popup-tab-topology"
     >
-      <!-- CABLE CONNECTED DEVICES -->
-      <section class="collapsible-section" id="topologyCableSection">
-        <div class="section-header">
-          <p class="section-title">Cable-connected devices</p>
+      <section class="popup-collapsible" id="popup-section-topology-cable">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">Cable-connected devices</p>
           <button
-            class="section-toggle"
-            id="toggleTopologyCableSection"
+            class="popup-collapsible-trigger"
+            id="popup-toggle-topology-cable"
             type="button"
             aria-label="Toggle Cable Topology section"
             aria-expanded="true"
-            aria-controls="sectionTopologyCableBody"
+            aria-controls="popup-section-topology-cable-body"
           >
-            <span class="section-toggle-icon">▾</span>
+            <span class="popup-collapsible-icon">▾</span>
           </button>
         </div>
-
         <div
-          class="section-body data-grid topology-panel"
-          id="sectionTopologyCableBody"
-          id="topology"
+          class="popup-collapsible-body popup-data-grid popup-topology-panel"
+          id="popup-section-topology-cable-body"
         ></div>
       </section>
 
-      <!-- 2.4GHZ CONNECTED DEVICES -->
-      <section class="collapsible-section" id="topology24GhSection">
-        <div class="section-header">
-          <p class="section-title">2.4GHz connected devices</p>
+      <section class="popup-collapsible" id="popup-section-topology-24ghz">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">2.4GHz connected devices</p>
           <button
-            class="section-toggle"
-            id="toggleTopology24GhSection"
+            class="popup-collapsible-trigger"
+            id="popup-toggle-topology-24ghz"
             type="button"
-            aria-label="Toggle 2.4Ghz Topology section"
+            aria-label="Toggle 2.4GHz Topology section"
             aria-expanded="true"
-            aria-controls="sectionTopology24GhBody"
+            aria-controls="popup-section-topology-24ghz-body"
           >
-            <span class="section-toggle-icon">▾</span>
+            <span class="popup-collapsible-icon">▾</span>
           </button>
         </div>
-
         <div
-          class="section-body data-grid topology-panel"
-          id="sectionTopology24GhBody"
-          id="topology"
+          class="popup-collapsible-body popup-data-grid popup-topology-panel"
+          id="popup-section-topology-24ghz-body"
         ></div>
       </section>
 
-      <!-- 5GHZ CONNECTED DEVICES -->
-      <section class="collapsible-section" id="topology5GhSection">
-        <div class="section-header">
-          <p class="section-title">5GHz connected devices</p>
+      <section class="popup-collapsible" id="popup-section-topology-5ghz">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">5GHz connected devices</p>
           <button
-            class="section-toggle"
-            id="toggletopology5GhSection"
+            class="popup-collapsible-trigger"
+            id="popup-toggle-topology-5ghz"
             type="button"
-            aria-label="Toggle 5Ghz Topology section"
+            aria-label="Toggle 5GHz Topology section"
             aria-expanded="true"
-            aria-controls="sectionTopology5GhBody"
+            aria-controls="popup-section-topology-5ghz-body"
           >
-            <span class="section-toggle-icon">▾</span>
+            <span class="popup-collapsible-icon">▾</span>
           </button>
         </div>
-
-        <div class="section-body data-grid" id="sectionTopology5GhBody"></div>
+        <div
+          class="popup-collapsible-body popup-data-grid"
+          id="popup-section-topology-5ghz-body"
+        ></div>
       </section>
     </div>
 
-    <!-- LOG -->
+    <!-- LOGS SECTION -->
     <section
-      class="tab-panel hidden"
-      id="panelLogs"
+      class="popup-panel popup-section popup-hidden"
+      id="popup-panel-logs"
       role="tabpanel"
-      aria-labelledby="tabLogs"
+      aria-labelledby="popup-tab-logs"
     >
-      <p class="section-title">Logs</p>
-      <div class="log-panel" id="log"></div>
+      <p class="popup-section-title">Logs</p>
+      <div class="popup-log-panel" id="popup-log-panel"></div>
     </section>
 
     <script src="./popup.js"></script>
