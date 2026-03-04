@@ -53,6 +53,18 @@ export class DomService {
     throw new Error(`Element "${selector}" not found or wrong type.`);
   }
 
+  public static getElements<T extends HTMLElement>(
+    selector: string,
+    type: new () => T
+  ): T[] {
+    const elements = document.querySelectorAll(selector);
+    if (elements.length === 0)
+      throw new Error(`Elements "${selector}" not found.`);
+    return Array.from(elements).filter(
+      (element) => element instanceof type
+    ) as T[];
+  }
+
   public static updateField(element: ValueElement, value: string): void {
     if (element instanceof HTMLInputElement) element.focus();
     element.value = value;

@@ -213,6 +213,38 @@ h1 {
   color: var(--popup-muted);
 }
 
+.popup-topology-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.popup-topology-client-entry {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) auto;
+  gap: 4px;
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  border: 1px solid var(--popup-border);
+  border-radius: var(--popup-radius);
+}
+
+.popup-topology-client-name,
+.popup-topology-client-mac {
+  width: 25%;
+}
+
+.popup-topology-client-ip,
+.popup-topology-client-signal {
+  color: var(--popup-muted);
+}
+
+.popup-topology-client-signal {
+  width: 24px;
+  text-align: end;
+}
+
 .popup-credentials-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -384,7 +416,7 @@ h1 {
 .popup-collapsible {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .popup-collapsible-header {
@@ -409,6 +441,8 @@ h1 {
 .popup-collapsible-icon {
   display: inline-block;
   transition: transform 0.2s ease;
+  width: 16px;
+  height: 16px;
 }
 
 .popup-collapsible.collapsed .popup-collapsible-body {

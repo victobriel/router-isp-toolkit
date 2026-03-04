@@ -70,10 +70,10 @@ export class PopupController {
       "click",
       () => this.handleClear()
     );
-    DomService.getElement("#popup-btn-save-credentials", HTMLElement).addEventListener(
-      "click",
-      () => void this.handleSaveCredentials()
-    );
+    DomService.getElement(
+      "#popup-btn-save-credentials",
+      HTMLElement
+    ).addEventListener("click", () => void this.handleSaveCredentials());
     DomService.getElement(
       "#popup-btn-toggle-bookmarks",
       HTMLElement
@@ -82,7 +82,8 @@ export class PopupController {
 
   private async handleCollect(): Promise<void> {
     const user =
-      DomService.getValueElement("#popup-input-username").value.trim() || "admin";
+      DomService.getValueElement("#popup-input-username").value.trim() ||
+      "admin";
     const pass = DomService.getValueElement("#popup-input-password").value;
 
     const [tab] = await chrome.tabs.query({
@@ -231,6 +232,64 @@ export class PopupController {
       "remoteAccessIpv6Status",
       this.toStatusText(data?.remoteAccessIpv6Status)
     );
+    const topology = data?.topology;
+
+    if (topology && topology["24ghz"] && topology["24ghz"].clients.length > 0) {
+      const panel = DomService.getElement(
+        "#popup-section-topology-24ghz-body",
+        HTMLDivElement
+      );
+
+      for (const client of topology["24ghz"].clients) {
+        const entry = document.createElement("div");
+        entry.className = "popup-topology-client-entry";
+        entry.innerHTML = `\
+        <span class="popup-topology-client-name">${client.name}</span>\
+        <span class="popup-topology-client-ip">${client.ip}</span>\
+        <span class="popup-topology-client-mac">${client.mac}</span>\
+        <span class="popup-topology-client-signal">${client.signal}</span>\
+        `;
+        panel.prepend(entry);
+      }
+    }
+
+    if (topology && topology["5ghz"] && topology["5ghz"].clients.length > 0) {
+      const panel = DomService.getElement(
+        "#popup-section-topology-5ghz-body",
+        HTMLDivElement
+      );
+
+      for (const client of topology["5ghz"].clients) {
+        const entry = document.createElement("div");
+        entry.className = "popup-topology-client-entry";
+        entry.innerHTML = `\
+        <span class="popup-topology-client-name">${client.name}</span>\
+        <span class="popup-topology-client-ip">${client.ip}</span>\
+        <span class="popup-topology-client-mac">${client.mac}</span>\
+        <span class="popup-topology-client-signal">${client.signal}</span>\
+        `;
+        panel.prepend(entry);
+      }
+    }
+
+    if (topology && topology["cable"] && topology["cable"].clients.length > 0) {
+      const panel = DomService.getElement(
+        "#popup-section-topology-cable-body",
+        HTMLDivElement
+      );
+
+      for (const client of topology["cable"].clients) {
+        const entry = document.createElement("div");
+        entry.className = "popup-topology-client-entry";
+        entry.innerHTML = `\
+        <span class="popup-topology-client-name">${client.name}</span>\
+        <span class="popup-topology-client-ip">${client.ip}</span>\
+        <span class="popup-topology-client-mac">${client.mac}</span>\
+        <span class="popup-topology-client-signal">${client.signal}</span>\
+        `;
+        panel.prepend(entry);
+      }
+    }
   }
 
   private async checkPendingErrors(): Promise<void> {
@@ -257,6 +316,21 @@ export class PopupController {
     PopupView.updateField("linkSpeed", null);
     PopupView.updateField("remoteAccessIpv4Status", null);
     PopupView.updateField("remoteAccessIpv6Status", null);
+    const topologyPanel24ghz = DomService.getElement(
+      "#popup-section-topology-24ghz-body",
+      HTMLDivElement
+    );
+    topologyPanel24ghz.innerHTML = "";
+    const topologyPanel5ghz = DomService.getElement(
+      "#popup-section-topology-5ghz-body",
+      HTMLDivElement
+    );
+    topologyPanel5ghz.innerHTML = "";
+    const topologyPanelCable = DomService.getElement(
+      "#popup-section-topology-cable-body",
+      HTMLDivElement
+    );
+    topologyPanelCable.innerHTML = "";
     PopupView.clearLogs();
     this.persistedLogs = [];
     void this.persistUiState();
@@ -349,8 +423,8 @@ export class PopupController {
   private log(msg: string, type: PopupStatusType = PopupStatusType.NONE): void {
     const time = new Date().toLocaleTimeString("en-US", { hour12: false });
     this.persistedLogs.unshift({ msg, type, time });
-    if (this.persistedLogs.length > 50) {
-      this.persistedLogs = this.persistedLogs.slice(0, 50);
+    if (this.persistedLogs.length > 30) {
+      this.persistedLogs = this.persistedLogs.slice(0, 30);
     }
     PopupView.log(msg, type, time);
     void this.persistUiState();
@@ -439,7 +513,8 @@ export class PopupController {
   }
 
   private setCollectButtonEnabled(enabled: boolean): void {
-    DomService.getElement("#popup-btn-collect", HTMLButtonElement).disabled = !enabled;
+    DomService.getElement("#popup-btn-collect", HTMLButtonElement).disabled =
+      !enabled;
   }
 
   private getTabStorageKey(baseKey: string): string | null {
@@ -452,7 +527,10 @@ export class PopupController {
       "#popup-saved-credentials-container",
       HTMLElement
     );
-    const list = DomService.getElement("#popup-saved-credentials-list", HTMLUListElement);
+    const list = DomService.getElement(
+      "#popup-saved-credentials-list",
+      HTMLUListElement
+    );
 
     if (!container || !list || !this.routerModel) {
       if (container) container.classList.add("popup-hidden");
@@ -555,7 +633,9 @@ export class PopupController {
       return;
     }
 
-    const user = DomService.getValueElement("#popup-input-username").value.trim();
+    const user = DomService.getValueElement(
+      "#popup-input-username"
+    ).value.trim();
     const pass = DomService.getValueElement("#popup-input-password").value;
 
     if (!user || !pass) {

@@ -55,13 +55,40 @@ function setupSectionToggles(): void {
   const toggleRemoteAccessSection = document.getElementById(
     "popup-toggle-remote-access"
   );
-  const remoteAccessSection = document.getElementById("popup-section-remote-access");
+  const remoteAccessSection = document.getElementById(
+    "popup-section-remote-access"
+  );
+
+  const toggleTopology24ghzSection = document.getElementById(
+    "popup-toggle-topology-24ghz"
+  );
+  const topology24ghzSection = document.getElementById(
+    "popup-section-topology-24ghz"
+  );
+  const toggleTopology5ghzSection = document.getElementById(
+    "popup-toggle-topology-5ghz"
+  );
+  const topology5ghzSection = document.getElementById(
+    "popup-section-topology-5ghz"
+  );
+  const toggleTopologyCableSection = document.getElementById(
+    "popup-toggle-topology-cable"
+  );
+  const topologyCableSection = document.getElementById(
+    "popup-section-topology-cable"
+  );
 
   if (
     !toggleWanSection ||
     !wanSection ||
     !toggleRemoteAccessSection ||
-    !remoteAccessSection
+    !remoteAccessSection ||
+    !toggleTopology24ghzSection ||
+    !topology24ghzSection ||
+    !toggleTopology5ghzSection ||
+    !topology5ghzSection ||
+    !toggleTopologyCableSection ||
+    !topologyCableSection
   )
     return;
 
@@ -73,6 +100,30 @@ function setupSectionToggles(): void {
   toggleRemoteAccessSection.addEventListener("click", () => {
     const isCollapsed = remoteAccessSection.classList.toggle("collapsed");
     toggleRemoteAccessSection.setAttribute(
+      "aria-expanded",
+      String(!isCollapsed)
+    );
+  });
+
+  toggleTopology24ghzSection.addEventListener("click", () => {
+    const isCollapsed = topology24ghzSection.classList.toggle("collapsed");
+    toggleTopology24ghzSection.setAttribute(
+      "aria-expanded",
+      String(!isCollapsed)
+    );
+  });
+
+  toggleTopology5ghzSection.addEventListener("click", () => {
+    const isCollapsed = topology5ghzSection.classList.toggle("collapsed");
+    toggleTopology5ghzSection.setAttribute(
+      "aria-expanded",
+      String(!isCollapsed)
+    );
+  });
+
+  toggleTopologyCableSection.addEventListener("click", () => {
+    const isCollapsed = topologyCableSection.classList.toggle("collapsed");
+    toggleTopologyCableSection.setAttribute(
       "aria-expanded",
       String(!isCollapsed)
     );

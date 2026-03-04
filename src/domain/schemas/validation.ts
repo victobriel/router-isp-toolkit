@@ -18,6 +18,40 @@ export const ExtractionResultSchema = z.object({
   linkSpeed: z.string().optional(),
   remoteAccessIpv4Status: z.boolean().optional(),
   remoteAccessIpv6Status: z.boolean().optional(),
+  topology: z
+    .object({
+      "24ghz": z.object({
+        clients: z.array(
+          z.object({
+            name: z.string(),
+            ip: z.string(),
+            mac: z.string(),
+            signal: z.number(),
+          })
+        ),
+      }),
+      "5ghz": z.object({
+        clients: z.array(
+          z.object({
+            name: z.string(),
+            ip: z.string(),
+            mac: z.string(),
+            signal: z.number(),
+          })
+        ),
+      }),
+      cable: z.object({
+        clients: z.array(
+          z.object({
+            name: z.string(),
+            ip: z.string(),
+            mac: z.string(),
+            signal: z.number(),
+          })
+        ),
+      }),
+    })
+    .optional(),
 });
 
 export const CollectMessageSchema = z.object({
