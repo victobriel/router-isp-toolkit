@@ -1,5 +1,5 @@
 import { PopupStatusType } from "../../application/types/index.js";
-import { DomService } from "./DomService.js";
+import { DomService } from "../../infra/dom/DomService.js";
 
 export class PopupView {
   public static setStatus(type: PopupStatusType, text: string): void {

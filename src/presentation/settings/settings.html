@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Router Inspector — Settings</title>
+    <link href="./tokens.css" rel="stylesheet" />
+    <link href="./settings.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="settings-wrap">
+      <header class="settings-header">
+        <div class="settings-header-inner">
+          <div class="settings-header-title-group">
+            <h1 class="settings-title">Router Inspector</h1>
+            <span class="settings-subtitle">Settings</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="settings-main">
+        <!-- Appearance -->
+        <section class="settings-section">
+          <h2 class="settings-section-title">Appearance</h2>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <span class="settings-row-label">Theme</span>
+                <span class="settings-row-desc"
+                  >Choose your preferred color scheme. Changes apply immediately
+                  and are persisted across sessions.</span
+                >
+              </div>
+              <div
+                class="theme-toggle theme-toggle--lg"
+                role="radiogroup"
+                aria-label="Theme selection"
+              >
+                <button
+                  class="theme-toggle-option"
+                  data-theme="light"
+                  type="button"
+                  role="radio"
+                  aria-checked="false"
+                >
+                  Light
+                </button>
+                <button
+                  class="theme-toggle-option"
+                  data-theme="dark"
+                  type="button"
+                  role="radio"
+                  aria-checked="false"
+                >
+                  Dark
+                </button>
+                <button
+                  class="theme-toggle-option"
+                  data-theme="system"
+                  type="button"
+                  role="radio"
+                  aria-checked="true"
+                >
+                  System
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Data & Storage -->
+        <section class="settings-section">
+          <h2 class="settings-section-title">Data &amp; Storage</h2>
+          <div class="settings-card">
+            <div class="settings-row">
+              <div class="settings-row-info">
+                <span class="settings-row-label">Saved bookmarks</span>
+                <span class="settings-row-desc"
+                  >Credential bookmarks are stored per router model and
+                  auto-loaded when a matching router is detected.</span
+                >
+              </div>
+              <span
+                class="settings-badge"
+                id="settings-bookmark-count"
+                title="Total saved credential bookmarks"
+                >—</span
+              >
+            </div>
+
+            <div class="settings-row settings-row--top-border">
+              <div class="settings-row-info">
+                <span class="settings-row-label">Clear all extension data</span>
+                <span class="settings-row-desc"
+                  >Removes all cached router data, saved credentials, bookmarks
+                  and UI state. This action cannot be undone.</span
+                >
+              </div>
+              <button
+                class="settings-btn settings-btn--danger"
+                id="settings-btn-clear-all"
+                type="button"
+              >
+                <span
+                  class="settings-icon settings-icon--trash"
+                  aria-hidden="true"
+                ></span>
+                Clear all
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- About -->
+        <section class="settings-section">
+          <h2 class="settings-section-title">About</h2>
+          <div class="settings-card">
+            <div class="settings-row">
+              <span class="settings-row-label">Extension</span>
+              <span class="settings-meta-value">Router Inspector</span>
+            </div>
+            <div class="settings-row settings-row--top-border">
+              <span class="settings-row-label">Version</span>
+              <span class="settings-meta-value" id="settings-version">—</span>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <div
+        class="settings-toast"
+        id="settings-toast"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      ></div>
+    </div>
+
+    <script src="./settings.js"></script>
+  </body>
+</html>

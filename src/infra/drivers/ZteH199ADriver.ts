@@ -118,7 +118,7 @@ export class ZteH199ADriver extends Router {
     );
     DomService.safeClick(pppoeEntryElement);
 
-    const ppoeUsername = (
+    const pppoeUsername = (
       DomService.getOptionalValue(this.selectors.pppoeUsername) ?? ""
     ).trim();
     const internetStatus = DomService.getInputElement(
@@ -146,7 +146,7 @@ export class ZteH199ADriver extends Router {
         : (ipModeValue ?? null);
 
     return {
-      ppoeUsername,
+      pppoeUsername,
       internetStatus,
       tr069Status,
       ipVersion,

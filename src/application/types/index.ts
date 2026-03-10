@@ -12,5 +12,12 @@ export enum PopupStatusType {
   NONE = "none",
   OK = "ok",
   WARN = "warn",
-  ERROR = "error",
+  ERROR = "err",
 }
+
+export type CredentialBookmark = { username: string; password: string };
+export type ModelBookmarks = {
+  model: string;
+  credentials: CredentialBookmark[];
+};
+export type BookmarkStore = Record<string, ModelBookmarks>;

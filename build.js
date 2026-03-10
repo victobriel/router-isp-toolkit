@@ -14,6 +14,7 @@ await esbuild.build({
     background: "src/infra/background/background.ts",
     content: "src/presentation/content/main.ts",
     popup: "src/presentation/popup/popup.ts",
+    settings: "src/presentation/settings/settings.ts",
   },
   bundle: true,
   outdir,
@@ -26,8 +27,11 @@ await esbuild.build({
 // Copy static files
 const staticFiles = [
   ["manifest.json", `${outdir}/manifest.json`],
+  ["src/presentation/tokens.css", `${outdir}/tokens.css`],
   ["src/presentation/popup/popup.html", `${outdir}/popup.html`],
   ["src/presentation/popup/popup.css", `${outdir}/popup.css`],
+  ["src/presentation/settings/settings.html", `${outdir}/settings.html`],
+  ["src/presentation/settings/settings.css", `${outdir}/settings.css`],
 ];
 
 for (const [src, dest] of staticFiles) {

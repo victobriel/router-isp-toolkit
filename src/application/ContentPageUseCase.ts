@@ -11,7 +11,7 @@ import type { ButtonConfig } from "../domain/schemas/validation.js";
 import type {
   BookmarkStore,
   ModelBookmarks,
-} from "../presentation/popup/index.js";
+} from "./types/index.js";
 
 /**
  * Application use case: bootstrap content script on router page.

@@ -3,11 +3,10 @@ import {
   type ExtractionResult,
 } from "../../domain/schemas/validation.js";
 import { DomService } from "../../infra/dom/DomService.js";
-import { PopupView } from "../../infra/dom/PopupView.js";
+import { PopupView } from "./PopupView.js";
 import { StorageService } from "../../infra/storage/StorageService.js";
 import { PopupStatusType } from "../../application/types/index.js";
-import type { CollectResponse } from "../../application/types/index.js";
-import type { BookmarkStore, CredentialBookmark } from "./index.js";
+import type { CollectResponse, BookmarkStore, CredentialBookmark } from "../../application/types/index.js";
 import {
   BOOKMARKS_STORAGE_KEY,
   LAST_DATA_STORAGE_KEY,
@@ -206,7 +205,7 @@ export class PopupController {
     if (this.currentData === null) return;
 
     const data = this.currentData;
-    PopupView.updateField("pppoeUsername", data?.ppoeUsername ?? null);
+    PopupView.updateField("pppoeUsername", data?.pppoeUsername ?? null);
     PopupView.updateField(
       "internetStatus",
       this.toStatusText(data?.internetStatus)
@@ -233,96 +232,56 @@ export class PopupController {
       this.toStatusText(data?.remoteAccessIpv6Status)
     );
     const topology = data?.topology;
-
-    if (topology && topology["24ghz"] && topology["24ghz"].clients.length > 0) {
-      const panel = DomService.getElement(
-        "#popup-section-topology-24ghz-body",
-        HTMLDivElement
-      );
-
-      if (topology["24ghz"].clients.length > 0) {
-        panel.innerHTML = "";
-      }
-
-      for (const client of topology["24ghz"].clients) {
-        const entry = document.createElement("div");
-        entry.className = "popup-topology-client-entry";
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "popup-topology-client-name";
-        nameSpan.textContent = client.name;
-        const ipSpan = document.createElement("span");
-        ipSpan.className = "popup-topology-client-ip";
-        ipSpan.textContent = client.ip;
-        const macSpan = document.createElement("span");
-        macSpan.className = "popup-topology-client-mac";
-        macSpan.textContent = client.mac.toUpperCase();
-        const signalSpan = document.createElement("span");
-        signalSpan.className = "popup-topology-client-signal";
-        signalSpan.textContent = String(client.signal);
-        entry.append(nameSpan, ipSpan, macSpan, signalSpan);
-        panel.prepend(entry);
+    if (topology) {
+      for (const band of ["24ghz", "5ghz", "cable"] as const) {
+        this.renderTopologyBand(band, topology[band].clients);
       }
     }
+  }
 
-    if (topology && topology["5ghz"] && topology["5ghz"].clients.length > 0) {
-      const panel = DomService.getElement(
-        "#popup-section-topology-5ghz-body",
-        HTMLDivElement
-      );
+  private renderTopologyBand(
+    band: "24ghz" | "5ghz" | "cable",
+    clients: Array<{ name: string; ip: string; mac: string; signal: number }>
+  ): void {
+    if (clients.length === 0) return;
 
-      if (topology["5ghz"].clients.length > 0) {
-        panel.innerHTML = "";
-      }
+    const panel = DomService.getElement(
+      `#popup-section-topology-${band}-body`,
+      HTMLDivElement
+    );
+    panel.innerHTML = "";
 
-      for (const client of topology["5ghz"].clients) {
-        const entry = document.createElement("div");
-        entry.className = "popup-topology-client-entry";
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "popup-topology-client-name";
-        nameSpan.textContent = client.name;
-        const ipSpan = document.createElement("span");
-        ipSpan.className = "popup-topology-client-ip";
-        ipSpan.textContent = client.ip;
-        const macSpan = document.createElement("span");
-        macSpan.className = "popup-topology-client-mac";
-        macSpan.textContent = client.mac.toUpperCase();
-        const signalSpan = document.createElement("span");
-        signalSpan.className = "popup-topology-client-signal";
-        signalSpan.textContent = String(client.signal);
-        entry.append(nameSpan, ipSpan, macSpan, signalSpan);
-        panel.prepend(entry);
-      }
+    for (const client of clients) {
+      const entry = document.createElement("div");
+      entry.className = "popup-topology-client-entry";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "popup-topology-client-name";
+      nameSpan.textContent = client.name;
+
+      const ipSpan = document.createElement("span");
+      ipSpan.className = "popup-topology-client-ip";
+      ipSpan.textContent = client.ip;
+
+      const macSpan = document.createElement("span");
+      macSpan.className = "popup-topology-client-mac";
+      macSpan.textContent = client.mac.toUpperCase();
+
+      const signalSpan = document.createElement("span");
+      signalSpan.className = "popup-topology-client-signal";
+      signalSpan.textContent = String(client.signal);
+
+      entry.append(nameSpan, ipSpan, macSpan, signalSpan);
+      panel.prepend(entry);
     }
+  }
 
-    if (topology && topology["cable"] && topology["cable"].clients.length > 0) {
-      const panel = DomService.getElement(
-        "#popup-section-topology-cable-body",
-        HTMLDivElement
-      );
-
-      if (topology["cable"].clients.length > 0) {
-        panel.innerHTML = "";
-      }
-
-      for (const client of topology["cable"].clients) {
-        const entry = document.createElement("div");
-        entry.className = "popup-topology-client-entry";
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "popup-topology-client-name";
-        nameSpan.textContent = client.name;
-        const ipSpan = document.createElement("span");
-        ipSpan.className = "popup-topology-client-ip";
-        ipSpan.textContent = client.ip;
-        const macSpan = document.createElement("span");
-        macSpan.className = "popup-topology-client-mac";
-        macSpan.textContent = client.mac.toUpperCase();
-        const signalSpan = document.createElement("span");
-        signalSpan.className = "popup-topology-client-signal";
-        signalSpan.textContent = String(client.signal);
-        entry.append(nameSpan, ipSpan, macSpan, signalSpan);
-        panel.prepend(entry);
-      }
-    }
+  private clearTopologyBand(band: "24ghz" | "5ghz" | "cable"): void {
+    const panel = DomService.getElement(
+      `#popup-section-topology-${band}-body`,
+      HTMLDivElement
+    );
+    panel.innerHTML = "<span class='popup-topology-no-data'>No data</span>";
   }
 
   private async checkPendingErrors(): Promise<void> {
@@ -349,24 +308,9 @@ export class PopupController {
     PopupView.updateField("linkSpeed", null);
     PopupView.updateField("remoteAccessIpv4Status", null);
     PopupView.updateField("remoteAccessIpv6Status", null);
-    const topologyPanel24ghz = DomService.getElement(
-      "#popup-section-topology-24ghz-body",
-      HTMLDivElement
-    );
-    topologyPanel24ghz.innerHTML =
-      "<span class='popup-topology-no-data'>No data</span>";
-    const topologyPanel5ghz = DomService.getElement(
-      "#popup-section-topology-5ghz-body",
-      HTMLDivElement
-    );
-    topologyPanel5ghz.innerHTML =
-      "<span class='popup-topology-no-data'>No data</span>";
-    const topologyPanelCable = DomService.getElement(
-      "#popup-section-topology-cable-body",
-      HTMLDivElement
-    );
-    topologyPanelCable.innerHTML =
-      "<span class='popup-topology-no-data'>No data</span>";
+    for (const band of ["24ghz", "5ghz", "cable"] as const) {
+      this.clearTopologyBand(band);
+    }
     PopupView.clearLogs();
     this.persistedLogs = [];
     void this.persistUiState();
@@ -601,7 +545,7 @@ export class PopupController {
       const usernameValueSpan = document.createElement("span");
       const passwordValueSpan = document.createElement("span");
       const deleteButton = document.createElement("button");
-      const deleteIcon = document.createElement("img");
+      const deleteIcon = document.createElement("span");
 
       usernameLabelSpan.textContent = "User:";
       passwordLabelSpan.textContent = "Password:";
@@ -622,9 +566,8 @@ export class PopupController {
       deleteButton.className = "popup-saved-credential-delete";
       deleteButton.title = `Delete saved credentials #${index + 1}`;
 
-      deleteIcon.src = "assets/trash.svg";
-      deleteIcon.alt = "Delete saved credentials";
-      deleteIcon.className = "popup-icon";
+      deleteIcon.className = "popup-icon popup-icon-bookmark--delete";
+      deleteIcon.setAttribute("aria-hidden", "true");
 
       deleteButton.appendChild(deleteIcon);
 

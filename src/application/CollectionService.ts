@@ -4,8 +4,7 @@ import {
   CredentialsSchema,
   type CollectMessage,
 } from "../domain/schemas/validation.js";
-import { PopupStatusType, type CollectResponse } from "./types/index.js";
-import { PopupView } from "../infra/dom/PopupView.js";
+import { type CollectResponse } from "./types/index.js";
 
 export class CollectionService {
   public static async handleCollect(

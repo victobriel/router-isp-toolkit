@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="./tokens.css" rel="stylesheet" />
     <link href="./popup.css" rel="stylesheet" />
   </head>
   <body>
@@ -43,6 +44,12 @@
           </button>
         </div>
       </div>
+      <button class="popup-btn popup-btn-settings" aria-label="Settings">
+        <span class="popup-icon popup-icon--gear" aria-hidden="true"></span>
+      </button>
+      <button class="popup-btn popup-btn-close" id="popup-btn-close" aria-label="Close panel">
+        <span class="popup-icon popup-icon--close" aria-hidden="true"></span>
+      </button>
     </header>
 
     <div class="popup-status-bar">
@@ -87,14 +94,17 @@
             id="popup-btn-save-credentials"
             aria-label="Save credentials"
           >
-            <img src="assets/save.svg" class="popup-icon" alt="Save" />
+            <span class="popup-icon popup-icon--save" aria-hidden="true"></span>
           </button>
           <button
             class="popup-btn popup-btn-bookmark"
             id="popup-btn-toggle-bookmarks"
             aria-label="Toggle saved credentials"
           >
-            <img src="assets/bookmark.svg" class="popup-icon" alt="Bookmark" />
+            <span
+              class="popup-icon popup-icon--bookmark"
+              aria-hidden="true"
+            ></span>
           </button>
         </div>
       </div>
@@ -116,7 +126,7 @@
     <section class="popup-section">
       <div class="popup-actions">
         <button class="popup-btn popup-btn-primary" id="popup-btn-collect">
-          <img src="assets/play.svg" class="popup-icon" alt="Play" />
+          <span class="popup-icon popup-icon--play" aria-hidden="true"></span>
           Start
         </button>
         <button
@@ -124,7 +134,7 @@
           id="popup-btn-clear"
           aria-label="Clear data"
         >
-          <img src="assets/trash.svg" class="popup-icon" alt="Trash" />
+          <span class="popup-icon popup-icon--trash" aria-hidden="true"></span>
         </button>
       </div>
     </section>
@@ -182,11 +192,7 @@
             aria-expanded="true"
             aria-controls="popup-section-wan-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -289,11 +295,7 @@
             aria-expanded="true"
             aria-controls="popup-section-remote-access-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -333,11 +335,7 @@
             aria-expanded="true"
             aria-controls="popup-section-wlan-24ghz-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -449,11 +447,7 @@
             aria-expanded="true"
             aria-controls="popup-section-wlan-5ghz-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -572,11 +566,7 @@
             aria-expanded="true"
             aria-controls="popup-section-topology-cable-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -598,11 +588,7 @@
             aria-expanded="true"
             aria-controls="popup-section-topology-24ghz-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div
@@ -624,11 +610,7 @@
             aria-expanded="true"
             aria-controls="popup-section-topology-5ghz-body"
           >
-            <img
-              class="popup-collapsible-icon"
-              src="assets/caret-down.svg"
-              alt="Caret Down"
-            />
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
           </button>
         </div>
         <div

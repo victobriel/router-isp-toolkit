@@ -7,7 +7,7 @@ export const CredentialsSchema = z.object({
 
 export const ExtractionResultSchema = z.object({
   timestamp: z.string().optional(),
-  ppoeUsername: z.string().optional(),
+  pppoeUsername: z.string().optional(),
   internetStatus: z.boolean().optional(),
   tr069Status: z.boolean().optional(),
   ipVersion: z.string().nullable().optional(),

@@ -48,48 +48,9 @@ class ExtensionManager {
     return { success: true };
   }
 
-  private static async resolvePopupWindowId(
-    senderWindowId?: number
-  ): Promise<number | null> {
-    if (
-      senderWindowId !== undefined &&
-      senderWindowId !== chrome.windows.WINDOW_ID_NONE
-    ) {
-      return senderWindowId;
-    }
-
-    const focusedWindow = await chrome.windows.getLastFocused({
-      windowTypes: ["normal"],
-    });
-    if (
-      focusedWindow?.id !== undefined &&
-      focusedWindow.id !== chrome.windows.WINDOW_ID_NONE
-    ) {
-      return focusedWindow.id;
-    }
-
-    const allNormalWindows = await chrome.windows.getAll({
-      windowTypes: ["normal"],
-    });
-    const fallbackWindow = allNormalWindows.find(
-      (window) => window.id !== undefined
-    );
-    return fallbackWindow?.id ?? null;
-  }
-
-  public static async openPopup(
-    senderWindowId?: number
-  ): Promise<CollectResponse> {
+  public static async showOverlay(tabId: number): Promise<CollectResponse> {
     try {
-      const windowId = await this.resolvePopupWindowId(senderWindowId);
-      if (windowId === null) {
-        return {
-          success: false,
-          message: "No browser window available to open popup",
-        };
-      }
-
-      await chrome.action.openPopup({ windowId });
+      await chrome.tabs.sendMessage(tabId, { action: "showOverlay" });
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
@@ -98,10 +59,22 @@ class ExtensionManager {
   }
 }
 
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.id === undefined) return;
+  void chrome.tabs
+    .sendMessage(tab.id, { action: "toggleOverlay" })
+    .catch(() => {});
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const actions = {
     openPopup: () => {
-      void ExtensionManager.openPopup(sender.tab?.windowId)
+      const tabId = sender.tab?.id;
+      if (tabId === undefined) {
+        sendResponse({ success: false, message: "No tab available" });
+        return false;
+      }
+      void ExtensionManager.showOverlay(tabId)
         .then(sendResponse)
         .catch((error) => {
           sendResponse({

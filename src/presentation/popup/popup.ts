@@ -131,9 +131,27 @@ function setupSectionToggles(): void {
   });
 }
 
+function setupSettingsButton(): void {
+  const btn = document.querySelector<HTMLButtonElement>(".popup-btn-settings");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    void chrome.runtime.openOptionsPage();
+  });
+}
+
+function setupCloseButton(): void {
+  const btn = document.getElementById("popup-btn-close");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    window.parent.postMessage({ type: "router-inspector-close" }, "*");
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   new ThemeManager();
   setupTabs();
   setupSectionToggles();
+  setupSettingsButton();
+  setupCloseButton();
   new PopupController();
 });
