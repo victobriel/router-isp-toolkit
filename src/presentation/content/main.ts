@@ -102,6 +102,18 @@ chrome.runtime.onMessage.addListener((rawMessage, _sender, sendResponse) => {
     return false;
   }
 
+  if (action === "fillLoginFields") {
+    const { credentials } = rawMessage;
+    if (credentials) {
+      ContentPageUseCase.fillLoginFieldsWithCredentials(
+        credentials.username,
+        credentials.password
+      );
+    }
+    sendResponse({ success: true });
+    return false;
+  }
+
   const result = CollectMessageSchema.safeParse(rawMessage);
 
   if (!result.success) {

@@ -72,7 +72,14 @@
         <section class="settings-section">
           <h2 class="settings-section-title">Data &amp; Storage</h2>
           <div class="settings-card">
-            <div class="settings-row">
+            <div
+              class="settings-row settings-accordion-trigger"
+              id="settings-bookmarks-trigger"
+              role="button"
+              tabindex="0"
+              aria-expanded="false"
+              aria-controls="settings-bookmarks-panel"
+            >
               <div class="settings-row-info">
                 <span class="settings-row-label">Saved bookmarks</span>
                 <span class="settings-row-desc"
@@ -80,12 +87,29 @@
                   auto-loaded when a matching router is detected.</span
                 >
               </div>
-              <span
-                class="settings-badge"
-                id="settings-bookmark-count"
-                title="Total saved credential bookmarks"
-                >—</span
-              >
+              <div class="settings-row-end">
+                <span
+                  class="settings-badge"
+                  id="settings-bookmark-count"
+                  title="Total saved credential bookmarks"
+                  >—</span
+                >
+                <span
+                  class="settings-icon settings-icon--chevron settings-accordion-chevron"
+                  aria-hidden="true"
+                ></span>
+              </div>
+            </div>
+            <div
+              class="settings-accordion-panel"
+              id="settings-bookmarks-panel"
+              role="region"
+              aria-labelledby="settings-bookmarks-trigger"
+            >
+              <div
+                id="settings-bookmarks-list"
+                class="settings-bookmarks-list"
+              ></div>
             </div>
 
             <div class="settings-row settings-row--top-border">

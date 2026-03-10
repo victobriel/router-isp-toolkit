@@ -8,10 +8,7 @@ import {
   PENDING_AUTH_ERROR_STORAGE_KEY,
 } from "./constants/index.js";
 import type { ButtonConfig } from "../domain/schemas/validation.js";
-import type {
-  BookmarkStore,
-  ModelBookmarks,
-} from "./types/index.js";
+import type { BookmarkStore, ModelBookmarks } from "./types/index.js";
 
 /**
  * Application use case: bootstrap content script on router page.
@@ -162,6 +159,35 @@ export class ContentPageUseCase {
     if (firstBookmark) {
       DomService.updateField(usernameElement, firstBookmark.username);
       DomService.updateField(passwordElement, firstBookmark.password);
+    }
+  }
+
+  public static fillLoginFieldsWithCredentials(
+    username: string,
+    password: string
+  ): void {
+    let router: Router;
+    try {
+      router = RouterFactory.create();
+    } catch {
+      return;
+    }
+
+    if (!router.isLoginPage()) {
+      return;
+    }
+
+    try {
+      const usernameElement = DomService.getValueElement(
+        router.usernameSelector
+      );
+      const passwordElement = DomService.getValueElement(
+        router.passwordSelector
+      );
+      DomService.updateField(usernameElement, username);
+      DomService.updateField(passwordElement, password);
+    } catch {
+      console.warn("Failed to fill login fields from popup selection");
     }
   }
 }

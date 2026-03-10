@@ -6,7 +6,11 @@ import { DomService } from "../../infra/dom/DomService.js";
 import { PopupView } from "./PopupView.js";
 import { StorageService } from "../../infra/storage/StorageService.js";
 import { PopupStatusType } from "../../application/types/index.js";
-import type { CollectResponse, BookmarkStore, CredentialBookmark } from "../../application/types/index.js";
+import type {
+  CollectResponse,
+  BookmarkStore,
+  CredentialBookmark,
+} from "../../application/types/index.js";
 import {
   BOOKMARKS_STORAGE_KEY,
   LAST_DATA_STORAGE_KEY,
@@ -15,6 +19,7 @@ import {
   ROUTER_MODEL_STORAGE_KEY,
   UI_STATE_STORAGE_KEY,
 } from "../../application/constants/index.js";
+import { ContentPageUseCase } from "../../application/ContentPageUseCase.js";
 
 /** Presentation controller: drives popup UI and Chrome messaging. */
 export class PopupController {
@@ -529,7 +534,10 @@ export class PopupController {
     list.innerHTML = "";
 
     if (!modelEntry.credentials.length) {
-      container.classList.add("popup-hidden");
+      const noDataItem = document.createElement("li");
+      noDataItem.className = "popup-saved-credentials-no-data";
+      noDataItem.textContent = "No data";
+      list.appendChild(noDataItem);
       return;
     }
 
@@ -579,6 +587,13 @@ export class PopupController {
         const passInput = DomService.getInputElement("#popup-input-password");
         DomService.updateField(userInput, cred.username);
         DomService.updateField(passInput, cred.password);
+
+        if (this.activeTabId !== null) {
+          void chrome.tabs.sendMessage(this.activeTabId, {
+            action: "fillLoginFields",
+            credentials: { username: cred.username, password: cred.password },
+          });
+        }
       });
 
       deleteButton.addEventListener("click", (event) => {
@@ -690,7 +705,15 @@ export class PopupController {
     );
     if (container.classList.contains("popup-hidden")) {
       await this.loadBookmarks();
-      container.classList.remove("popup-hidden");
+      const list = DomService.getElement(
+        "#popup-saved-credentials-list",
+        HTMLUListElement
+      );
+      const hasCredentials =
+        list && !list.querySelector(".popup-saved-credentials-no-data");
+      if (hasCredentials) {
+        container.classList.remove("popup-hidden");
+      }
     } else {
       container.classList.add("popup-hidden");
     }

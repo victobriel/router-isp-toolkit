@@ -148,7 +148,7 @@ h1 {
 
 .popup-model-value {
   font-family: var(--ri-mono);
-  font-size: var(--ri-text-xs);
+  font-size: var(--ri-text-sm);
   color: var(--ri-accent2);
   font-weight: 600;
 }
@@ -282,6 +282,14 @@ h1 {
   gap: 2px;
   max-height: 96px;
   overflow-y: auto;
+}
+
+.popup-saved-credentials-no-data {
+  font-family: var(--ri-mono);
+  font-size: var(--ri-text-xs);
+  color: var(--ri-muted);
+  text-align: center;
+  padding: var(--ri-space-2) 0;
 }
 
 .popup-saved-credential-item {
@@ -454,7 +462,7 @@ h1 {
 .popup-btn-clear {
   background: var(--ri-danger-dim);
   color: var(--ri-danger);
-  border: 1px solid var(--ri-border);
+  border: 1px solid var(--ri-danger);
 }
 
 .popup-btn-clear:hover {

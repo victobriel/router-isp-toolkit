@@ -292,6 +292,154 @@ body {
   mask-image: url(assets/trash.svg);
 }
 
+.settings-icon--chevron {
+  mask-image: url(assets/angle-down.svg);
+}
+
+/* ─── Accordion ──────────────────────────────────────────────────────────── */
+.settings-accordion-trigger {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.settings-accordion-trigger:hover {
+  background-color: var(--ri-accent-dim);
+}
+
+.settings-accordion-trigger:focus-visible {
+  outline: 2px solid var(--ri-accent2);
+  outline-offset: -2px;
+}
+
+.settings-row-end {
+  display: flex;
+  align-items: center;
+  gap: var(--ri-space-3);
+  flex-shrink: 0;
+}
+
+.settings-accordion-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--ri-muted);
+  transition: transform 0.2s ease;
+}
+
+.settings-accordion-trigger[aria-expanded="true"] .settings-accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.settings-accordion-panel {
+  max-height: 0;
+  overflow: hidden;
+  border-top: 1px solid var(--ri-border);
+  transition: max-height 0.25s ease;
+}
+
+.settings-accordion-panel.is-open {
+  max-height: 600px;
+}
+
+/* ─── Bookmark list ──────────────────────────────────────────────────────── */
+.settings-bookmarks-list {
+  padding: var(--ri-space-3) var(--ri-space-5) var(--ri-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ri-space-4);
+}
+
+.settings-bookmarks-empty {
+  font-size: var(--ri-text-xs);
+  color: var(--ri-muted);
+  text-align: center;
+  padding: var(--ri-space-3) 0;
+}
+
+.settings-bookmark-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-bookmark-group-header {
+  font-family: var(--ri-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ri-muted);
+  padding: 0 var(--ri-space-2) 6px;
+  border-bottom: 1px solid var(--ri-border);
+  margin-bottom: 2px;
+}
+
+.settings-bookmark-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--ri-space-4);
+  padding: 5px var(--ri-space-2);
+  border-radius: var(--ri-radius-sm);
+}
+
+.settings-bookmark-username {
+  font-family: var(--ri-mono);
+  font-size: var(--ri-text-sm);
+  color: var(--ri-text);
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-bookmark-password {
+  font-family: var(--ri-mono);
+  font-size: var(--ri-text-xs);
+  color: var(--ri-muted);
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-bookmark-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ri-radius-sm);
+  cursor: pointer;
+  color: var(--ri-muted);
+  flex-shrink: 0;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.settings-bookmark-delete:hover {
+  background-color: var(--ri-danger-dim);
+  border-color: var(--ri-danger);
+  color: var(--ri-danger);
+}
+
+.settings-bookmark-delete:focus-visible {
+  outline: 2px solid var(--ri-accent2);
+  outline-offset: 2px;
+}
+
+.settings-bookmark-delete:active {
+  transform: scale(0.9);
+}
+
 /* ─── Toast ──────────────────────────────────────────────────────────────── */
 .settings-toast {
   position: fixed;
