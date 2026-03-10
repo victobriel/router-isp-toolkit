@@ -1,4 +1,5 @@
 import { PopupController } from "./PopupController.js";
+import { ThemeManager } from "./ThemeManager.js";
 
 enum tabElement {
   MAIN = "main",
@@ -131,6 +132,7 @@ function setupSectionToggles(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  new ThemeManager();
   setupTabs();
   setupSectionToggles();
   new PopupController();
