@@ -298,11 +298,11 @@ h1 {
   font-size: var(--ri-text-xs);
   font-family: var(--ri-mono);
   color: var(--ri-text);
-  padding: 2px 4px;
+  padding: 4px;
   cursor: pointer;
   border: 1px solid transparent;
-  justify-content: space-between;
   gap: 4px;
+  align-items: center;
 }
 
 .popup-saved-credential-item:hover {
@@ -697,7 +697,7 @@ h1 {
 /* ─── Log panel ──────────────────────────────────────────────────────────── */
 .popup-log-panel {
   padding: 2px 2px 4px;
-  height: calc(100vh - 400px);
+  height: calc(100vh - 394px);
   overflow-y: auto;
   display: flex;
   flex-direction: column;

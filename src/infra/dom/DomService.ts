@@ -44,6 +44,18 @@ export class DomService {
     return element.getAttribute("value") ?? (element.textContent ?? "").trim();
   }
 
+  public static getSelectedOptionText(selector: string): string | null {
+    const element = document.querySelector(selector);
+    if (!(element instanceof HTMLSelectElement)) return null;
+
+    const option =
+      element.selectedOptions[0] ??
+      (element.selectedIndex >= 0 ? element.options[element.selectedIndex] : null);
+
+    if (!option) return null;
+    return (option.textContent ?? "").trim();
+  }
+
   public static getElement<T extends HTMLElement>(
     selector: string,
     type: new () => T

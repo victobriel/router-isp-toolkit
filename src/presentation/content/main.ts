@@ -1,7 +1,8 @@
+import { ZodError } from "zod";
+
 import { CollectionService } from "../../application/CollectionService.js";
 import { ContentPageUseCase } from "../../application/ContentPageUseCase.js";
 import { CollectMessageSchema } from "../../domain/schemas/validation.js";
-import { ZodError } from "zod";
 
 // --- Overlay management ---
 let overlayContainer: HTMLDivElement | null = null;

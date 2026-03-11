@@ -56,6 +56,7 @@
       </button>
     </header>
 
+    <!-- STATUS BAR -->
     <div class="popup-status-bar">
       <span class="popup-status-dot" id="popup-status-dot"></span>
       <span class="popup-status-text" id="popup-status-text"
@@ -63,6 +64,7 @@
       >
     </div>
 
+    <!-- MODEL BAR -->
     <div class="popup-model-bar">
       <span class="popup-model-label">Model</span>
       <span class="popup-model-value" id="popup-router-model">-</span>
@@ -325,6 +327,37 @@
         </div>
       </section>
 
+      <!-- WLAN BAND STEERING SECTION -->
+      <section class="popup-collapsible" id="popup-section-wlan-band-steering">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">Band Steering</p>
+          <button
+            class="popup-collapsible-trigger"
+            id="popup-toggle-wlan-band-steering"
+            type="button"
+            aria-label="Toggle WLAN Band Steering section"
+            aria-expanded="true"
+            aria-controls="popup-section-wlan-band-steering-body"
+          >
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div
+          class="popup-collapsible-body popup-data-grid"
+          id="popup-section-wlan-band-steering-body"
+        >
+          <div class="popup-data-card popup-data-card--full">
+            <p class="popup-card-label">Status</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-wlanBandSteeringStatus"
+            >
+              -
+            </p>
+          </div>
+        </div>
+      </section>
+
       <!-- WLAN 2.4GHz SECTION -->
       <section class="popup-collapsible" id="popup-section-wlan-24ghz">
         <div class="popup-collapsible-header">
@@ -542,6 +575,118 @@
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzMaxClients"
+            >
+              -
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- DHCP SECTION -->
+      <section class="popup-collapsible" id="popup-section-dhcp">
+        <div class="popup-collapsible-header">
+          <p class="popup-section-title">DHCP</p>
+          <button
+            class="popup-collapsible-trigger"
+            id="popup-toggle-dhcp"
+            type="button"
+            aria-label="Toggle DHCP section"
+            aria-expanded="true"
+            aria-controls="popup-section-dhcp-body"
+          >
+            <span class="popup-collapsible-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div
+          class="popup-collapsible-body popup-data-grid"
+          id="popup-section-dhcp-body"
+        >
+          <div class="popup-data-card popup-data-card--full">
+            <p class="popup-card-label">Enabled</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpEnabled"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">IP Address</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpIpAddress"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Subnet Mask</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpSubnetMask"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Start IP</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpStartIp"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">End IP</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpEndIp"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--full">
+            <p class="popup-card-label">ISP DNS Enabled</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpIspDnsEnabled"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Primary DNS</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpPrimaryDns"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Secondary DNS</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpSecondaryDns"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Lease Time Mode</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpLeaseTimeMode"
+            >
+              -
+            </p>
+          </div>
+          <div class="popup-data-card popup-data-card--1-2">
+            <p class="popup-card-label">Lease Time</p>
+            <p
+              class="popup-card-value popup-card-value--empty"
+              id="popup-val-dhcpLeaseTime"
             >
               -
             </p>

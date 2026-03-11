@@ -1,17 +1,4 @@
 import {
-  ExtractionResultSchema,
-  type ExtractionResult,
-} from "../../domain/schemas/validation.js";
-import { DomService } from "../../infra/dom/DomService.js";
-import { PopupView } from "./PopupView.js";
-import { StorageService } from "../../infra/storage/StorageService.js";
-import { PopupStatusType } from "../../application/types/index.js";
-import type {
-  CollectResponse,
-  BookmarkStore,
-  CredentialBookmark,
-} from "../../application/types/index.js";
-import {
   BOOKMARKS_STORAGE_KEY,
   LAST_DATA_STORAGE_KEY,
   MAX_BOOKMARK_CREDENTIALS,
@@ -19,7 +6,21 @@ import {
   ROUTER_MODEL_STORAGE_KEY,
   UI_STATE_STORAGE_KEY,
 } from "../../application/constants/index.js";
-import { ContentPageUseCase } from "../../application/ContentPageUseCase.js";
+import { PopupStatusType } from "../../application/types/index.js";
+import {
+  ExtractionResultSchema,
+  type ExtractionResult,
+} from "../../domain/schemas/validation.js";
+import { DomService } from "../../infra/dom/DomService.js";
+import { StorageService } from "../../infra/storage/StorageService.js";
+
+import { PopupView } from "./PopupView.js";
+
+import type {
+  CollectResponse,
+  BookmarkStore,
+  CredentialBookmark,
+} from "../../application/types/index.js";
 
 /** Presentation controller: drives popup UI and Chrome messaging. */
 export class PopupController {
@@ -96,21 +97,21 @@ export class PopupController {
     });
     if (!tab?.id) {
       this.setStatus(
-        PopupStatusType.ERROR,
+        PopupStatusType.ERR,
         "Cannot find an active browser tab. Open your router page and try again"
       );
       this.log(
         "No active browser tab detected while starting collection",
-        PopupStatusType.ERROR
+        PopupStatusType.ERR
       );
       return;
     }
 
     try {
-      const response = (await chrome.tabs.sendMessage(tab.id, {
+      const response = await chrome.tabs.sendMessage(tab.id, {
         action: "authenticate",
         credentials: { username: user, password: pass },
-      })) as CollectResponse | undefined;
+      });
 
       if (!response?.success) {
         const errorMessage = this.getResponseMessage(response);
@@ -133,17 +134,17 @@ export class PopupController {
       if (isExpectedNavigationError) {
         this.log(
           "Router page is redirecting after login. Retrying collection...",
-          PopupStatusType.WARN
+          PopupStatusType.ERR
         );
         await this.startRetryLoop(tab.id);
         return;
       }
 
       this.setStatus(
-        PopupStatusType.ERROR,
+        PopupStatusType.ERR,
         "Failed to communicate with the router page. Make sure it is open and reachable, then try again"
       );
-      this.log(errorMessage, PopupStatusType.ERROR);
+      this.log(errorMessage, PopupStatusType.ERR);
     }
   }
 
@@ -156,9 +157,9 @@ export class PopupController {
       );
 
       try {
-        const res = (await chrome.tabs.sendMessage(tabId, {
+        const res = await chrome.tabs.sendMessage(tabId, {
           action: "collect",
-        })) as CollectResponse | undefined;
+        });
 
         if (res?.success) {
           this.processResponse(res);
@@ -177,12 +178,12 @@ export class PopupController {
     }
 
     this.setStatus(
-      PopupStatusType.ERROR,
+      PopupStatusType.ERR,
       "Timed out waiting for the router page to be ready. Refresh the page and try again"
     );
     this.log(
       "Timed out waiting for the router page to become ready",
-      PopupStatusType.ERROR
+      PopupStatusType.ERR
     );
   }
 
@@ -213,29 +214,120 @@ export class PopupController {
     PopupView.updateField("pppoeUsername", data?.pppoeUsername ?? null);
     PopupView.updateField(
       "internetStatus",
-      this.toStatusText(data?.internetStatus)
+      this.toStatusText(data?.internetEnabled)
     );
-    PopupView.updateField("tr069Status", this.toStatusText(data?.tr069Status));
+    PopupView.updateField("tr069Status", this.toStatusText(data?.tr069Enabled));
     PopupView.updateField("ipVersion", data?.ipVersion ?? null);
     PopupView.updateField(
       "requestPdStatus",
-      this.toStatusText(data?.requestPdStatus)
+      this.toStatusText(data?.requestPdEnabled)
     );
-    PopupView.updateField("slaacStatus", this.toStatusText(data?.slaacStatus));
+    PopupView.updateField("slaacStatus", this.toStatusText(data?.slaacEnabled));
     PopupView.updateField(
       "dhcpv6Status",
-      this.toStatusText(data?.dhcpv6Status)
+      this.toStatusText(data?.dhcpv6Enabled)
     );
-    PopupView.updateField("pdStatus", this.toStatusText(data?.pdStatus));
+    PopupView.updateField("pdStatus", this.toStatusText(data?.pdEnabled));
     PopupView.updateField("linkSpeed", data?.linkSpeed ?? null);
     PopupView.updateField(
       "remoteAccessIpv4Status",
-      this.toStatusText(data?.remoteAccessIpv4Status)
+      this.toStatusText(data?.remoteAccessIpv4Enabled)
     );
     PopupView.updateField(
       "remoteAccessIpv6Status",
-      this.toStatusText(data?.remoteAccessIpv6Status)
+      this.toStatusText(data?.remoteAccessIpv6Enabled)
     );
+    PopupView.updateField(
+      "wlanBandSteeringStatus",
+      this.toStatusText(data?.bandSteeringEnabled)
+    );
+    PopupView.updateField(
+      "wlan24ghzStatus",
+      this.toStatusText(data?.wlan24GhzConfig?.enabled) ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzChannel",
+      String(data?.wlan24GhzConfig?.channel ?? null)
+    );
+    PopupView.updateField(
+      "wlan24ghzBandWidth",
+      data?.wlan24GhzConfig?.bandWidth ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzTransmittingPower",
+      data?.wlan24GhzConfig?.transmittingPower ?? null
+    );
+    PopupView.updateField("wlan24ghzMode", data?.wlan24GhzConfig?.mode ?? null);
+    PopupView.updateField(
+      "wlan24ghzSsidName",
+      data?.wlan24GhzConfig?.ssidName ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzSsidPassword",
+      data?.wlan24GhzConfig?.ssidPassword ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzSsidHideMode",
+      data?.wlan24GhzConfig?.ssidHideMode ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzWpa2Security",
+      data?.wlan24GhzConfig?.wpa2SecurityType ?? null
+    );
+    PopupView.updateField(
+      "wlan24ghzMaxClients",
+      String(data?.wlan24GhzConfig?.maxClients ?? null)
+    );
+    PopupView.updateField(
+      "wlan5ghzStatus",
+      this.toStatusText(data?.wlan5GhzConfig?.enabled) ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzChannel",
+      String(data?.wlan5GhzConfig?.channel ?? null)
+    );
+    PopupView.updateField(
+      "wlan5ghzBandWidth",
+      data?.wlan5GhzConfig?.bandWidth ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzTransmittingPower",
+      data?.wlan5GhzConfig?.transmittingPower ?? null
+    );
+    PopupView.updateField("wlan5ghzMode", data?.wlan5GhzConfig?.mode ?? null);
+    PopupView.updateField(
+      "wlan5ghzSsidName",
+      data?.wlan5GhzConfig?.ssidName ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzSsidPassword",
+      data?.wlan5GhzConfig?.ssidPassword ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzSsidHideMode",
+      data?.wlan5GhzConfig?.ssidHideMode ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzWpa2Security",
+      data?.wlan5GhzConfig?.wpa2SecurityType ?? null
+    );
+    PopupView.updateField(
+      "wlan5ghzMaxClients",
+      String(data?.wlan5GhzConfig?.maxClients ?? null)
+    );
+    PopupView.updateField("dhcpEnabled", this.toStatusText(data?.dhcpEnabled));
+    PopupView.updateField("dhcpIpAddress", data?.dhcpIpAddress ?? null);
+    PopupView.updateField("dhcpSubnetMask", data?.dhcpSubnetMask ?? null);
+    PopupView.updateField("dhcpStartIp", data?.dhcpStartIp ?? null);
+    PopupView.updateField("dhcpEndIp", data?.dhcpEndIp ?? null);
+    PopupView.updateField(
+      "dhcpIspDnsEnabled",
+      this.toStatusText(data?.dhcpIspDnsEnabled)
+    );
+    PopupView.updateField("dhcpPrimaryDns", data?.dhcpPrimaryDns ?? null);
+    PopupView.updateField("dhcpSecondaryDns", data?.dhcpSecondaryDns ?? null);
+    PopupView.updateField("dhcpLeaseTimeMode", data?.dhcpLeaseTimeMode ?? null);
+    PopupView.updateField("dhcpLeaseTime", data?.dhcpLeaseTime ?? null);
     const topology = data?.topology;
     if (topology) {
       for (const band of ["24ghz", "5ghz", "cable"] as const) {
@@ -313,6 +405,37 @@ export class PopupController {
     PopupView.updateField("linkSpeed", null);
     PopupView.updateField("remoteAccessIpv4Status", null);
     PopupView.updateField("remoteAccessIpv6Status", null);
+    PopupView.updateField("wlanBandSteeringStatus", null);
+    PopupView.updateField("wlan24ghzStatus", null);
+    PopupView.updateField("wlan24ghzChannel", null);
+    PopupView.updateField("wlan24ghzBandWidth", null);
+    PopupView.updateField("wlan24ghzTransmittingPower", null);
+    PopupView.updateField("wlan24ghzMode", null);
+    PopupView.updateField("wlan24ghzSsidName", null);
+    PopupView.updateField("wlan24ghzSsidPassword", null);
+    PopupView.updateField("wlan24ghzSsidHideMode", null);
+    PopupView.updateField("wlan24ghzWpa2Security", null);
+    PopupView.updateField("wlan24ghzMaxClients", null);
+    PopupView.updateField("wlan5ghzStatus", null);
+    PopupView.updateField("wlan5ghzChannel", null);
+    PopupView.updateField("wlan5ghzBandWidth", null);
+    PopupView.updateField("wlan5ghzTransmittingPower", null);
+    PopupView.updateField("wlan5ghzMode", null);
+    PopupView.updateField("wlan5ghzSsidName", null);
+    PopupView.updateField("wlan5ghzSsidPassword", null);
+    PopupView.updateField("wlan5ghzSsidHideMode", null);
+    PopupView.updateField("wlan5ghzWpa2Security", null);
+    PopupView.updateField("wlan5ghzMaxClients", null);
+    PopupView.updateField("dhcpEnabled", null);
+    PopupView.updateField("dhcpIpAddress", null);
+    PopupView.updateField("dhcpSubnetMask", null);
+    PopupView.updateField("dhcpStartIp", null);
+    PopupView.updateField("dhcpEndIp", null);
+    PopupView.updateField("dhcpIspDnsEnabled", null);
+    PopupView.updateField("dhcpPrimaryDns", null);
+    PopupView.updateField("dhcpSecondaryDns", null);
+    PopupView.updateField("dhcpLeaseTimeMode", null);
+    PopupView.updateField("dhcpLeaseTime", null);
     for (const band of ["24ghz", "5ghz", "cable"] as const) {
       this.clearTopologyBand(band);
     }
@@ -344,6 +467,7 @@ export class PopupController {
 
   private async persistCurrentData(): Promise<void> {
     if (this.currentData === null) return;
+
     const storageKey = this.getTabStorageKey(LAST_DATA_STORAGE_KEY);
     if (storageKey === null) return;
 
@@ -352,6 +476,7 @@ export class PopupController {
 
   private async loadPersistedUiState(): Promise<void> {
     const storageKey = this.getTabStorageKey(UI_STATE_STORAGE_KEY);
+
     if (storageKey === null) return;
 
     const state = await StorageService.get<{

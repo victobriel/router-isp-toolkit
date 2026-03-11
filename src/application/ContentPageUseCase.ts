@@ -1,14 +1,16 @@
-import type { Router } from "../domain/models/Router.js";
-import { RouterFactory } from "../infra/router/RouterFactory.js";
-import { CollectionService } from "./CollectionService.js";
 import { DomService } from "../infra/dom/DomService.js";
+import { RouterFactory } from "../infra/router/RouterFactory.js";
 import { StorageService } from "../infra/storage/StorageService.js";
+
+import { CollectionService } from "./CollectionService.js";
 import {
   BOOKMARKS_STORAGE_KEY,
   PENDING_AUTH_ERROR_STORAGE_KEY,
 } from "./constants/index.js";
+
+import type { BookmarkStore } from "./types/index.js";
+import type { Router } from "../domain/models/Router.js";
 import type { ButtonConfig } from "../domain/schemas/validation.js";
-import type { BookmarkStore, ModelBookmarks } from "./types/index.js";
 
 /**
  * Application use case: bootstrap content script on router page.

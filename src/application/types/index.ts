@@ -12,7 +12,7 @@ export enum PopupStatusType {
   NONE = "none",
   OK = "ok",
   WARN = "warn",
-  ERROR = "err",
+  ERR = "err",
 }
 
 export type CredentialBookmark = { username: string; password: string };

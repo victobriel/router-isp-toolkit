@@ -1,10 +1,10 @@
+import type { CollectResponse } from "./types/index.js";
 import type { Router } from "../domain/models/Router.js";
-import { RouterFactory } from "../infra/router/RouterFactory.js";
 import {
   CredentialsSchema,
   type CollectMessage,
 } from "../domain/schemas/validation.js";
-import { type CollectResponse } from "./types/index.js";
+import { RouterFactory } from "../infra/router/RouterFactory.js";
 
 export class CollectionService {
   public static async handleCollect(

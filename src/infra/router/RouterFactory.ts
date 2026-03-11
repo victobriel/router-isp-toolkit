@@ -1,17 +1,18 @@
-import { ZteH199ADriver } from "../drivers/ZteH199ADriver.js";
-import type { Router } from "../../domain/models/Router.js";
+import { ZteH199ADriver } from "../drivers/zte/ZteH199ADriver.js";
+import { TopologySectionParser } from "../drivers/shared/TopologySectionParser.js";
+import type { IRouter } from "../../domain/ports/IRouter.js";
 
 /**
- * Infrastructure factory: creates a Router for the current page.
- * Uses document (browser) for detection; domain has no dependency on infra.
+ * Infrastructure factory: creates a router adapter for the current page.
+ * Composition root: wires drivers and their dependencies (e.g. TopologySectionParser).
  */
 export class RouterFactory {
-  public static create(): Router {
+  public static create(): IRouter {
     const title = document.title.toLowerCase();
     const bodyText = document.body.innerText.toLowerCase();
 
     if (this.isZteH199A(title, bodyText)) {
-      return new ZteH199ADriver();
+      return new ZteH199ADriver(new TopologySectionParser());
     }
 
     throw new Error(

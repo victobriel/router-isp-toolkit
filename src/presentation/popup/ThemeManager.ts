@@ -36,9 +36,7 @@ export class ThemeManager {
   private applyTheme(theme: ThemeChoice, persist: boolean = true): void {
     this.currentTheme = theme;
     const effective =
-      theme === ThemeChoice.SYSTEM
-        ? this.getSystemTheme()
-        : (theme as ThemeChoice.LIGHT | ThemeChoice.DARK);
+      theme === ThemeChoice.SYSTEM ? this.getSystemTheme() : theme;
 
     document.documentElement.setAttribute("data-theme", effective);
 

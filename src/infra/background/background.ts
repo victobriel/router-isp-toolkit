@@ -1,9 +1,14 @@
-import { StorageService } from "../storage/StorageService.js";
-import type { CollectResponse } from "../../application/types/index.js";
 import {
   LAST_DATA_STORAGE_KEY,
   ROUTER_MODEL_STORAGE_KEY,
 } from "../../application/constants/index.js";
+import {
+  ExtractionResultSchema,
+  type ExtractionResult,
+} from "../../domain/schemas/validation.js";
+import { StorageService } from "../storage/StorageService.js";
+
+import type { CollectResponse } from "../../application/types/index.js";
 
 class ExtensionManager {
   public static async saveLastExtractionData(
@@ -17,14 +22,23 @@ class ExtensionManager {
       };
     }
 
-    if (typeof data !== "object" || data === null) {
-      return { success: false, message: "Invalid extraction data" };
+    const parsed = ExtractionResultSchema.safeParse({
+      ...(typeof data === "object" && data !== null ? data : {}),
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!parsed.success) {
+      return {
+        success: false,
+        message: JSON.stringify(parsed.error.issues ?? []),
+      };
     }
 
     const storageKey = `${LAST_DATA_STORAGE_KEY}-${tabId}`;
-    await StorageService.save(storageKey, data, 24 * 60 * 1000);
+    const value: ExtractionResult = parsed.data;
+    await StorageService.save(storageKey, value, 24 * 60 * 1000);
 
-    return { success: true };
+    return { success: true, data: value };
   }
 
   public static async saveDetectedRouterModel(

@@ -1,12 +1,14 @@
-import { ThemeManager } from "../popup/ThemeManager.js";
-import { StorageService } from "../../infra/storage/StorageService.js";
 import { BOOKMARKS_STORAGE_KEY } from "../../application/constants/index.js";
+import { StorageService } from "../../infra/storage/StorageService.js";
+import { ThemeManager } from "../popup/ThemeManager.js";
+
 import type { BookmarkStore } from "../popup/index.js";
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
 function showToast(msg: string, variant: "ok" | "err" = "ok"): void {
   const toast = document.getElementById("settings-toast");
+
   if (!toast) return;
 
   if (toastTimer !== null) {
@@ -46,38 +48,52 @@ async function loadBookmarks(): Promise<void> {
   );
 
   if (countEl) countEl.textContent = String(total);
+
   if (!listEl) return;
 
   if (total === 0) {
-    listEl.innerHTML = `<div class="settings-bookmarks-empty">No saved credentials yet.</div>`;
+    const div = document.createElement("div");
+    div.className = "settings-bookmarks-empty";
+    div.textContent = "No saved credentials yet.";
+    listEl.appendChild(div);
     return;
   }
 
-  listEl.innerHTML = entries
-    .map(
-      ([modelKey, { model, credentials }]) => `
-        <div class="settings-bookmark-group">
-          <div class="settings-bookmark-group-header">${escapeHtml(model)}</div>
-          ${credentials
-            .map(
-              ({ username, password }, credIdx) => `
-            <div class="settings-bookmark-entry">
-              <span class="settings-bookmark-username">${escapeHtml(username)}</span>
-              <span class="settings-bookmark-password">${escapeHtml(password)}</span>
-              <button
-                class="settings-bookmark-delete"
-                data-model-key="${escapeHtml(modelKey)}"
-                data-cred-idx="${credIdx}"
-                title="Remove credential"
-                type="button"
-                aria-label="Remove credential for ${escapeHtml(username)}"
-              ><span class="settings-icon settings-icon--trash" aria-hidden="true"></span></button>
-            </div>`
-            )
-            .join("")}
-        </div>`
-    )
-    .join("");
+  listEl.innerHTML = "";
+  for (const [modelKey, { model, credentials }] of entries) {
+    const container = document.createElement("div");
+    container.className = "settings-bookmark-group";
+    const header = document.createElement("div");
+    header.className = "settings-bookmark-group-header";
+    header.textContent = escapeHtml(model);
+    container.appendChild(header);
+    const entriesContainer = document.createElement("div");
+    entriesContainer.className = "settings-bookmark-entries";
+    credentials.forEach(({ username, password }, credIdx) => {
+      const entry = document.createElement("div");
+      entry.className = "settings-bookmark-entry";
+      const usernameSpan = document.createElement("span");
+      usernameSpan.className = "settings-bookmark-username";
+      usernameSpan.textContent = escapeHtml(username);
+      entry.appendChild(usernameSpan);
+      const passwordSpan = document.createElement("span");
+      passwordSpan.className = "settings-bookmark-password";
+      passwordSpan.textContent = escapeHtml(password);
+      entry.appendChild(passwordSpan);
+      const deleteButton = document.createElement("button");
+      deleteButton.className = "settings-bookmark-delete";
+      deleteButton.dataset.modelKey = modelKey;
+      deleteButton.dataset.credIdx = String(credIdx);
+      deleteButton.title = "Remove credential";
+      deleteButton.type = "button";
+      deleteButton.ariaLabel = `Remove credential for ${escapeHtml(username)}`;
+      deleteButton.innerHTML = `<span class="settings-icon settings-icon--trash" aria-hidden="true"></span>`;
+      entry.appendChild(deleteButton);
+      entriesContainer.appendChild(entry);
+    });
+    container.appendChild(entriesContainer);
+    listEl.appendChild(container);
+  }
 }
 
 async function deleteCredential(
