@@ -1,6 +1,22 @@
 import { PopupStatusType } from "../../application/types/index.js";
 import { DomService } from "../../infra/dom/DomService.js";
 
+function getUiLocale(): string | undefined {
+  try {
+    // Prefer Chrome i18n locale when available
+    const chromeLocale = chrome?.i18n?.getUILanguage?.();
+    if (chromeLocale) return chromeLocale;
+  } catch {
+    // ignore chrome access errors
+  }
+
+  if (typeof navigator !== "undefined" && navigator.language) {
+    return navigator.language;
+  }
+
+  return undefined;
+}
+
 export class PopupView {
   public static setStatus(type: PopupStatusType, text: string): void {
     const dot = DomService.getElement("#popup-status-dot", HTMLElement);
@@ -23,7 +39,10 @@ export class PopupView {
   ): void {
     const panel = DomService.getElement("#popup-log-panel", HTMLElement);
     const displayTime =
-      time ?? new Date().toLocaleTimeString("en-US", { hour12: false });
+      time ??
+      new Date().toLocaleTimeString(getUiLocale() ?? undefined, {
+        hour12: false,
+      });
     const entry = document.createElement("div");
     entry.className = "popup-log-entry";
     const timeSpan = document.createElement("span");

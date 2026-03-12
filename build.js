@@ -32,6 +32,8 @@ const staticFiles = [
   ["src/presentation/popup/popup.css", `${outdir}/popup.css`],
   ["src/presentation/settings/settings.html", `${outdir}/settings.html`],
   ["src/presentation/settings/settings.css", `${outdir}/settings.css`],
+  ["_locales/en/messages.json", `${outdir}/_locales/en/messages.json`],
+  ["_locales/pt_BR/messages.json", `${outdir}/_locales/pt_BR/messages.json`],
 ];
 
 for (const [src, dest] of staticFiles) {

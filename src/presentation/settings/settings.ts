@@ -1,8 +1,8 @@
-import { BOOKMARKS_STORAGE_KEY } from "../../application/constants/index.js";
 import { StorageService } from "../../infra/storage/StorageService.js";
 import { ThemeManager } from "../popup/ThemeManager.js";
+import { translator } from "../../infra/i18n/I18nService.js";
 
-import type { BookmarkStore } from "../popup/index.js";
+import { defaultBookmarksService } from "../../application/BookmarksService.js";
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -37,15 +37,9 @@ async function loadBookmarks(): Promise<void> {
   const countEl = document.getElementById("settings-bookmark-count");
   const listEl = document.getElementById("settings-bookmarks-list");
 
-  const store =
-    (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
-  const entries = Object.entries(store).filter(
-    ([, entry]) => entry.credentials.length > 0
-  );
-  const total = entries.reduce(
-    (sum, [, entry]) => sum + entry.credentials.length,
-    0
-  );
+  const summary = await defaultBookmarksService.getSummary();
+  const entries = summary.entries;
+  const total = summary.total;
 
   if (countEl) countEl.textContent = String(total);
 
@@ -54,7 +48,7 @@ async function loadBookmarks(): Promise<void> {
   if (total === 0) {
     const div = document.createElement("div");
     div.className = "settings-bookmarks-empty";
-    div.textContent = "No saved credentials yet.";
+    div.textContent = translator.t("settings_bookmarks_empty");
     listEl.appendChild(div);
     return;
   }
@@ -84,9 +78,12 @@ async function loadBookmarks(): Promise<void> {
       deleteButton.className = "settings-bookmark-delete";
       deleteButton.dataset.modelKey = modelKey;
       deleteButton.dataset.credIdx = String(credIdx);
-      deleteButton.title = "Remove credential";
+      deleteButton.title = translator.t("settings_bookmarks_delete_title");
       deleteButton.type = "button";
-      deleteButton.ariaLabel = `Remove credential for ${escapeHtml(username)}`;
+      deleteButton.ariaLabel = translator.t(
+        "settings_bookmarks_delete_aria",
+        escapeHtml(username)
+      );
       deleteButton.innerHTML = `<span class="settings-icon settings-icon--trash" aria-hidden="true"></span>`;
       entry.appendChild(deleteButton);
       entriesContainer.appendChild(entry);
@@ -100,17 +97,9 @@ async function deleteCredential(
   modelKey: string,
   credIdx: number
 ): Promise<void> {
-  const store =
-    (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
-  const entry = store[modelKey];
-  if (!entry) return;
-
-  entry.credentials.splice(credIdx, 1);
-  if (entry.credentials.length === 0) delete store[modelKey];
-
-  await StorageService.save(BOOKMARKS_STORAGE_KEY, store);
+  await defaultBookmarksService.removeCredential(modelKey, credIdx);
   await loadBookmarks();
-  showToast("Credential removed", "ok");
+  showToast(translator.t("settings_toast_credential_removed"), "ok");
 }
 
 function setupBookmarksList(): void {
@@ -128,6 +117,65 @@ function setupBookmarksList(): void {
     if (!modelKey || isNaN(credIdx)) return;
 
     void deleteCredential(modelKey, credIdx);
+  });
+}
+
+function applySettingsTranslations(): void {
+  try {
+    const uiLang = chrome?.i18n?.getUILanguage?.() ?? "en";
+    const shortLang = uiLang.split("-")[0] || uiLang;
+    document.documentElement.lang = shortLang;
+  } catch {
+    // ignore language errors
+  }
+
+  // Header and document title
+  const title = document.querySelector<HTMLHeadingElement>(".settings-title");
+  if (title) title.textContent = translator.t("settings_header_title");
+  const subtitle =
+    document.querySelector<HTMLSpanElement>(".settings-subtitle");
+  if (subtitle) subtitle.textContent = translator.t("settings_header_subtitle");
+  const docTitle = translator.t("settings_title");
+  if (docTitle) document.title = docTitle;
+
+  // Generic text translations
+  const textNodes = document.querySelectorAll<HTMLElement>("[data-i18n]");
+  textNodes.forEach((el) => {
+    const key = el.dataset.i18n;
+    if (!key) return;
+    el.textContent = translator.t(key);
+  });
+
+  // Generic aria-label translations
+  const ariaLabelNodes = document.querySelectorAll<HTMLElement>(
+    "[data-i18n-aria-label]"
+  );
+  ariaLabelNodes.forEach((el) => {
+    const key = el.dataset.i18nAriaLabel;
+    if (!key) return;
+    el.setAttribute("aria-label", translator.t(key));
+  });
+
+  // Generic title translations
+  const titleNodes =
+    document.querySelectorAll<HTMLElement>("[data-i18n-title]");
+  titleNodes.forEach((el) => {
+    const key = el.dataset.i18nTitle;
+    if (!key) return;
+    el.setAttribute("title", translator.t(key));
+  });
+
+  // Theme toggle labels (reuse popup theme keys)
+  const themeButtons = document.querySelectorAll<HTMLButtonElement>(
+    ".theme-toggle-option"
+  );
+  themeButtons.forEach((btn) => {
+    const theme = btn.dataset.theme;
+    if (theme === "light") btn.textContent = translator.t("popup_theme_light");
+    else if (theme === "dark")
+      btn.textContent = translator.t("popup_theme_dark");
+    else if (theme === "system")
+      btn.textContent = translator.t("popup_theme_system");
   });
 }
 
@@ -158,7 +206,7 @@ function setupClearAll(): void {
   btn.addEventListener("click", async () => {
     await StorageService.clear();
     await loadBookmarks();
-    showToast("All extension data cleared", "ok");
+    showToast(translator.t("settings_toast_all_cleared"), "ok");
   });
 }
 
@@ -171,9 +219,12 @@ function setupVersion(): void {
 
 document.addEventListener("DOMContentLoaded", () => {
   new ThemeManager();
-  setupVersion();
-  setupAccordion();
-  setupBookmarksList();
-  setupClearAll();
-  void loadBookmarks();
+  void (async () => {
+    applySettingsTranslations();
+    setupVersion();
+    setupAccordion();
+    setupBookmarksList();
+    setupClearAll();
+    await loadBookmarks();
+  })();
 });

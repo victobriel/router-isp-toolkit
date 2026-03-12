@@ -21,20 +21,31 @@
       <main class="settings-main">
         <!-- Appearance -->
         <section class="settings-section">
-          <h2 class="settings-section-title">Appearance</h2>
+          <h2
+            class="settings-section-title"
+            data-i18n="settings_section_appearance"
+          >
+            Appearance
+          </h2>
           <div class="settings-card">
             <div class="settings-row">
               <div class="settings-row-info">
-                <span class="settings-row-label">Theme</span>
-                <span class="settings-row-desc"
-                  >Choose your preferred color scheme. Changes apply immediately
-                  and are persisted across sessions.</span
+                <span
+                  class="settings-row-label"
+                  data-i18n="settings_theme_label"
                 >
+                  Theme
+                </span>
+                <span class="settings-row-desc" data-i18n="settings_theme_desc">
+                  Choose your preferred color scheme. Changes apply immediately
+                  and are persisted across sessions.
+                </span>
               </div>
               <div
                 class="theme-toggle theme-toggle--lg"
                 role="radiogroup"
                 aria-label="Theme selection"
+                data-i18n-aria-label="popup_theme_aria_label"
               >
                 <button
                   class="theme-toggle-option"
@@ -70,7 +81,12 @@
 
         <!-- Data & Storage -->
         <section class="settings-section">
-          <h2 class="settings-section-title">Data &amp; Storage</h2>
+          <h2
+            class="settings-section-title"
+            data-i18n="settings_section_data_storage"
+          >
+            Data &amp; Storage
+          </h2>
           <div class="settings-card">
             <div
               class="settings-row settings-accordion-trigger"
@@ -81,17 +97,26 @@
               aria-controls="settings-bookmarks-panel"
             >
               <div class="settings-row-info">
-                <span class="settings-row-label">Saved bookmarks</span>
-                <span class="settings-row-desc"
-                  >Credential bookmarks are stored per router model and
-                  auto-loaded when a matching router is detected.</span
+                <span
+                  class="settings-row-label"
+                  data-i18n="settings_saved_bookmarks_label"
                 >
+                  Saved bookmarks
+                </span>
+                <span
+                  class="settings-row-desc"
+                  data-i18n="settings_saved_bookmarks_desc"
+                >
+                  Credential bookmarks are stored per router model and
+                  auto-loaded when a matching router is detected.
+                </span>
               </div>
               <div class="settings-row-end">
                 <span
                   class="settings-badge"
                   id="settings-bookmark-count"
                   title="Total saved credential bookmarks"
+                  data-i18n-title="settings_bookmark_count_title"
                   >—</span
                 >
                 <span
@@ -114,11 +139,19 @@
 
             <div class="settings-row settings-row--top-border">
               <div class="settings-row-info">
-                <span class="settings-row-label">Clear all extension data</span>
-                <span class="settings-row-desc"
-                  >Removes all cached router data, saved credentials, bookmarks
-                  and UI state. This action cannot be undone.</span
+                <span
+                  class="settings-row-label"
+                  data-i18n="settings_clear_all_label"
                 >
+                  Clear all extension data
+                </span>
+                <span
+                  class="settings-row-desc"
+                  data-i18n="settings_clear_all_desc"
+                >
+                  Removes all cached router data, saved credentials, bookmarks
+                  and UI state. This action cannot be undone.
+                </span>
               </div>
               <button
                 class="settings-btn settings-btn--danger"
@@ -137,14 +170,26 @@
 
         <!-- About -->
         <section class="settings-section">
-          <h2 class="settings-section-title">About</h2>
+          <h2 class="settings-section-title" data-i18n="settings_section_about">
+            About
+          </h2>
           <div class="settings-card">
             <div class="settings-row">
-              <span class="settings-row-label">Extension</span>
+              <span
+                class="settings-row-label"
+                data-i18n="settings_about_extension_label"
+              >
+                Extension
+              </span>
               <span class="settings-meta-value">Router Inspector</span>
             </div>
             <div class="settings-row settings-row--top-border">
-              <span class="settings-row-label">Version</span>
+              <span
+                class="settings-row-label"
+                data-i18n="settings_about_version_label"
+              >
+                Version
+              </span>
               <span class="settings-meta-value" id="settings-version">—</span>
             </div>
           </div>

@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export type ValidationIssue = z.ZodIssue;
+
+export type ValidationResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; issues: ValidationIssue[] };
+
 export const CredentialsSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
@@ -118,6 +124,45 @@ export const CollectMessageSchema = z.object({
 export type Credentials = z.infer<typeof CredentialsSchema>;
 export type CollectMessage = z.infer<typeof CollectMessageSchema>;
 export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;
+
+export function validateCredentials(
+  raw: unknown
+): ValidationResult<Credentials> {
+  const result = CredentialsSchema.safeParse(raw);
+  if (result.success) {
+    return { ok: true, value: result.data };
+  }
+  return { ok: false, issues: result.error.issues };
+}
+
+export function validateCollectMessage(
+  raw: unknown
+): ValidationResult<CollectMessage> {
+  const result = CollectMessageSchema.safeParse(raw);
+  if (result.success) {
+    return { ok: true, value: result.data };
+  }
+  return { ok: false, issues: result.error.issues };
+}
+
+export function createExtractionResult(
+  raw: unknown,
+  options?: { withTimestamp?: boolean }
+): ValidationResult<ExtractionResult> {
+  const base =
+    typeof raw === "object" && raw !== null ? (raw as object) : ({} as object);
+
+  const payload =
+    options?.withTimestamp === false
+      ? base
+      : { ...base, timestamp: new Date().toISOString() };
+
+  const result = ExtractionResultSchema.safeParse(payload as unknown);
+  if (result.success) {
+    return { ok: true, value: result.data };
+  }
+  return { ok: false, issues: result.error.issues };
+}
 
 export interface ButtonConfig {
   targetSelector: string;

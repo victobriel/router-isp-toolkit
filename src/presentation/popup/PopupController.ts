@@ -1,10 +1,7 @@
 import {
-  BOOKMARKS_STORAGE_KEY,
   LAST_DATA_STORAGE_KEY,
-  MAX_BOOKMARK_CREDENTIALS,
   PENDING_AUTH_ERROR_STORAGE_KEY,
   ROUTER_MODEL_STORAGE_KEY,
-  UI_STATE_STORAGE_KEY,
 } from "../../application/constants/index.js";
 import { PopupStatusType } from "../../application/types/index.js";
 import {
@@ -16,11 +13,18 @@ import { StorageService } from "../../infra/storage/StorageService.js";
 
 import { PopupView } from "./PopupView.js";
 
+import { defaultBookmarksService } from "../../application/BookmarksService.js";
+import {
+  defaultPopupUiStateService,
+  type PopupUiState,
+} from "../../application/PopupUiStateService.js";
+
 import type {
   CollectResponse,
   BookmarkStore,
   CredentialBookmark,
 } from "../../application/types/index.js";
+import { translator } from "../../infra/i18n/I18nService.js";
 
 /** Presentation controller: drives popup UI and Chrome messaging. */
 export class PopupController {
@@ -29,13 +33,16 @@ export class PopupController {
   private routerModel: string | null = null;
   private persistedStatus: { type: PopupStatusType; text: string } = {
     type: PopupStatusType.NONE,
-    text: "Ready to collect router data",
+    text: translator.t("popup_status_ready"),
   };
   private persistedLogs: Array<{
     msg: string;
     type: PopupStatusType;
     time: string;
   }> = [];
+
+  private readonly bookmarksService = defaultBookmarksService;
+  private readonly uiStateService = defaultPopupUiStateService;
 
   private static readonly EXPECTED_NAVIGATION_ERROR_SNIPPETS = [
     "message channel closed before a response was received",
@@ -98,12 +105,9 @@ export class PopupController {
     if (!tab?.id) {
       this.setStatus(
         PopupStatusType.ERR,
-        "Cannot find an active browser tab. Open your router page and try again"
+        translator.t("popup_error_no_active_tab")
       );
-      this.log(
-        "No active browser tab detected while starting collection",
-        PopupStatusType.ERR
-      );
+      this.log(translator.t("popup_log_no_active_tab"), PopupStatusType.ERR);
       return;
     }
 
@@ -132,17 +136,14 @@ export class PopupController {
         this.isExpectedNavigationError(errorMessage);
 
       if (isExpectedNavigationError) {
-        this.log(
-          "Router page is redirecting after login. Retrying collection...",
-          PopupStatusType.ERR
-        );
+        this.log(translator.t("popup_log_redirect_retry"), PopupStatusType.ERR);
         await this.startRetryLoop(tab.id);
         return;
       }
 
       this.setStatus(
         PopupStatusType.ERR,
-        "Failed to communicate with the router page. Make sure it is open and reachable, then try again"
+        translator.t("popup_error_router_comm")
       );
       this.log(errorMessage, PopupStatusType.ERR);
     }
@@ -153,7 +154,11 @@ export class PopupController {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       this.log(
-        `Retrying collection (${attempt}/${maxRetries}) while waiting for the router page to finish loading...`
+        translator.t(
+          "popup_log_retry_attempt",
+          String(attempt),
+          String(maxRetries)
+        )
       );
 
       try {
@@ -179,12 +184,9 @@ export class PopupController {
 
     this.setStatus(
       PopupStatusType.ERR,
-      "Timed out waiting for the router page to be ready. Refresh the page and try again"
+      translator.t("popup_error_timeout_waiting")
     );
-    this.log(
-      "Timed out waiting for the router page to become ready",
-      PopupStatusType.ERR
-    );
+    this.log(translator.t("popup_log_timeout_waiting"), PopupStatusType.ERR);
   }
 
   private processResponse(response: CollectResponse): void {
@@ -196,7 +198,7 @@ export class PopupController {
     if (!result.success) {
       this.setStatus(
         PopupStatusType.WARN,
-        "Router returned data in an unexpected format. Refresh the router page and try again"
+        translator.t("popup_error_unexpected_format")
       );
       return;
     }
@@ -204,7 +206,10 @@ export class PopupController {
     this.currentData = result.data;
     this.renderData();
     void this.persistCurrentData();
-    this.setStatus(PopupStatusType.OK, "Router data collected successfully");
+    this.setStatus(
+      PopupStatusType.OK,
+      translator.t("popup_status_collected_ok")
+    );
   }
 
   private renderData(): void {
@@ -328,9 +333,6 @@ export class PopupController {
     PopupView.updateField("dhcpSecondaryDns", data?.dhcpSecondaryDns ?? null);
     PopupView.updateField("dhcpLeaseTimeMode", data?.dhcpLeaseTimeMode ?? null);
     PopupView.updateField("dhcpLeaseTime", data?.dhcpLeaseTime ?? null);
-    PopupView.updateField("upnpEnabled", this.toStatusText(data?.upnpEnabled));
-    PopupView.updateField("routerVersion", data?.routerVersion ?? null);
-    PopupView.updateField("tr069Url", data?.tr069Url ?? null);
     const topology = data?.topology;
     if (topology) {
       for (const band of ["24ghz", "5ghz", "cable"] as const) {
@@ -381,7 +383,11 @@ export class PopupController {
       `#popup-section-topology-${band}-body`,
       HTMLDivElement
     );
-    panel.innerHTML = "<span class='popup-topology-no-data'>No data</span>";
+    panel.innerHTML = "";
+    const span = document.createElement("span");
+    span.className = "popup-topology-no-data";
+    span.textContent = translator.t("popup_topology_no_data");
+    panel.appendChild(span);
   }
 
   private async checkPendingErrors(): Promise<void> {
@@ -396,7 +402,7 @@ export class PopupController {
 
   private handleClear(): void {
     this.currentData = null;
-    this.setStatus(PopupStatusType.NONE, "Ready to collect router data");
+    this.setStatus(PopupStatusType.NONE, translator.t("popup_status_ready"));
     PopupView.updateField("pppoeUsername", null);
     PopupView.updateField("internetStatus", null);
     PopupView.updateField("tr069Status", null);
@@ -439,9 +445,6 @@ export class PopupController {
     PopupView.updateField("dhcpSecondaryDns", null);
     PopupView.updateField("dhcpLeaseTimeMode", null);
     PopupView.updateField("dhcpLeaseTime", null);
-    PopupView.updateField("upnpEnabled", null);
-    PopupView.updateField("routerVersion", null);
-    PopupView.updateField("tr069Url", null);
     for (const band of ["24ghz", "5ghz", "cable"] as const) {
       this.clearTopologyBand(band);
     }
@@ -455,79 +458,43 @@ export class PopupController {
   }
 
   private async loadPersistedData(): Promise<void> {
-    const storageKey = this.getTabStorageKey(LAST_DATA_STORAGE_KEY);
-    if (storageKey === null) return;
-
-    const rawData = await StorageService.get<unknown>(storageKey);
-    if (!rawData) return;
-
-    const parsed = ExtractionResultSchema.safeParse(rawData);
-    if (!parsed.success) {
-      await StorageService.remove(storageKey);
-      return;
-    }
-
-    this.currentData = parsed.data;
+    const last = await this.uiStateService.loadLastExtraction(this.activeTabId);
+    if (!last) return;
+    this.currentData = last;
     this.renderData();
   }
 
   private async persistCurrentData(): Promise<void> {
     if (this.currentData === null) return;
 
-    const storageKey = this.getTabStorageKey(LAST_DATA_STORAGE_KEY);
-    if (storageKey === null) return;
-
-    await StorageService.save(storageKey, this.currentData, 24 * 60 * 1000);
+    await this.uiStateService.saveLastExtraction(
+      this.activeTabId,
+      this.currentData
+    );
   }
 
   private async loadPersistedUiState(): Promise<void> {
-    const storageKey = this.getTabStorageKey(UI_STATE_STORAGE_KEY);
-
-    if (storageKey === null) return;
-
-    const state = await StorageService.get<{
-      status?: { type?: PopupStatusType; text?: string };
-      logs?: Array<{ msg?: string; type?: string; time?: string }>;
-    }>(storageKey);
+    const state = await this.uiStateService.loadUiState(this.activeTabId);
     if (!state) return;
 
-    const statusType = state.status?.type;
-    const statusText = state.status?.text;
-    if (statusType && typeof statusText === "string") {
-      this.persistedStatus = { type: statusType, text: statusText };
-      PopupView.setStatus(statusType, statusText);
-    }
+    this.persistedStatus = state.status;
+    this.persistedLogs = state.logs.slice(0, 50);
 
-    if (Array.isArray(state.logs)) {
-      const logs = state.logs.filter(
-        (log) =>
-          typeof log?.msg === "string" &&
-          log?.type &&
-          typeof log?.time === "string"
-      ) as Array<{ msg: string; type: PopupStatusType; time: string }>;
-
-      this.persistedLogs = logs.slice(0, 50);
-      PopupView.clearLogs();
-      for (let index = this.persistedLogs.length - 1; index >= 0; index--) {
-        const entry = this.persistedLogs[index];
-        if (!entry) continue;
-        PopupView.log(entry.msg, entry.type, entry.time);
-      }
+    PopupView.setStatus(state.status.type, state.status.text);
+    PopupView.clearLogs();
+    for (let index = this.persistedLogs.length - 1; index >= 0; index--) {
+      const entry = this.persistedLogs[index];
+      if (!entry) continue;
+      PopupView.log(entry.msg, entry.type, entry.time);
     }
   }
 
   private async persistUiState(): Promise<void> {
-    const storageKey = this.getTabStorageKey(UI_STATE_STORAGE_KEY);
-    if (storageKey === null) return;
-
-    await StorageService.save(
-      storageKey,
-      {
-        status: this.persistedStatus,
-        logs: this.persistedLogs,
-      },
-      24 * 60 * 1000
-    );
+    const state: PopupUiState = {
+      status: this.persistedStatus,
+      logs: this.persistedLogs,
+    };
+    await this.uiStateService.saveUiState(this.activeTabId, state);
   }
 
   private setStatus(type: PopupStatusType, text: string): void {
@@ -537,7 +504,7 @@ export class PopupController {
   }
 
   private log(msg: string, type: PopupStatusType = PopupStatusType.NONE): void {
-    const time = new Date().toLocaleTimeString("en-US", { hour12: false });
+    const time = new Date().toLocaleTimeString(undefined, { hour12: false });
     this.persistedLogs.unshift({ msg, type, time });
     if (this.persistedLogs.length > 30) {
       this.persistedLogs = this.persistedLogs.slice(0, 30);
@@ -548,7 +515,9 @@ export class PopupController {
 
   private toStatusText(value: boolean | undefined): string | null {
     if (value === undefined) return null;
-    return value ? "Enabled" : "Disabled";
+    return value
+      ? translator.t("popup_status_enabled")
+      : translator.t("popup_status_disabled");
   }
 
   private getErrorMessage(error: unknown): string {
@@ -556,7 +525,7 @@ export class PopupController {
   }
 
   private getResponseMessage(response: unknown): string {
-    const fallback = "Unknown response format";
+    const fallback = translator.t("popup_error_unknown_response");
 
     if (!response || typeof response !== "object") {
       return fallback;
@@ -610,7 +579,7 @@ export class PopupController {
     const storageKey = this.getTabStorageKey(ROUTER_MODEL_STORAGE_KEY);
 
     if (storageKey === null) {
-      routerModelElement.textContent = "Not detected";
+      routerModelElement.textContent = translator.t("popup_model_not_detected");
       return false;
     }
 
@@ -619,10 +588,12 @@ export class PopupController {
       this.routerModel =
         typeof model === "string" && model.trim() !== "" ? model : null;
       routerModelElement.textContent =
-        this.routerModel !== null ? this.routerModel : "Not detected";
+        this.routerModel !== null
+          ? this.routerModel
+          : translator.t("popup_model_not_detected");
       return this.routerModel !== null;
     } catch {
-      routerModelElement.textContent = "Not detected";
+      routerModelElement.textContent = translator.t("popup_model_not_detected");
       this.routerModel = null;
       return false;
     }
@@ -654,20 +625,19 @@ export class PopupController {
       return;
     }
 
-    const store =
-      (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
-
-    const modelEntry = store[this.routerModel] ?? {
-      model: this.routerModel,
-      credentials: [],
-    };
+    const modelEntry =
+      (await this.bookmarksService.listByModel(this.routerModel)) ??
+      ({
+        model: this.routerModel,
+        credentials: [],
+      } as BookmarkStore[string]);
 
     list.innerHTML = "";
 
     if (!modelEntry.credentials.length) {
       const noDataItem = document.createElement("li");
       noDataItem.className = "popup-saved-credentials-no-data";
-      noDataItem.textContent = "No data";
+      noDataItem.textContent = translator.t("popup_saved_credentials_no_data");
       list.appendChild(noDataItem);
       return;
     }
@@ -686,8 +656,12 @@ export class PopupController {
       const deleteButton = document.createElement("button");
       const deleteIcon = document.createElement("span");
 
-      usernameLabelSpan.textContent = "User:";
-      passwordLabelSpan.textContent = "Password:";
+      usernameLabelSpan.textContent = `${translator.t(
+        "popup_credentials_user_label"
+      )}:`;
+      passwordLabelSpan.textContent = `${translator.t(
+        "popup_credentials_password_label"
+      )}:`;
       usernameValueSpan.textContent = cred.username;
       passwordValueSpan.textContent = cred.password;
 
@@ -703,7 +677,7 @@ export class PopupController {
 
       deleteButton.type = "button";
       deleteButton.className = "popup-saved-credential-delete";
-      deleteButton.title = `Delete saved credentials #${index + 1}`;
+      deleteButton.title = translator.t("popup_saved_credentials_delete_title");
 
       deleteIcon.className = "popup-icon popup-icon-bookmark--delete";
       deleteIcon.setAttribute("aria-hidden", "true");
@@ -712,7 +686,7 @@ export class PopupController {
 
       li.className = "popup-saved-credential-item";
       li.append(usernameContainer, passwordContainer, deleteButton);
-      li.title = `Use saved credentials #${index + 1}`;
+      li.title = translator.t("popup_saved_credentials_use_title");
       li.addEventListener("click", () => {
         const userInput = DomService.getInputElement("#popup-input-username");
         const passInput = DomService.getInputElement("#popup-input-password");
@@ -753,7 +727,7 @@ export class PopupController {
     if (!this.routerModel) {
       this.setStatus(
         PopupStatusType.WARN,
-        "Router model not detected. Cannot save credentials"
+        translator.t("popup_error_router_model_not_detected")
       );
       return;
     }
@@ -766,67 +740,40 @@ export class PopupController {
     if (!user || !pass) {
       this.setStatus(
         PopupStatusType.WARN,
-        "Provide both username and password before saving"
+        translator.t("popup_error_save_missing_fields")
       );
       return;
     }
 
-    const store =
-      (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
+    const result = await this.bookmarksService.addCredential(this.routerModel, {
+      username: user,
+      password: pass,
+    });
 
-    const existing = store[this.routerModel] ?? {
-      model: this.routerModel,
-      credentials: [],
-    };
-
-    const updatedCredentials = [...existing.credentials];
-
-    if (updatedCredentials.length >= MAX_BOOKMARK_CREDENTIALS) {
+    if (result.kind === "max_reached") {
       this.setStatus(
         PopupStatusType.WARN,
-        "Maximum number of bookmarks reached. Remove some bookmarks to save new ones"
+        translator.t("popup_error_max_bookmarks")
       );
       return;
     }
 
-    updatedCredentials.push({ username: user, password: pass });
-
-    store[this.routerModel] = {
-      model: this.routerModel,
-      credentials: updatedCredentials.slice(0, MAX_BOOKMARK_CREDENTIALS),
-    };
-
-    await StorageService.save(BOOKMARKS_STORAGE_KEY, store);
-
     await this.loadBookmarks();
-    this.setStatus(PopupStatusType.OK, "Credentials saved to bookmark list");
+    this.setStatus(
+      PopupStatusType.OK,
+      translator.t("popup_status_bookmark_saved")
+    );
   }
 
   private async deleteCredentialAtIndex(index: number): Promise<void> {
     if (!this.routerModel) return;
 
-    const store =
-      (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
-    const existing = store[this.routerModel];
-    if (!existing) return;
-
-    const updatedCredentials = [...existing.credentials];
-    if (index < 0 || index >= updatedCredentials.length) return;
-
-    updatedCredentials.splice(index, 1);
-
-    if (updatedCredentials.length === 0) {
-      delete store[this.routerModel];
-    } else {
-      store[this.routerModel] = {
-        model: existing.model,
-        credentials: updatedCredentials,
-      };
-    }
-
-    await StorageService.save(BOOKMARKS_STORAGE_KEY, store);
+    await this.bookmarksService.removeCredential(this.routerModel, index);
     await this.loadBookmarks();
-    this.setStatus(PopupStatusType.OK, "Credential removed from bookmark list");
+    this.setStatus(
+      PopupStatusType.OK,
+      translator.t("popup_status_bookmark_removed")
+    );
   }
 
   private async handleBookmarkButton(): Promise<void> {

@@ -59,6 +59,7 @@ h1 {
 }
 
 .popup-header-actions {
+  display: flex;
   margin-left: auto;
 }
 
@@ -185,36 +186,6 @@ h1 {
   border-color: var(--ri-accent2);
   color: var(--ri-accent2);
   background: var(--ri-accent2-dim);
-}
-
-/* ─── Theme toggle ───────────────────────────────────────────────────────── */
-.theme-toggle {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  background: var(--ri-bg-card);
-  border: 1px solid var(--ri-border);
-  border-radius: var(--ri-radius-pill);
-  padding: 2px;
-}
-
-.theme-toggle-option {
-  padding: 4px var(--ri-space-2);
-  border-radius: var(--ri-radius-pill);
-  font-size: var(--ri-text-xs);
-  font-family: var(--ri-sans);
-  color: var(--ri-muted);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.theme-toggle-option.active {
-  background-color: var(--ri-accent-dim);
-  color: var(--ri-text);
 }
 
 /* ─── Panel ──────────────────────────────────────────────────────────────── */

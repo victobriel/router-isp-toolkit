@@ -1,0 +1,271 @@
+{
+  "extName": {
+    "message": "Inspector de Roteador",
+    "description": "Nome da extensão exibido na UI do Chrome e no cabeçalho do popup."
+  },
+  "extDescription": {
+    "message": "Uma extensão do Chrome para inspecionar dados do roteador e exibi-los em um popup.",
+    "description": "Descrição da extensão na página de extensões e na Chrome Web Store."
+  },
+
+  "popup_title": {
+    "message": "Inspector de Roteador"
+  },
+  "popup_theme_aria_label": {
+    "message": "Seleção de tema"
+  },
+  "popup_theme_light": { "message": "Claro" },
+  "popup_theme_dark": { "message": "Escuro" },
+  "popup_theme_system": { "message": "Sistema" },
+
+  "popup_settings_aria_label": { "message": "Configurações" },
+  "popup_close_aria_label": { "message": "Fechar painel" },
+
+  "popup_status_ready": {
+    "message": "Pronto para coletar dados do roteador"
+  },
+
+  "popup_model_label": { "message": "Modelo" },
+
+  "popup_credentials_title": { "message": "Credenciais" },
+  "popup_credentials_user_label": { "message": "Usuário" },
+  "popup_credentials_password_label": { "message": "Senha" },
+  "popup_credentials_username_placeholder": { "message": "admin" },
+  "popup_credentials_save_aria_label": {
+    "message": "Salvar credenciais"
+  },
+  "popup_credentials_toggle_bookmarks_aria_label": {
+    "message": "Alternar credenciais salvas"
+  },
+  "popup_saved_credentials_title": { "message": "Credenciais salvas" },
+
+  "popup_collect_start": { "message": "Iniciar" },
+  "popup_clear_aria_label": { "message": "Limpar dados" },
+
+  "popup_tab_main": { "message": "Principal" },
+  "popup_tab_topology": { "message": "Topologia" },
+  "popup_tab_logs": { "message": "Logs" },
+
+  "popup_section_wan": { "message": "WAN" },
+  "popup_section_remote_access": { "message": "Acesso remoto" },
+  "popup_section_band_steering": { "message": "Band Steering" },
+  "popup_section_wlan_24": { "message": "WLAN (2,4 GHz)" },
+  "popup_section_wlan_5": { "message": "WLAN (5 GHz)" },
+  "popup_section_dhcp": { "message": "DHCP" },
+  "popup_section_upnp": { "message": "UPnP" },
+  "popup_section_router_version": { "message": "Versão do roteador" },
+  "popup_section_tr069_url": { "message": "URL TR069" },
+
+  "popup_label_status": { "message": "Status" },
+  "popup_label_channel": { "message": "Canal" },
+  "popup_label_bandwidth": { "message": "Largura de banda" },
+  "popup_label_transmitting_power": { "message": "Potência de transmissão" },
+  "popup_label_mode": { "message": "Modo" },
+  "popup_label_ssid_name": { "message": "Nome da SSID" },
+  "popup_label_ssid_password": { "message": "Senha da SSID" },
+  "popup_label_ssid_hide_mode": { "message": "Modo de ocultação da SSID" },
+  "popup_label_wpa2_security": { "message": "Segurança WPA2" },
+  "popup_label_max_clients": { "message": "Máx. de clientes" },
+  "popup_label_ip_address": { "message": "Endereço IP" },
+  "popup_label_subnet_mask": { "message": "Máscara de sub-rede" },
+  "popup_label_start_ip": { "message": "IP inicial" },
+  "popup_label_end_ip": { "message": "IP final" },
+  "popup_label_primary_dns": { "message": "DNS primário" },
+  "popup_label_secondary_dns": { "message": "DNS secundário" },
+  "popup_label_enabled": { "message": "Ativado" },
+  "popup_label_internet": { "message": "Internet" },
+  "popup_label_pppoe": { "message": "PPPoE" },
+  "popup_label_tr069": { "message": "TR-069" },
+
+  "popup_topology_cable_devices": {
+    "message": "Dispositivos conectados por cabo"
+  },
+  "popup_topology_24_devices": {
+    "message": "Dispositivos conectados em 2,4 GHz"
+  },
+  "popup_topology_5_devices": {
+    "message": "Dispositivos conectados em 5 GHz"
+  },
+  "popup_topology_no_data": { "message": "Sem dados" },
+
+  "popup_logs_title": { "message": "Logs" },
+
+  "settings_title": {
+    "message": "Inspector de Roteador — Configurações"
+  },
+  "settings_header_title": { "message": "Inspector de Roteador" },
+  "settings_header_subtitle": { "message": "Configurações" },
+
+  "settings_section_appearance": { "message": "Aparência" },
+  "settings_section_data_storage": { "message": "Dados e armazenamento" },
+  "settings_section_about": { "message": "Sobre" },
+
+  "settings_theme_label": { "message": "Tema" },
+  "settings_theme_desc": {
+    "message": "Escolha o esquema de cores preferido. As alterações são aplicadas imediatamente e persistem entre sessões."
+  },
+
+  "settings_saved_bookmarks_label": {
+    "message": "Favoritos salvos"
+  },
+  "settings_saved_bookmarks_desc": {
+    "message": "Os favoritos de credenciais são armazenados por modelo de roteador e carregados automaticamente quando um roteador correspondente é detectado."
+  },
+  "settings_bookmark_count_title": {
+    "message": "Total de favoritos de credenciais salvos"
+  },
+
+  "settings_clear_all_label": {
+    "message": "Limpar todos os dados da extensão"
+  },
+  "settings_clear_all_desc": {
+    "message": "Remove todos os dados de roteador em cache, credenciais salvas, favoritos e estado da interface. Esta ação não pode ser desfeita."
+  },
+  "settings_clear_all_button": {
+    "message": "Limpar tudo"
+  },
+
+  "settings_about_extension_label": {
+    "message": "Extensão"
+  },
+  "settings_about_version_label": {
+    "message": "Versão"
+  },
+
+  "settings_bookmarks_empty": {
+    "message": "Ainda não há credenciais salvas."
+  },
+  "settings_toast_credential_removed": {
+    "message": "Credencial removida"
+  },
+  "settings_toast_all_cleared": {
+    "message": "Todos os dados da extensão foram apagados"
+  },
+  "settings_bookmarks_delete_title": {
+    "message": "Remover credencial"
+  },
+  "settings_bookmarks_delete_aria": {
+    "message": "Remover credencial de $username$",
+    "placeholders": {
+      "username": {
+        "content": "$1"
+      }
+    }
+  },
+
+  "popup_label_link_speed": { "message": "Velocidade do link" },
+  "popup_label_ip_version": { "message": "Versão de IP" },
+  "popup_label_dhcpv6_status": { "message": "Status do DHCPv6" },
+  "popup_label_pd_status": { "message": "Status de PD" },
+  "popup_label_slaac_status": { "message": "Status do SLAAC" },
+  "popup_label_gua_pd_status": { "message": "Status do GUA PD" },
+  "popup_label_remote_access_ipv4": {
+    "message": "Acesso remoto - IPv4"
+  },
+  "popup_label_remote_access_ipv6": {
+    "message": "Acesso remoto - IPv6"
+  },
+  "popup_label_isp_dns_enabled": { "message": "DNS do provedor ativado" },
+  "popup_label_lease_time_mode": { "message": "Modo do tempo de concessão" },
+  "popup_label_lease_time": { "message": "Tempo de concessão" },
+  "popup_label_version": { "message": "Versão" },
+  "popup_label_url": { "message": "URL" },
+
+  "popup_toggle_wan_aria": { "message": "Alternar seção WAN" },
+  "popup_toggle_remote_access_aria": {
+    "message": "Alternar seção de acesso remoto"
+  },
+  "popup_toggle_wlan_band_steering_aria": {
+    "message": "Alternar seção de Band Steering"
+  },
+  "popup_toggle_wlan_24_aria": {
+    "message": "Alternar seção WLAN 2,4 GHz"
+  },
+  "popup_toggle_wlan_5_aria": {
+    "message": "Alternar seção WLAN 5 GHz"
+  },
+  "popup_toggle_dhcp_aria": { "message": "Alternar seção DHCP" },
+  "popup_toggle_upnp_aria": { "message": "Alternar seção UPnP" },
+  "popup_toggle_router_version_aria": {
+    "message": "Alternar seção Versão do roteador"
+  },
+  "popup_toggle_tr069_url_aria": {
+    "message": "Alternar seção URL TR069"
+  },
+  "popup_toggle_topology_cable_aria": {
+    "message": "Alternar seção de topologia por cabo"
+  },
+  "popup_toggle_topology_24_aria": {
+    "message": "Alternar seção de topologia 2,4 GHz"
+  },
+  "popup_toggle_topology_5_aria": {
+    "message": "Alternar seção de topologia 5 GHz"
+  },
+  "popup_tabs_aria_label": { "message": "Seções do popup" },
+
+  "popup_status_enabled": { "message": "Ativado" },
+  "popup_status_disabled": { "message": "Desativado" },
+
+  "popup_error_no_active_tab": {
+    "message": "Não foi possível encontrar uma aba ativa. Abra a página do roteador e tente novamente"
+  },
+  "popup_log_no_active_tab": {
+    "message": "Nenhuma aba ativa detectada ao iniciar a coleta"
+  },
+  "popup_log_redirect_retry": {
+    "message": "A página do roteador está redirecionando após o login. Tentando coletar novamente..."
+  },
+  "popup_error_router_comm": {
+    "message": "Falha ao se comunicar com a página do roteador. Verifique se ela está aberta e acessível e tente novamente"
+  },
+  "popup_log_retry_attempt": {
+    "message": "Tentando coletar novamente ($attempt$/$max$) enquanto aguarda a página do roteador terminar de carregar...",
+    "placeholders": {
+      "attempt": { "content": "$1" },
+      "max": { "content": "$2" }
+    }
+  },
+  "popup_error_timeout_waiting": {
+    "message": "Tempo esgotado aguardando a página do roteador ficar pronta. Atualize a página e tente novamente"
+  },
+  "popup_log_timeout_waiting": {
+    "message": "Tempo esgotado aguardando a página do roteador ficar pronta"
+  },
+  "popup_error_unexpected_format": {
+    "message": "O roteador retornou dados em um formato inesperado. Atualize a página do roteador e tente novamente"
+  },
+  "popup_status_collected_ok": {
+    "message": "Dados do roteador coletados com sucesso"
+  },
+  "popup_error_unknown_response": {
+    "message": "Formato de resposta desconhecido"
+  },
+
+  "popup_model_not_detected": { "message": "Não detectado" },
+
+  "popup_saved_credentials_no_data": {
+    "message": "Nenhuma credencial salva"
+  },
+  "popup_saved_credentials_delete_title": {
+    "message": "Excluir credenciais salvas"
+  },
+  "popup_saved_credentials_use_title": {
+    "message": "Usar credenciais salvas"
+  },
+
+  "popup_error_router_model_not_detected": {
+    "message": "Modelo de roteador não detectado. Não é possível salvar as credenciais"
+  },
+  "popup_error_save_missing_fields": {
+    "message": "Informe usuário e senha antes de salvar"
+  },
+  "popup_error_max_bookmarks": {
+    "message": "Número máximo de favoritos atingido. Remova alguns favoritos para salvar novos"
+  },
+  "popup_status_bookmark_saved": {
+    "message": "Credenciais salvas na lista de favoritos"
+  },
+  "popup_status_bookmark_removed": {
+    "message": "Credencial removida da lista de favoritos"
+  }
+}

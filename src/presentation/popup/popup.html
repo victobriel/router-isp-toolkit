@@ -10,58 +10,27 @@
     <header class="popup-header">
       <h1>Router Inspector</h1>
       <div class="popup-header-actions">
-        <div
-          class="theme-toggle"
-          role="radiogroup"
-          aria-label="Theme selection"
+        <button class="popup-btn popup-btn-settings" aria-label="Settings">
+          <span class="popup-icon popup-icon--gear" aria-hidden="true"></span>
+        </button>
+        <button
+          class="popup-btn popup-btn-close"
+          id="popup-btn-close"
+          aria-label="Close panel"
         >
-          <button
-            class="theme-toggle-option"
-            data-theme="light"
-            type="button"
-            role="radio"
-            aria-checked="false"
-          >
-            Light
-          </button>
-          <button
-            class="theme-toggle-option"
-            data-theme="dark"
-            type="button"
-            role="radio"
-            aria-checked="false"
-          >
-            Dark
-          </button>
-          <button
-            class="theme-toggle-option"
-            data-theme="system"
-            type="button"
-            role="radio"
-            aria-checked="true"
-          >
-            System
-          </button>
-        </div>
+          <span class="popup-icon popup-icon--close" aria-hidden="true"></span>
+        </button>
       </div>
-      <button class="popup-btn popup-btn-settings" aria-label="Settings">
-        <span class="popup-icon popup-icon--gear" aria-hidden="true"></span>
-      </button>
-      <button
-        class="popup-btn popup-btn-close"
-        id="popup-btn-close"
-        aria-label="Close panel"
-      >
-        <span class="popup-icon popup-icon--close" aria-hidden="true"></span>
-      </button>
     </header>
 
     <!-- STATUS BAR -->
     <div class="popup-status-bar">
       <span class="popup-status-dot" id="popup-status-dot"></span>
-      <span class="popup-status-text" id="popup-status-text"
-        >Ready to collect router data</span
-      >
+      <span
+        class="popup-status-text"
+        id="popup-status-text"
+        data-i18n="popup_status_ready"
+      ></span>
     </div>
 
     <!-- MODEL BAR -->
@@ -144,7 +113,12 @@
     </section>
 
     <!-- TABS SECTION -->
-    <div class="popup-tabs" role="tablist" aria-label="Popup sections">
+    <div
+      class="popup-tabs"
+      role="tablist"
+      aria-label="Popup sections"
+      data-i18n-aria-label="popup_tabs_aria_label"
+    >
       <button
         class="popup-tab popup-tab--active"
         id="popup-tab-main"
@@ -193,6 +167,7 @@
             id="popup-toggle-wan"
             type="button"
             aria-label="Toggle WAN section"
+            data-i18n-aria-label="popup_toggle_wan_aria"
             aria-expanded="true"
             aria-controls="popup-section-wan-body"
           >
@@ -204,7 +179,7 @@
           id="popup-section-wan-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">PPPoE</p>
+            <p class="popup-card-label" data-i18n="popup_label_pppoe">PPPoE</p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-pppoeUsername"
@@ -213,7 +188,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">Internet</p>
+            <p class="popup-card-label" data-i18n="popup_label_internet">
+              Internet
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-internetStatus"
@@ -222,7 +199,7 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">TR-069</p>
+            <p class="popup-card-label" data-i18n="popup_label_tr069">TR-069</p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-tr069Status"
@@ -231,7 +208,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">Link Speed</p>
+            <p class="popup-card-label" data-i18n="popup_label_link_speed">
+              Link Speed
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-linkSpeed"
@@ -240,7 +219,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">IP Version</p>
+            <p class="popup-card-label" data-i18n="popup_label_ip_version">
+              IP Version
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-ipVersion"
@@ -249,7 +230,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">DHCPv6 Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_dhcpv6_status">
+              DHCPv6 Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpv6Status"
@@ -258,7 +241,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">PD Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_pd_status">
+              PD Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-requestPdStatus"
@@ -267,7 +252,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">SLAAC Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_slaac_status">
+              SLAAC Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-slaacStatus"
@@ -276,7 +263,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">Gua PD Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_gua_pd_status">
+              Gua PD Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-pdStatus"
@@ -296,6 +285,7 @@
             id="popup-toggle-remote-access"
             type="button"
             aria-label="Toggle Remote Access section"
+            data-i18n-aria-label="popup_toggle_remote_access_aria"
             aria-expanded="true"
             aria-controls="popup-section-remote-access-body"
           >
@@ -307,7 +297,12 @@
           id="popup-section-remote-access-body"
         >
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Remote access - IPv4</p>
+            <p
+              class="popup-card-label"
+              data-i18n="popup_label_remote_access_ipv4"
+            >
+              Remote access - IPv4
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-remoteAccessIpv4Status"
@@ -316,7 +311,12 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Remote access - IPv6</p>
+            <p
+              class="popup-card-label"
+              data-i18n="popup_label_remote_access_ipv6"
+            >
+              Remote access - IPv6
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-remoteAccessIpv6Status"
@@ -336,6 +336,7 @@
             id="popup-toggle-wlan-band-steering"
             type="button"
             aria-label="Toggle WLAN Band Steering section"
+            data-i18n-aria-label="popup_toggle_wlan_band_steering_aria"
             aria-expanded="true"
             aria-controls="popup-section-wlan-band-steering-body"
           >
@@ -347,7 +348,9 @@
           id="popup-section-wlan-band-steering-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_status">
+              Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlanBandSteeringStatus"
@@ -367,6 +370,7 @@
             id="popup-toggle-wlan-24ghz"
             type="button"
             aria-label="Toggle WLAN 2.4GHz section"
+            data-i18n-aria-label="popup_toggle_wlan_24_aria"
             aria-expanded="true"
             aria-controls="popup-section-wlan-24ghz-body"
           >
@@ -378,7 +382,9 @@
           id="popup-section-wlan-24ghz-body"
         >
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_status">
+              Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzStatus"
@@ -387,7 +393,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Channel</p>
+            <p class="popup-card-label" data-i18n="popup_label_channel">
+              Channel
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzChannel"
@@ -396,7 +404,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Band Width</p>
+            <p class="popup-card-label" data-i18n="popup_label_bandwidth">
+              Band Width
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzBandWidth"
@@ -405,7 +415,12 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Transmitting Power</p>
+            <p
+              class="popup-card-label"
+              data-i18n="popup_label_transmitting_power"
+            >
+              Transmitting Power
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzTransmittingPower"
@@ -414,7 +429,7 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Mode</p>
+            <p class="popup-card-label" data-i18n="popup_label_mode">Mode</p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzMode"
@@ -423,7 +438,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">SSID Name</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_name">
+              SSID Name
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzSsidName"
@@ -432,7 +449,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">SSID Password</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_password">
+              SSID Password
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzSsidPassword"
@@ -441,7 +460,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">SSID Hide Mode</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_hide_mode">
+              SSID Hide Mode
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzSsidHideMode"
@@ -450,7 +471,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">WPA2-Security</p>
+            <p class="popup-card-label" data-i18n="popup_label_wpa2_security">
+              WPA2-Security
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzWpa2Security"
@@ -459,7 +482,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">Max. Clients</p>
+            <p class="popup-card-label" data-i18n="popup_label_max_clients">
+              Max. Clients
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan24ghzMaxClients"
@@ -479,6 +504,7 @@
             id="popup-toggle-wlan-5ghz"
             type="button"
             aria-label="Toggle WLAN 5GHz section"
+            data-i18n-aria-label="popup_toggle_wlan_5_aria"
             aria-expanded="true"
             aria-controls="popup-section-wlan-5ghz-body"
           >
@@ -490,7 +516,9 @@
           id="popup-section-wlan-5ghz-body"
         >
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Status</p>
+            <p class="popup-card-label" data-i18n="popup_label_status">
+              Status
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzStatus"
@@ -499,7 +527,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Channel</p>
+            <p class="popup-card-label" data-i18n="popup_label_channel">
+              Channel
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzChannel"
@@ -508,7 +538,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Band Width</p>
+            <p class="popup-card-label" data-i18n="popup_label_bandwidth">
+              Band Width
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzBandWidth"
@@ -517,7 +549,12 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-4">
-            <p class="popup-card-label">Transmitting Power</p>
+            <p
+              class="popup-card-label"
+              data-i18n="popup_label_transmitting_power"
+            >
+              Transmitting Power
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzTransmittingPower"
@@ -526,7 +563,7 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Mode</p>
+            <p class="popup-card-label" data-i18n="popup_label_mode">Mode</p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzMode"
@@ -535,7 +572,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">SSID Name</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_name">
+              SSID Name
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzSsidName"
@@ -544,7 +583,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">SSID Password</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_password">
+              SSID Password
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzSsidPassword"
@@ -553,7 +594,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">SSID Hide Mode</p>
+            <p class="popup-card-label" data-i18n="popup_label_ssid_hide_mode">
+              SSID Hide Mode
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzSsidHideMode"
@@ -562,7 +605,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">WPA2-Security</p>
+            <p class="popup-card-label" data-i18n="popup_label_wpa2_security">
+              WPA2-Security
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzWpa2Security"
@@ -571,7 +616,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-3">
-            <p class="popup-card-label">Max. Clients</p>
+            <p class="popup-card-label" data-i18n="popup_label_max_clients">
+              Max. Clients
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-wlan5ghzMaxClients"
@@ -591,6 +638,7 @@
             id="popup-toggle-dhcp"
             type="button"
             aria-label="Toggle DHCP section"
+            data-i18n-aria-label="popup_toggle_dhcp_aria"
             aria-expanded="true"
             aria-controls="popup-section-dhcp-body"
           >
@@ -602,7 +650,9 @@
           id="popup-section-dhcp-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Enabled</p>
+            <p class="popup-card-label" data-i18n="popup_label_enabled">
+              Enabled
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpEnabled"
@@ -611,7 +661,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">IP Address</p>
+            <p class="popup-card-label" data-i18n="popup_label_ip_address">
+              IP Address
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpIpAddress"
@@ -620,7 +672,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Subnet Mask</p>
+            <p class="popup-card-label" data-i18n="popup_label_subnet_mask">
+              Subnet Mask
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpSubnetMask"
@@ -629,7 +683,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Start IP</p>
+            <p class="popup-card-label" data-i18n="popup_label_start_ip">
+              Start IP
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpStartIp"
@@ -638,7 +694,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">End IP</p>
+            <p class="popup-card-label" data-i18n="popup_label_end_ip">
+              End IP
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpEndIp"
@@ -647,7 +705,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">ISP DNS Enabled</p>
+            <p class="popup-card-label" data-i18n="popup_label_isp_dns_enabled">
+              ISP DNS Enabled
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpIspDnsEnabled"
@@ -656,7 +716,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Primary DNS</p>
+            <p class="popup-card-label" data-i18n="popup_label_primary_dns">
+              Primary DNS
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpPrimaryDns"
@@ -665,7 +727,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Secondary DNS</p>
+            <p class="popup-card-label" data-i18n="popup_label_secondary_dns">
+              Secondary DNS
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpSecondaryDns"
@@ -674,7 +738,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Lease Time Mode</p>
+            <p class="popup-card-label" data-i18n="popup_label_lease_time_mode">
+              Lease Time Mode
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpLeaseTimeMode"
@@ -683,7 +749,9 @@
             </p>
           </div>
           <div class="popup-data-card popup-data-card--1-2">
-            <p class="popup-card-label">Lease Time</p>
+            <p class="popup-card-label" data-i18n="popup_label_lease_time">
+              Lease Time
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-dhcpLeaseTime"
@@ -703,6 +771,7 @@
             id="popup-toggle-upnp"
             type="button"
             aria-label="Toggle UPnP section"
+            data-i18n-aria-label="popup_toggle_upnp_aria"
             aria-expanded="true"
             aria-controls="popup-section-upnp-body"
           >
@@ -714,7 +783,9 @@
           id="popup-section-upnp-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Enabled</p>
+            <p class="popup-card-label" data-i18n="popup_label_enabled">
+              Enabled
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-upnpEnabled"
@@ -734,6 +805,7 @@
             id="popup-toggle-router-version"
             type="button"
             aria-label="Toggle Router Version section"
+            data-i18n-aria-label="popup_toggle_router_version_aria"
             aria-expanded="true"
             aria-controls="popup-section-router-version-body"
           >
@@ -745,7 +817,9 @@
           id="popup-section-router-version-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">Version</p>
+            <p class="popup-card-label" data-i18n="popup_label_version">
+              Version
+            </p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-routerVersion"
@@ -765,6 +839,7 @@
             id="popup-toggle-tr069-url"
             type="button"
             aria-label="Toggle TR069 URL section"
+            data-i18n-aria-label="popup_toggle_tr069_url_aria"
             aria-expanded="true"
             aria-controls="popup-section-tr069-url-body"
           >
@@ -776,7 +851,7 @@
           id="popup-section-tr069-url-body"
         >
           <div class="popup-data-card popup-data-card--full">
-            <p class="popup-card-label">URL</p>
+            <p class="popup-card-label" data-i18n="popup_label_url">URL</p>
             <p
               class="popup-card-value popup-card-value--empty"
               id="popup-val-tr069Url"
@@ -803,6 +878,7 @@
             id="popup-toggle-topology-cable"
             type="button"
             aria-label="Toggle Cable Topology section"
+            data-i18n-aria-label="popup_toggle_topology_cable_aria"
             aria-expanded="true"
             aria-controls="popup-section-topology-cable-body"
           >
@@ -825,6 +901,7 @@
             id="popup-toggle-topology-24ghz"
             type="button"
             aria-label="Toggle 2.4GHz Topology section"
+            data-i18n-aria-label="popup_toggle_topology_24_aria"
             aria-expanded="true"
             aria-controls="popup-section-topology-24ghz-body"
           >
@@ -847,6 +924,7 @@
             id="popup-toggle-topology-5ghz"
             type="button"
             aria-label="Toggle 5GHz Topology section"
+            data-i18n-aria-label="popup_toggle_topology_5_aria"
             aria-expanded="true"
             aria-controls="popup-section-topology-5ghz-body"
           >

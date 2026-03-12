@@ -1,0 +1,356 @@
+{
+  "extName": {
+    "message": "Router Inspector",
+    "description": "Extension name shown in Chrome UI and popup header."
+  },
+  "extDescription": {
+    "message": "A Chrome extension to inspect router data and display it in a popup.",
+    "description": "Extension description in the Chrome extensions page and Web Store."
+  },
+
+  "popup_title": {
+    "message": "Router Inspector",
+    "description": "Main title in popup header."
+  },
+  "popup_theme_aria_label": {
+    "message": "Theme selection",
+    "description": "ARIA label for theme toggle radiogroup."
+  },
+  "popup_theme_light": {
+    "message": "Light",
+    "description": "Light theme option label."
+  },
+  "popup_theme_dark": {
+    "message": "Dark",
+    "description": "Dark theme option label."
+  },
+  "popup_theme_system": {
+    "message": "System",
+    "description": "System theme option label."
+  },
+
+  "popup_settings_aria_label": {
+    "message": "Settings",
+    "description": "ARIA label for settings button."
+  },
+  "popup_close_aria_label": {
+    "message": "Close panel",
+    "description": "ARIA label for close button."
+  },
+
+  "popup_status_ready": {
+    "message": "Ready to collect router data",
+    "description": "Initial status text in popup."
+  },
+
+  "popup_model_label": {
+    "message": "Model",
+    "description": "Label before router model value."
+  },
+
+  "popup_credentials_title": {
+    "message": "Credentials",
+    "description": "Section title for credentials."
+  },
+  "popup_credentials_user_label": {
+    "message": "User",
+    "description": "Label for username field."
+  },
+  "popup_credentials_password_label": {
+    "message": "Password",
+    "description": "Label for password field."
+  },
+  "popup_credentials_username_placeholder": {
+    "message": "admin",
+    "description": "Placeholder for username input."
+  },
+  "popup_credentials_save_aria_label": {
+    "message": "Save credentials",
+    "description": "ARIA label for save credentials button."
+  },
+  "popup_credentials_toggle_bookmarks_aria_label": {
+    "message": "Toggle saved credentials",
+    "description": "ARIA label for toggle saved credentials button."
+  },
+  "popup_saved_credentials_title": {
+    "message": "Saved credentials",
+    "description": "Title above list of saved credentials."
+  },
+
+  "popup_collect_start": {
+    "message": "Start",
+    "description": "Label of main collect button."
+  },
+  "popup_clear_aria_label": {
+    "message": "Clear data",
+    "description": "ARIA label for clear data button."
+  },
+
+  "popup_tab_main": {
+    "message": "Main",
+    "description": "Label of Main tab."
+  },
+  "popup_tab_topology": {
+    "message": "Topology",
+    "description": "Label of Topology tab."
+  },
+  "popup_tab_logs": {
+    "message": "Logs",
+    "description": "Label of Logs tab."
+  },
+
+  "popup_section_wan": {
+    "message": "WAN",
+    "description": "WAN section title."
+  },
+  "popup_section_remote_access": {
+    "message": "Remote Access",
+    "description": "Remote Access section title."
+  },
+  "popup_section_band_steering": {
+    "message": "Band Steering",
+    "description": "Band Steering section title."
+  },
+  "popup_section_wlan_24": {
+    "message": "WLAN (2.4GHz)",
+    "description": "2.4GHz WLAN section title."
+  },
+  "popup_section_wlan_5": {
+    "message": "WLAN (5GHz)",
+    "description": "5GHz WLAN section title."
+  },
+  "popup_section_dhcp": {
+    "message": "DHCP",
+    "description": "DHCP section title."
+  },
+  "popup_section_upnp": {
+    "message": "UPnP",
+    "description": "UPnP section title."
+  },
+  "popup_section_router_version": {
+    "message": "Router Version",
+    "description": "Router version section title."
+  },
+  "popup_section_tr069_url": {
+    "message": "TR069 URL",
+    "description": "TR069 URL section title."
+  },
+
+  "popup_label_status": { "message": "Status" },
+  "popup_label_channel": { "message": "Channel" },
+  "popup_label_bandwidth": { "message": "Band Width" },
+  "popup_label_transmitting_power": { "message": "Transmitting Power" },
+  "popup_label_mode": { "message": "Mode" },
+  "popup_label_ssid_name": { "message": "SSID Name" },
+  "popup_label_ssid_password": { "message": "SSID Password" },
+  "popup_label_ssid_hide_mode": { "message": "SSID Hide Mode" },
+  "popup_label_wpa2_security": { "message": "WPA2-Security" },
+  "popup_label_max_clients": { "message": "Max. Clients" },
+  "popup_label_ip_address": { "message": "IP Address" },
+  "popup_label_subnet_mask": { "message": "Subnet Mask" },
+  "popup_label_start_ip": { "message": "Start IP" },
+  "popup_label_end_ip": { "message": "End IP" },
+  "popup_label_primary_dns": { "message": "Primary DNS" },
+  "popup_label_secondary_dns": { "message": "Secondary DNS" },
+  "popup_label_enabled": { "message": "Enabled" },
+  "popup_label_internet": { "message": "Internet" },
+  "popup_label_pppoe": { "message": "PPPoE" },
+  "popup_label_tr069": { "message": "TR-069" },
+
+  "popup_topology_cable_devices": {
+    "message": "Cable-connected devices"
+  },
+  "popup_topology_24_devices": {
+    "message": "2.4GHz connected devices"
+  },
+  "popup_topology_5_devices": {
+    "message": "5GHz connected devices"
+  },
+  "popup_topology_no_data": {
+    "message": "No data"
+  },
+
+  "popup_logs_title": {
+    "message": "Logs",
+    "description": "Title for Logs panel."
+  },
+
+  "settings_title": {
+    "message": "Router Inspector — Settings",
+    "description": "Document title for settings page."
+  },
+  "settings_header_title": {
+    "message": "Router Inspector"
+  },
+  "settings_header_subtitle": {
+    "message": "Settings"
+  },
+
+  "settings_section_appearance": {
+    "message": "Appearance"
+  },
+  "settings_section_data_storage": {
+    "message": "Data & Storage"
+  },
+  "settings_section_about": {
+    "message": "About"
+  },
+
+  "settings_theme_label": {
+    "message": "Theme"
+  },
+  "settings_theme_desc": {
+    "message": "Choose your preferred color scheme. Changes apply immediately and are persisted across sessions."
+  },
+
+  "settings_saved_bookmarks_label": {
+    "message": "Saved bookmarks"
+  },
+  "settings_saved_bookmarks_desc": {
+    "message": "Credential bookmarks are stored per router model and auto-loaded when a matching router is detected."
+  },
+  "settings_bookmark_count_title": {
+    "message": "Total saved credential bookmarks"
+  },
+
+  "settings_clear_all_label": {
+    "message": "Clear all extension data"
+  },
+  "settings_clear_all_desc": {
+    "message": "Removes all cached router data, saved credentials, bookmarks and UI state. This action cannot be undone."
+  },
+  "settings_clear_all_button": {
+    "message": "Clear all"
+  },
+
+  "settings_about_extension_label": {
+    "message": "Extension"
+  },
+  "settings_about_version_label": {
+    "message": "Version"
+  },
+
+  "settings_bookmarks_empty": {
+    "message": "No saved credentials yet."
+  },
+  "settings_toast_credential_removed": {
+    "message": "Credential removed"
+  },
+  "settings_toast_all_cleared": {
+    "message": "All extension data cleared"
+  },
+  "settings_bookmarks_delete_title": {
+    "message": "Remove credential"
+  },
+  "settings_bookmarks_delete_aria": {
+    "message": "Remove credential for $username$",
+    "placeholders": {
+      "username": {
+        "content": "$1"
+      }
+    }
+  },
+
+  "popup_label_link_speed": { "message": "Link Speed" },
+  "popup_label_ip_version": { "message": "IP Version" },
+  "popup_label_dhcpv6_status": { "message": "DHCPv6 Status" },
+  "popup_label_pd_status": { "message": "PD Status" },
+  "popup_label_slaac_status": { "message": "SLAAC Status" },
+  "popup_label_gua_pd_status": { "message": "Gua PD Status" },
+  "popup_label_remote_access_ipv4": { "message": "Remote access - IPv4" },
+  "popup_label_remote_access_ipv6": { "message": "Remote access - IPv6" },
+  "popup_label_isp_dns_enabled": { "message": "ISP DNS Enabled" },
+  "popup_label_lease_time_mode": { "message": "Lease Time Mode" },
+  "popup_label_lease_time": { "message": "Lease Time" },
+  "popup_label_version": { "message": "Version" },
+  "popup_label_url": { "message": "URL" },
+
+  "popup_toggle_wan_aria": { "message": "Toggle WAN section" },
+  "popup_toggle_remote_access_aria": {
+    "message": "Toggle Remote Access section"
+  },
+  "popup_toggle_wlan_band_steering_aria": {
+    "message": "Toggle WLAN Band Steering section"
+  },
+  "popup_toggle_wlan_24_aria": { "message": "Toggle WLAN 2.4GHz section" },
+  "popup_toggle_wlan_5_aria": { "message": "Toggle WLAN 5GHz section" },
+  "popup_toggle_dhcp_aria": { "message": "Toggle DHCP section" },
+  "popup_toggle_upnp_aria": { "message": "Toggle UPnP section" },
+  "popup_toggle_router_version_aria": {
+    "message": "Toggle Router Version section"
+  },
+  "popup_toggle_tr069_url_aria": { "message": "Toggle TR069 URL section" },
+  "popup_toggle_topology_cable_aria": {
+    "message": "Toggle Cable Topology section"
+  },
+  "popup_toggle_topology_24_aria": {
+    "message": "Toggle 2.4GHz Topology section"
+  },
+  "popup_toggle_topology_5_aria": {
+    "message": "Toggle 5GHz Topology section"
+  },
+  "popup_tabs_aria_label": { "message": "Popup sections" },
+  "popup_status_enabled": { "message": "Enabled" },
+  "popup_status_disabled": { "message": "Disabled" },
+
+  "popup_error_no_active_tab": {
+    "message": "Cannot find an active browser tab. Open your router page and try again"
+  },
+  "popup_log_no_active_tab": {
+    "message": "No active browser tab detected while starting collection"
+  },
+  "popup_log_redirect_retry": {
+    "message": "Router page is redirecting after login. Retrying collection..."
+  },
+  "popup_error_router_comm": {
+    "message": "Failed to communicate with the router page. Make sure it is open and reachable, then try again"
+  },
+  "popup_log_retry_attempt": {
+    "message": "Retrying collection ($attempt$/$max$) while waiting for the router page to finish loading...",
+    "placeholders": {
+      "attempt": { "content": "$1" },
+      "max": { "content": "$2" }
+    }
+  },
+  "popup_error_timeout_waiting": {
+    "message": "Timed out waiting for the router page to be ready. Refresh the page and try again"
+  },
+  "popup_log_timeout_waiting": {
+    "message": "Timed out waiting for the router page to become ready"
+  },
+  "popup_error_unexpected_format": {
+    "message": "Router returned data in an unexpected format. Refresh the router page and try again"
+  },
+  "popup_status_collected_ok": {
+    "message": "Router data collected successfully"
+  },
+  "popup_error_unknown_response": {
+    "message": "Unknown response format"
+  },
+
+  "popup_model_not_detected": { "message": "Not detected" },
+
+  "popup_saved_credentials_no_data": { "message": "No saved credentials" },
+  "popup_saved_credentials_delete_title": {
+    "message": "Delete saved credentials"
+  },
+  "popup_saved_credentials_use_title": {
+    "message": "Use saved credentials"
+  },
+
+  "popup_error_router_model_not_detected": {
+    "message": "Router model not detected. Cannot save credentials"
+  },
+  "popup_error_save_missing_fields": {
+    "message": "Provide both username and password before saving"
+  },
+  "popup_error_max_bookmarks": {
+    "message": "Maximum number of bookmarks reached. Remove some bookmarks to save new ones"
+  },
+  "popup_status_bookmark_saved": {
+    "message": "Credentials saved to bookmark list"
+  },
+  "popup_status_bookmark_removed": {
+    "message": "Credential removed from bookmark list"
+  }
+}
