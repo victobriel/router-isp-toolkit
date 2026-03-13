@@ -9,7 +9,7 @@ import type { IRouter } from "../../domain/ports/IRouter.js";
 import {
   DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
-} from "../drivers/zte/constants.js";
+} from "../../infra/drivers/shared/constants.js";
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.

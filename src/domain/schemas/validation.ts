@@ -82,6 +82,34 @@ export const ExtractionResultSchema = z.object({
       maxClients: z.number(),
     })
     .optional(),
+  /**
+   * Some routers support multiple SSIDs per band.
+   * When present, these arrays list all configured SSIDs for the band.
+   * The legacy single-band config fields above continue to represent
+   * the primary SSID to preserve backward compatibility.
+   */
+  wlan24GhzSsids: z
+    .array(
+      z.object({
+        ssidName: z.string(),
+        ssidPassword: z.string(),
+        ssidHideMode: z.string(),
+        wpa2SecurityType: z.string(),
+        maxClients: z.number(),
+      })
+    )
+    .optional(),
+  wlan5GhzSsids: z
+    .array(
+      z.object({
+        ssidName: z.string(),
+        ssidPassword: z.string(),
+        ssidHideMode: z.string(),
+        wpa2SecurityType: z.string(),
+        maxClients: z.number(),
+      })
+    )
+    .optional(),
   wlan5GhzConfig: z
     .object({
       enabled: z.boolean(),

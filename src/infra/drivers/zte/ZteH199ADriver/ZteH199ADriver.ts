@@ -1,4 +1,4 @@
-import { BaseRouter } from "../../router/BaseRouter.js";
+import { BaseRouter } from "../../../router/BaseRouter.js";
 import {
   ExtractionResultSchema,
   PingTestResultSchema,
@@ -6,9 +6,9 @@ import {
   type Credentials,
   type ExtractionResult,
   type PingTestResult,
-} from "../../../domain/schemas/validation.js";
-import { DomService } from "../../dom/DomService.js";
-import type { TopologyBand, TopologyClient } from "../shared/types.js";
+} from "../../../../domain/schemas/validation.js";
+import { DomService } from "../../../dom/DomService.js";
+import type { TopologyBand, TopologyClient } from "../../shared/types.js";
 import {
   DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
   TOPOLOGY_CLIENTS_LOAD_MAX_WAIT_MS,
@@ -18,8 +18,7 @@ import {
   ZteH199ALoginSelectors,
   ZteH199ASelectors as Selectors,
 } from "./ZteH199ASelectors.js";
-import type { ITopologySectionParser } from "../shared/TopologySectionParser.js";
-import type { DiagnosticsMode } from "../../../domain/schemas/validation.js";
+import type { ITopologySectionParser } from "../../shared/TopologySectionParser.js";
 
 export class ZteH199ADriver extends BaseRouter {
   private readonly s = Selectors;
@@ -273,7 +272,10 @@ export class ZteH199ADriver extends BaseRouter {
   }
 
   private async extractWlanData(): Promise<
-    Pick<ExtractionResult, "wlan24GhzConfig" | "wlan5GhzConfig">
+    Pick<
+      ExtractionResult,
+      "wlan24GhzConfig" | "wlan5GhzConfig" | "wlan24GhzSsids" | "wlan5GhzSsids"
+    >
   > {
     await this.clickElementAndWait(
       this.s.localNetworkTab,
@@ -385,6 +387,9 @@ export class ZteH199ADriver extends BaseRouter {
       ).trim();
     }
 
+    const wlan24GhzSsids = this.extractMultiSsidConfigs(0, 4);
+    const wlan5GhzSsids = this.extractMultiSsidConfigs(4, 4);
+
     return {
       wlan24GhzConfig: {
         enabled: wlan24GhzConfig.enabled,
@@ -410,7 +415,74 @@ export class ZteH199ADriver extends BaseRouter {
         maxClients: Number(wlan5GhzSsidMaxClients),
         ssidPassword: wlan5GhzSsidPassword,
       },
+      wlan24GhzSsids,
+      wlan5GhzSsids,
     };
+  }
+
+  /**
+   * Reads all SSID rows that are currently visible in the SSID configuration
+   * table. The H199A can expose up to 4 SSIDs per band; indices 0–3 are
+   * typically 2.4GHz and 4–7 are 5GHz.
+   *
+   * This helper is intentionally defensive: it skips rows that are not present
+   * or have an empty SSID name so that we only surface SSIDs that are actually
+   * configured.
+   */
+  private extractMultiSsidConfigs(startIndex: number, count: number): {
+    ssidName: string;
+    ssidPassword: string;
+    ssidHideMode: string;
+    wpa2SecurityType: string;
+    maxClients: number;
+  }[] {
+    const results: {
+      ssidName: string;
+      ssidPassword: string;
+      ssidHideMode: string;
+      wpa2SecurityType: string;
+      maxClients: number;
+    }[] = [];
+
+    for (let offset = 0; offset < count; offset++) {
+      const index = startIndex + offset;
+
+      const ssidNameSelector = `#ESSID\\:${index}`;
+      const ssidName =
+        DomService.getOptionalValue(ssidNameSelector) ?? "";
+      if (!ssidName.trim()) {
+        continue;
+      }
+
+      const passwordSelector = `#KeyPassphrase\\:${index}`;
+      const ssidPassword =
+        DomService.getOptionalValue(passwordSelector) ?? "";
+
+      const hideModeInput = document.querySelector<HTMLInputElement>(
+        `#ESSIDHideEnable0\\:${index}`
+      );
+      const ssidHideMode =
+        hideModeInput && hideModeInput.checked ? "Hidden" : "Visible";
+
+      const wpa2SecuritySelector = `#EncryptionType\\:${index}`;
+      const wpa2SecurityType =
+        DomService.getOptionalValue(wpa2SecuritySelector) ?? "";
+
+      const maxClientsSelector = `#MaxUserNum\\:${index}`;
+      const maxClientsRaw =
+        DomService.getOptionalValue(maxClientsSelector) ?? "";
+      const maxClients = Number(maxClientsRaw) || 0;
+
+      results.push({
+        ssidName: ssidName.trim(),
+        ssidPassword: ssidPassword.trim(),
+        ssidHideMode,
+        wpa2SecurityType,
+        maxClients,
+      });
+    }
+
+    return results;
   }
 
   private async extractLanData(): Promise<

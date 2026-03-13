@@ -67,6 +67,9 @@ export class PopupController {
     "the tab was closed",
   ];
 
+  private wlan24GhzSsidIndex = 0;
+  private wlan5GhzSsidIndex = 0;
+
   constructor() {
     this.setupListeners();
     this.resetDiagnosticsControls();
@@ -138,6 +141,30 @@ export class PopupController {
     externalModeButton?.addEventListener("click", () => {
       this.setDiagnosticsMode(DiagnosticsMode.EXTERNAL);
     });
+
+    const wlan24Prev = document.getElementById(
+      "popup-wlan24ghz-ssid-prev"
+    ) as HTMLButtonElement | null;
+    const wlan24Next = document.getElementById(
+      "popup-wlan24ghz-ssid-next"
+    ) as HTMLButtonElement | null;
+    const wlan5Prev = document.getElementById(
+      "popup-wlan5ghz-ssid-prev"
+    ) as HTMLButtonElement | null;
+    const wlan5Next = document.getElementById(
+      "popup-wlan5ghz-ssid-next"
+    ) as HTMLButtonElement | null;
+
+    wlan24Prev?.addEventListener("click", () =>
+      this.changeSsidIndex("24ghz", -1)
+    );
+    wlan24Next?.addEventListener("click", () =>
+      this.changeSsidIndex("24ghz", 1)
+    );
+    wlan5Prev?.addEventListener("click", () =>
+      this.changeSsidIndex("5ghz", -1)
+    );
+    wlan5Next?.addEventListener("click", () => this.changeSsidIndex("5ghz", 1));
   }
 
   /**
@@ -489,80 +516,7 @@ export class PopupController {
       "wlanBandSteeringStatus",
       this.toStatusText(data?.bandSteeringEnabled)
     );
-    PopupView.updateField(
-      "wlan24ghzStatus",
-      this.toStatusText(data?.wlan24GhzConfig?.enabled) ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzChannel",
-      String(data?.wlan24GhzConfig?.channel ?? null)
-    );
-    PopupView.updateField(
-      "wlan24ghzBandWidth",
-      data?.wlan24GhzConfig?.bandWidth ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzTransmittingPower",
-      data?.wlan24GhzConfig?.transmittingPower ?? null
-    );
-    PopupView.updateField("wlan24ghzMode", data?.wlan24GhzConfig?.mode ?? null);
-    PopupView.updateField(
-      "wlan24ghzSsidName",
-      data?.wlan24GhzConfig?.ssidName ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzSsidPassword",
-      data?.wlan24GhzConfig?.ssidPassword ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzSsidHideMode",
-      data?.wlan24GhzConfig?.ssidHideMode ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzWpa2Security",
-      data?.wlan24GhzConfig?.wpa2SecurityType ?? null
-    );
-    PopupView.updateField(
-      "wlan24ghzMaxClients",
-      String(data?.wlan24GhzConfig?.maxClients ?? null)
-    );
-    PopupView.updateField(
-      "wlan5ghzStatus",
-      this.toStatusText(data?.wlan5GhzConfig?.enabled) ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzChannel",
-      String(data?.wlan5GhzConfig?.channel ?? null)
-    );
-    PopupView.updateField(
-      "wlan5ghzBandWidth",
-      data?.wlan5GhzConfig?.bandWidth ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzTransmittingPower",
-      data?.wlan5GhzConfig?.transmittingPower ?? null
-    );
-    PopupView.updateField("wlan5ghzMode", data?.wlan5GhzConfig?.mode ?? null);
-    PopupView.updateField(
-      "wlan5ghzSsidName",
-      data?.wlan5GhzConfig?.ssidName ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzSsidPassword",
-      data?.wlan5GhzConfig?.ssidPassword ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzSsidHideMode",
-      data?.wlan5GhzConfig?.ssidHideMode ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzWpa2Security",
-      data?.wlan5GhzConfig?.wpa2SecurityType ?? null
-    );
-    PopupView.updateField(
-      "wlan5ghzMaxClients",
-      String(data?.wlan5GhzConfig?.maxClients ?? null)
-    );
+    this.renderWlanSections(data);
     PopupView.updateField("dhcpEnabled", this.toStatusText(data?.dhcpEnabled));
     PopupView.updateField("dhcpIpAddress", data?.dhcpIpAddress ?? null);
     PopupView.updateField("dhcpSubnetMask", data?.dhcpSubnetMask ?? null);
@@ -594,6 +548,125 @@ export class PopupController {
     }
     this.populateDiagnosticsDevicesFromTopology();
     this.setCopyTextButtonEnabled(true);
+  }
+
+  private renderWlanSections(data: ExtractionResult): void {
+    const base24 = data.wlan24GhzConfig;
+    const base5 = data.wlan5GhzConfig;
+
+    PopupView.updateField(
+      "wlan24ghzStatus",
+      this.toStatusText(base24?.enabled) ?? null
+    );
+    PopupView.updateField("wlan24ghzChannel", String(base24?.channel ?? null));
+    PopupView.updateField("wlan24ghzBandWidth", base24?.bandWidth ?? null);
+    PopupView.updateField(
+      "wlan24ghzTransmittingPower",
+      base24?.transmittingPower ?? null
+    );
+    PopupView.updateField("wlan24ghzMode", base24?.mode ?? null);
+
+    const ssids24 = data.wlan24GhzSsids ?? [];
+    if (ssids24.length > 0) {
+      this.wlan24GhzSsidIndex =
+        ((this.wlan24GhzSsidIndex % ssids24.length) + ssids24.length) %
+        ssids24.length;
+      const active = ssids24[this.wlan24GhzSsidIndex]!;
+      PopupView.updateField("wlan24ghzSsidName", active.ssidName || null);
+      PopupView.updateField(
+        "wlan24ghzSsidPassword",
+        active.ssidPassword || null
+      );
+      PopupView.updateField(
+        "wlan24ghzSsidHideMode",
+        active.ssidHideMode || null
+      );
+      PopupView.updateField(
+        "wlan24ghzWpa2Security",
+        active.wpa2SecurityType || null
+      );
+      PopupView.updateField("wlan24ghzMaxClients", String(active.maxClients));
+      PopupView.updateField(
+        "wlan24ghzSsidIndex",
+        `${this.wlan24GhzSsidIndex + 1} / ${ssids24.length}`
+      );
+    } else {
+      PopupView.updateField("wlan24ghzSsidName", base24?.ssidName ?? null);
+      PopupView.updateField(
+        "wlan24ghzSsidPassword",
+        base24?.ssidPassword ?? null
+      );
+      PopupView.updateField(
+        "wlan24ghzSsidHideMode",
+        base24?.ssidHideMode ?? null
+      );
+      PopupView.updateField(
+        "wlan24ghzWpa2Security",
+        base24?.wpa2SecurityType ?? null
+      );
+      PopupView.updateField(
+        "wlan24ghzMaxClients",
+        base24?.maxClients != null ? String(base24.maxClients) : null
+      );
+      PopupView.updateField("wlan24ghzSsidIndex", null);
+    }
+
+    PopupView.updateField(
+      "wlan5ghzStatus",
+      this.toStatusText(base5?.enabled) ?? null
+    );
+    PopupView.updateField("wlan5ghzChannel", String(base5?.channel ?? null));
+    PopupView.updateField("wlan5ghzBandWidth", base5?.bandWidth ?? null);
+    PopupView.updateField(
+      "wlan5ghzTransmittingPower",
+      base5?.transmittingPower ?? null
+    );
+    PopupView.updateField("wlan5ghzMode", base5?.mode ?? null);
+
+    const ssids5 = data.wlan5GhzSsids ?? [];
+    if (ssids5.length > 0) {
+      this.wlan5GhzSsidIndex =
+        ((this.wlan5GhzSsidIndex % ssids5.length) + ssids5.length) %
+        ssids5.length;
+      const active = ssids5[this.wlan5GhzSsidIndex]!;
+      PopupView.updateField("wlan5ghzSsidName", active.ssidName || null);
+      PopupView.updateField(
+        "wlan5ghzSsidPassword",
+        active.ssidPassword || null
+      );
+      PopupView.updateField(
+        "wlan5ghzSsidHideMode",
+        active.ssidHideMode || null
+      );
+      PopupView.updateField(
+        "wlan5ghzWpa2Security",
+        active.wpa2SecurityType || null
+      );
+      PopupView.updateField("wlan5ghzMaxClients", String(active.maxClients));
+      PopupView.updateField(
+        "wlan5ghzSsidIndex",
+        `${this.wlan5GhzSsidIndex + 1} / ${ssids5.length}`
+      );
+    } else {
+      PopupView.updateField("wlan5ghzSsidName", base5?.ssidName ?? null);
+      PopupView.updateField(
+        "wlan5ghzSsidPassword",
+        base5?.ssidPassword ?? null
+      );
+      PopupView.updateField(
+        "wlan5ghzSsidHideMode",
+        base5?.ssidHideMode ?? null
+      );
+      PopupView.updateField(
+        "wlan5ghzWpa2Security",
+        base5?.wpa2SecurityType ?? null
+      );
+      PopupView.updateField(
+        "wlan5ghzMaxClients",
+        base5?.maxClients != null ? String(base5.maxClients) : null
+      );
+      PopupView.updateField("wlan5ghzSsidIndex", null);
+    }
   }
 
   private renderTopologyBand(
@@ -800,6 +873,22 @@ export class PopupController {
 
     select.disabled = false;
     pingButton.disabled = false;
+  }
+  private changeSsidIndex(band: "24ghz" | "5ghz", delta: number): void {
+    if (!this.currentData) return;
+
+    if (band === "24ghz") {
+      const total = this.currentData.wlan24GhzSsids?.length ?? 0;
+      if (total <= 1) return;
+      this.wlan24GhzSsidIndex =
+        (this.wlan24GhzSsidIndex + delta + total) % total;
+    } else {
+      const total = this.currentData.wlan5GhzSsids?.length ?? 0;
+      if (total <= 1) return;
+      this.wlan5GhzSsidIndex = (this.wlan5GhzSsidIndex + delta + total) % total;
+    }
+
+    this.renderWlanSections(this.currentData);
   }
 
   private async handleDiagnosticsPing(): Promise<void> {

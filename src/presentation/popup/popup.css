@@ -859,3 +859,25 @@ h1 {
     transition-duration: 0.01ms !important;
   }
 }
+
+.popup-ssid-slider {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: var(--ri-space-3);
+}
+
+#popup-val-wlan24ghzSsidIndex,
+#popup-val-wlan5ghzSsidIndex {
+  text-align: center;
+  font-family: var(--ri-sans);
+}
+
+.popup-btn-ssid-nav {
+  height: 28px;
+  border-radius: 8px;
+  font-size: var(--ri-text-lg);
+  background-color: transparent;
+  color: var(--ri-muted);
+  border: 1px solid var(--ri-muted);
+}
