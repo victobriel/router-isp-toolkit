@@ -29,6 +29,7 @@ export class PopupView {
     const el = DomService.getElement(`#popup-val-${id}`, HTMLElement);
     const displayValue = value === null || value === "" ? "-" : value;
     el.textContent = displayValue;
+    el.title = displayValue;
     el.className = `popup-card-value ${displayValue === "-" ? "popup-card-value--empty" : ""}`;
   }
 

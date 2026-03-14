@@ -1,8 +1,8 @@
 /**
- * CSS selectors for the ZTE ZXHN H199A router admin UI.
- * Used by ZteH199ADriver for navigation and data extraction.
+ * CSS selectors for the ZTE ZXHN H199 router admin UI.
+ * Used by ZteH199Driver for navigation and data extraction.
  */
-export const ZteH199ASelectors = {
+export const ZteH199Selectors = {
   // Login
   username: '#Frm_Username, input[name="Frm_Username"]',
   password: '#Frm_Password, input[name="Frm_Password"]',
@@ -103,6 +103,7 @@ export const ZteH199ASelectors = {
   wlanSsidConfigContainer: "#WLANSSIDConfBar",
 
   // Local Network -> WLAN -> Basic -> SSID Config -> 2.4GHz
+  wlan24GhzSsidEnabled: "#Enable1\\:0",
   wlan24GhzSsidName: "#ESSID\\:0",
   wlan24GhzSsidHideMode: "#ESSIDHideEnable0\\:0",
   wlan24GhzSsidWpa2SecurityType: "#EncryptionType\\:0",
@@ -112,6 +113,7 @@ export const ZteH199ASelectors = {
 
   // Local Network -> WLAN -> Basic -> SSID Config -> 5GHz
   wlan5GhzSsidConfigContainer: "#instName_WLANSSIDConf\\:4",
+  wlan5GhzSsidEnabled: "#Enable1\\:4",
   wlan5GhzSsidName: "#ESSID\\:4",
   wlan5GhzSsidHideMode: "#ESSIDHideEnable0\\:4",
   wlan5GhzSsidWpa2SecurityType: "#EncryptionType\\:4",
@@ -173,7 +175,7 @@ export const ZteH199ASelectors = {
 } as const;
 
 /** Login form selectors for Router base class (password may include fallbacks). */
-export const ZteH199ALoginSelectors = {
-  username: ZteH199ASelectors.username,
+export const ZteH199LoginSelectors = {
+  username: ZteH199Selectors.username,
   password: '#Frm_Password, input[name="Frm_Password"], input[type="password"]',
 } as const;

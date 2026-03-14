@@ -1,7 +1,7 @@
-import { ZteH199ADriver } from "../drivers/zte/ZteH199ADriver/ZteH199ADriver.js";
+import { ZteH199Driver } from "../drivers/zte/ZteH199Driver/ZteH199Driver.js";
 import { TopologySectionParser } from "../drivers/shared/TopologySectionParser.js";
 import type { IRouter } from "../../domain/ports/IRouter.js";
-import { ZteH3601PDriver } from "../drivers/zte/ZteH3601PDriver/ZteH3601PDriver.js";
+import { ZteH3601Driver } from "../drivers/zte/ZteH3601Driver/ZteH3601Driver.js";
 
 /**
  * Infrastructure factory: creates a router adapter for the current page.
@@ -12,12 +12,12 @@ export class RouterFactory {
     const title = document.title.toLowerCase();
     const bodyText = document.body.innerText.toLowerCase();
 
-    if (this.isZteH199A(title, bodyText)) {
-      return new ZteH199ADriver(new TopologySectionParser());
+    if (this.isZteH199(title, bodyText)) {
+      return new ZteH199Driver(new TopologySectionParser());
     }
 
-    if (this.isZteH3601P(title, bodyText)) {
-      return new ZteH3601PDriver(new TopologySectionParser());
+    if (this.isZteH3601(title, bodyText)) {
+      return new ZteH3601Driver(new TopologySectionParser());
     }
 
     throw new Error(
@@ -25,8 +25,8 @@ export class RouterFactory {
     );
   }
 
-  private static isZteH199A(title: string, body: string): boolean {
-    const indicators = ["h199a", "h199"];
+  private static isZteH199(title: string, body: string): boolean {
+    const indicators = ["h199"];
 
     for (const term of indicators) {
       if (title.includes(term) || body.includes(term)) {
@@ -37,8 +37,8 @@ export class RouterFactory {
     return false;
   }
 
-  private static isZteH3601P(title: string, body: string): boolean {
-    const indicators = ["h3601p", "h3601"];
+  private static isZteH3601(title: string, body: string): boolean {
+    const indicators = ["h3601"];
 
     for (const term of indicators) {
       if (title.includes(term) || body.includes(term)) {

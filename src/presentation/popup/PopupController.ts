@@ -273,17 +273,20 @@ export class PopupController {
       // Band steering
       BandSteeringStatus: boolText(data.bandSteeringEnabled),
 
+      // Cable
+      CableTotalClientsConnected: String(
+        data.topology?.["cable"]?.totalClients ?? 0
+      ),
+
       // WLAN 2.4GHz
       Wlan24Status: wlan24 ? boolText(wlan24.enabled) : "-",
       Wlan24Channel: wlan24 ? asText(wlan24.channel) : "-",
       Wlan24Mode: wlan24 ? asText(wlan24.mode) : "-",
       Wlan24BandWidth: wlan24 ? asText(wlan24.bandWidth) : "-",
       Wlan24TransmittingPower: wlan24 ? asText(wlan24.transmittingPower) : "-",
-      Wlan24SsidName: wlan24 ? asText(wlan24.ssidName) : "-",
-      Wlan24SsidPassword: wlan24 ? asText(wlan24.ssidPassword) : "-",
-      Wlan24SsidHideMode: wlan24 ? asText(wlan24.ssidHideMode) : "-",
-      Wlan24Wpa2SecurityType: wlan24 ? asText(wlan24.wpa2SecurityType) : "-",
-      Wlan24MaxClients: wlan24 ? asText(wlan24.maxClients) : "-",
+      Wlan24TotalClientsConnected: wlan24
+        ? String(data.topology?.["24ghz"]?.totalClients ?? 0)
+        : "-",
 
       // WLAN 5GHz
       Wlan5Status: wlan5 ? boolText(wlan5.enabled) : "-",
@@ -291,11 +294,16 @@ export class PopupController {
       Wlan5Mode: wlan5 ? asText(wlan5.mode) : "-",
       Wlan5BandWidth: wlan5 ? asText(wlan5.bandWidth) : "-",
       Wlan5TransmittingPower: wlan5 ? asText(wlan5.transmittingPower) : "-",
-      Wlan5SsidName: wlan5 ? asText(wlan5.ssidName) : "-",
-      Wlan5SsidPassword: wlan5 ? asText(wlan5.ssidPassword) : "-",
-      Wlan5SsidHideMode: wlan5 ? asText(wlan5.ssidHideMode) : "-",
-      Wlan5Wpa2SecurityType: wlan5 ? asText(wlan5.wpa2SecurityType) : "-",
-      Wlan5MaxClients: wlan5 ? asText(wlan5.maxClients) : "-",
+      Wlan5TotalClientsConnected: wlan5
+        ? String(data.topology?.["5ghz"]?.totalClients ?? 0)
+        : "-",
+
+      TotalClientsConnected: String(
+        (["24ghz", "5ghz", "cable"] as const).reduce(
+          (sum, band) => sum + (data.topology?.[band]?.totalClients ?? 0),
+          0
+        )
+      ),
 
       // DHCP
       DhcpStatus: boolText(data.dhcpEnabled),
@@ -522,10 +530,6 @@ export class PopupController {
     PopupView.updateField("dhcpSubnetMask", data?.dhcpSubnetMask ?? null);
     PopupView.updateField("dhcpStartIp", data?.dhcpStartIp ?? null);
     PopupView.updateField("dhcpEndIp", data?.dhcpEndIp ?? null);
-    PopupView.updateField(
-      "dhcpIspDnsEnabled",
-      this.toStatusText(data?.dhcpIspDnsEnabled)
-    );
     PopupView.updateField("dhcpPrimaryDns", data?.dhcpPrimaryDns ?? null);
     PopupView.updateField("dhcpSecondaryDns", data?.dhcpSecondaryDns ?? null);
     PopupView.updateField("dhcpLeaseTimeMode", data?.dhcpLeaseTimeMode ?? null);
@@ -534,6 +538,14 @@ export class PopupController {
     PopupView.updateField("routerVersion", data?.routerVersion ?? null);
     PopupView.updateField("tr069Url", data?.tr069Url ?? null);
     const topology = data?.topology;
+    PopupView.updateField(
+      "wlan24ghzTotalClients",
+      String(topology?.["24ghz"]?.totalClients ?? 0)
+    );
+    PopupView.updateField(
+      "wlan5ghzTotalClients",
+      String(topology?.["5ghz"]?.totalClients ?? 0)
+    );
     if (topology) {
       for (const band of ["24ghz", "5ghz", "cable"] as const) {
         this.renderTopologyBand(band, topology[band].clients);
@@ -572,6 +584,10 @@ export class PopupController {
         ((this.wlan24GhzSsidIndex % ssids24.length) + ssids24.length) %
         ssids24.length;
       const active = ssids24[this.wlan24GhzSsidIndex]!;
+      PopupView.updateField(
+        "wlan24ghzSsidStatus",
+        this.toStatusText(active.enabled) ?? null
+      );
       PopupView.updateField("wlan24ghzSsidName", active.ssidName || null);
       PopupView.updateField(
         "wlan24ghzSsidPassword",
@@ -579,7 +595,7 @@ export class PopupController {
       );
       PopupView.updateField(
         "wlan24ghzSsidHideMode",
-        active.ssidHideMode || null
+        active.ssidHideMode ? "Hidden" : "Visible"
       );
       PopupView.updateField(
         "wlan24ghzWpa2Security",
@@ -591,24 +607,17 @@ export class PopupController {
         `${this.wlan24GhzSsidIndex + 1} / ${ssids24.length}`
       );
     } else {
-      PopupView.updateField("wlan24ghzSsidName", base24?.ssidName ?? null);
+      // No multi-SSID array: show primary band config where available
       PopupView.updateField(
-        "wlan24ghzSsidPassword",
-        base24?.ssidPassword ?? null
+        "wlan24ghzSsidStatus",
+        base24 ? (this.toStatusText(base24.enabled) ?? null) : null
       );
-      PopupView.updateField(
-        "wlan24ghzSsidHideMode",
-        base24?.ssidHideMode ?? null
-      );
-      PopupView.updateField(
-        "wlan24ghzWpa2Security",
-        base24?.wpa2SecurityType ?? null
-      );
-      PopupView.updateField(
-        "wlan24ghzMaxClients",
-        base24?.maxClients != null ? String(base24.maxClients) : null
-      );
-      PopupView.updateField("wlan24ghzSsidIndex", null);
+      PopupView.updateField("wlan24ghzSsidName", null);
+      PopupView.updateField("wlan24ghzSsidPassword", null);
+      PopupView.updateField("wlan24ghzSsidHideMode", null);
+      PopupView.updateField("wlan24ghzWpa2Security", null);
+      PopupView.updateField("wlan24ghzMaxClients", null);
+      PopupView.updateField("wlan24ghzSsidIndex", base24 ? "1 / 1" : null);
     }
 
     PopupView.updateField(
@@ -629,6 +638,10 @@ export class PopupController {
         ((this.wlan5GhzSsidIndex % ssids5.length) + ssids5.length) %
         ssids5.length;
       const active = ssids5[this.wlan5GhzSsidIndex]!;
+      PopupView.updateField(
+        "wlan5ghzSsidStatus",
+        this.toStatusText(active.enabled) ?? null
+      );
       PopupView.updateField("wlan5ghzSsidName", active.ssidName || null);
       PopupView.updateField(
         "wlan5ghzSsidPassword",
@@ -636,7 +649,7 @@ export class PopupController {
       );
       PopupView.updateField(
         "wlan5ghzSsidHideMode",
-        active.ssidHideMode || null
+        active.ssidHideMode ? "Hidden" : "Visible"
       );
       PopupView.updateField(
         "wlan5ghzWpa2Security",
@@ -648,24 +661,17 @@ export class PopupController {
         `${this.wlan5GhzSsidIndex + 1} / ${ssids5.length}`
       );
     } else {
-      PopupView.updateField("wlan5ghzSsidName", base5?.ssidName ?? null);
+      // No multi-SSID array: show primary band config where available
       PopupView.updateField(
-        "wlan5ghzSsidPassword",
-        base5?.ssidPassword ?? null
+        "wlan5ghzSsidStatus",
+        base5 ? (this.toStatusText(base5.enabled) ?? null) : null
       );
-      PopupView.updateField(
-        "wlan5ghzSsidHideMode",
-        base5?.ssidHideMode ?? null
-      );
-      PopupView.updateField(
-        "wlan5ghzWpa2Security",
-        base5?.wpa2SecurityType ?? null
-      );
-      PopupView.updateField(
-        "wlan5ghzMaxClients",
-        base5?.maxClients != null ? String(base5.maxClients) : null
-      );
-      PopupView.updateField("wlan5ghzSsidIndex", null);
+      PopupView.updateField("wlan5ghzSsidName", null);
+      PopupView.updateField("wlan5ghzSsidPassword", null);
+      PopupView.updateField("wlan5ghzSsidHideMode", null);
+      PopupView.updateField("wlan5ghzWpa2Security", null);
+      PopupView.updateField("wlan5ghzMaxClients", null);
+      PopupView.updateField("wlan5ghzSsidIndex", base5 ? "1 / 1" : null);
     }
   }
 
@@ -874,6 +880,7 @@ export class PopupController {
     select.disabled = false;
     pingButton.disabled = false;
   }
+
   private changeSsidIndex(band: "24ghz" | "5ghz", delta: number): void {
     if (!this.currentData) return;
 
@@ -1030,6 +1037,8 @@ export class PopupController {
     PopupView.updateField("wlan24ghzBandWidth", null);
     PopupView.updateField("wlan24ghzTransmittingPower", null);
     PopupView.updateField("wlan24ghzMode", null);
+    PopupView.updateField("wlan24ghzTotalClients", null);
+    PopupView.updateField("wlan24ghzSsidStatus", null);
     PopupView.updateField("wlan24ghzSsidName", null);
     PopupView.updateField("wlan24ghzSsidPassword", null);
     PopupView.updateField("wlan24ghzSsidHideMode", null);
@@ -1040,6 +1049,8 @@ export class PopupController {
     PopupView.updateField("wlan5ghzBandWidth", null);
     PopupView.updateField("wlan5ghzTransmittingPower", null);
     PopupView.updateField("wlan5ghzMode", null);
+    PopupView.updateField("wlan5ghzTotalClients", null);
+    PopupView.updateField("wlan5ghzSsidStatus", null);
     PopupView.updateField("wlan5ghzSsidName", null);
     PopupView.updateField("wlan5ghzSsidPassword", null);
     PopupView.updateField("wlan5ghzSsidHideMode", null);
@@ -1050,7 +1061,6 @@ export class PopupController {
     PopupView.updateField("dhcpSubnetMask", null);
     PopupView.updateField("dhcpStartIp", null);
     PopupView.updateField("dhcpEndIp", null);
-    PopupView.updateField("dhcpIspDnsEnabled", null);
     PopupView.updateField("dhcpPrimaryDns", null);
     PopupView.updateField("dhcpSecondaryDns", null);
     PopupView.updateField("dhcpLeaseTimeMode", null);

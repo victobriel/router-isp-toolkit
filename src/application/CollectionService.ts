@@ -79,8 +79,8 @@ export class CollectionService {
         const result = await router.ping(ip);
 
         return {
-          success: true,
-          message: "Request timed out.",
+          success: result ? true : false,
+          message: result ? "Ping request successful" : "Ping request failed",
           pingResult: result,
         };
       },

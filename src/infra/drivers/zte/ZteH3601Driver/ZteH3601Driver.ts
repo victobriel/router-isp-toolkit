@@ -15,18 +15,18 @@ import {
   TOPOLOGY_POPUP_SETTLE_MS,
 } from "./constants.js";
 import {
-  ZteH199ALoginSelectors,
-  ZteH199ASelectors as Selectors,
-} from "./ZteH199ASelectors.js";
+  ZteH3601LoginSelectors,
+  ZteH3601Selectors as Selectors,
+} from "./ZteH3601Selectors.js";
 import type { ITopologySectionParser } from "../../shared/TopologySectionParser.js";
 
-export class ZteH199ADriver extends BaseRouter {
+export class ZteH3601Driver extends BaseRouter {
   private readonly s = Selectors;
   private readonly topologyParser: ITopologySectionParser;
-  protected readonly loginSelectors = ZteH199ALoginSelectors;
+  protected readonly loginSelectors = ZteH3601LoginSelectors;
 
   constructor(topologyParser: ITopologySectionParser) {
-    super("ZTE ZXHN H199A");
+    super("ZTE ZXHN H3601");
     this.topologyParser = topologyParser;
   }
 
@@ -240,9 +240,18 @@ export class ZteH199ADriver extends BaseRouter {
     }
 
     const topology: ExtractionResult["topology"] = {
-      "24ghz": { clients: clientsByBand["24ghz"] },
-      "5ghz": { clients: clientsByBand["5ghz"] },
-      cable: { clients: clientsByBand.cable },
+      "24ghz": {
+        clients: clientsByBand["24ghz"],
+        totalClients: clientsByBand["24ghz"].length,
+      },
+      "5ghz": {
+        clients: clientsByBand["5ghz"],
+        totalClients: clientsByBand["5ghz"].length,
+      },
+      cable: {
+        clients: clientsByBand.cable,
+        totalClients: clientsByBand.cable.length,
+      },
     };
 
     return { topology };
@@ -334,58 +343,14 @@ export class ZteH199ADriver extends BaseRouter {
       this.s.wlan24GhzSsidName
     );
 
-    const wlan24GhzSsidName = DomService.getOptionalValue(
-      this.s.wlan24GhzSsidName
-    );
-    const wlan24GhzSsidHideMode = DomService.getInputElement(
-      this.s.wlan24GhzSsidHideMode
-    ).checked;
-    const wlan24GhzSsidWpa2SecurityType = DomService.getOptionalValue(
-      this.s.wlan24GhzSsidWpa2SecurityType
-    );
-    const wlan24GhzSsidMaxClients = DomService.getOptionalValue(
-      this.s.wlan24GhzSsidMaxClients
-    );
-
     await this.clickElementAndWait(this.s.wlan24GhzShowPasswordButton);
-    const showPassword24Ghz = DomService.getInputElement(
-      this.s.wlan24GhzShowPasswordButton
-    ).checked;
-    let wlan24GhzSsidPassword = "";
-    if (showPassword24Ghz) {
-      wlan24GhzSsidPassword = (
-        DomService.getOptionalValue(this.s.wlan24GhzSsidPassword) ?? ""
-      ).trim();
-    }
 
     await this.clickElementAndWait(
       this.s.wlan5GhzSsidConfigContainer,
       this.s.wlan5GhzSsidName
     );
 
-    const wlan5GhzSsidName = DomService.getOptionalValue(
-      this.s.wlan5GhzSsidName
-    );
-    const wlan5GhzSsidHideMode = DomService.getInputElement(
-      this.s.wlan5GhzSsidHideMode
-    ).checked;
-    const wlan5GhzSsidWpa2SecurityType = DomService.getOptionalValue(
-      this.s.wlan5GhzSsidWpa2SecurityType
-    );
-    const wlan5GhzSsidMaxClients = DomService.getOptionalValue(
-      this.s.wlan5GhzSsidMaxClients
-    );
-
     await this.clickElementAndWait(this.s.wlan5GhzShowPasswordButton);
-    const showPassword5Ghz = DomService.getInputElement(
-      this.s.wlan5GhzShowPasswordButton
-    ).checked;
-    let wlan5GhzSsidPassword = "";
-    if (showPassword5Ghz) {
-      wlan5GhzSsidPassword = (
-        DomService.getOptionalValue(this.s.wlan5GhzSsidPassword) ?? ""
-      ).trim();
-    }
 
     const wlan24GhzSsids = this.extractMultiSsidConfigs(0, 4);
     const wlan5GhzSsids = this.extractMultiSsidConfigs(4, 4);
@@ -393,27 +358,17 @@ export class ZteH199ADriver extends BaseRouter {
     return {
       wlan24GhzConfig: {
         enabled: wlan24GhzConfig.enabled,
-        channel: Number(wlan24GhzChannel),
+        channel: wlan24GhzChannel ?? "",
         mode: wlan24GhzMode ?? "",
         bandWidth: wlan24GhzBandWidth ?? "",
         transmittingPower: wlan24GhzTransmittingPower ?? "",
-        ssidName: wlan24GhzSsidName ?? "",
-        ssidHideMode: wlan24GhzSsidHideMode ? "Hidden" : "Visible",
-        wpa2SecurityType: wlan24GhzSsidWpa2SecurityType ?? "",
-        maxClients: Number(wlan24GhzSsidMaxClients),
-        ssidPassword: wlan24GhzSsidPassword,
       },
       wlan5GhzConfig: {
         enabled: wlan5GhzConfig.enabled,
-        channel: Number(wlan5GhzChannel),
+        channel: wlan5GhzChannel ?? "",
         mode: wlan5GhzMode ?? "",
         bandWidth: wlan5GhzBandWidth ?? "",
         transmittingPower: wlan5GhzTransmittingPower ?? "",
-        ssidName: wlan5GhzSsidName ?? "",
-        ssidHideMode: wlan5GhzSsidHideMode ? "Hidden" : "Visible",
-        wpa2SecurityType: wlan5GhzSsidWpa2SecurityType ?? "",
-        maxClients: Number(wlan5GhzSsidMaxClients),
-        ssidPassword: wlan5GhzSsidPassword,
       },
       wlan24GhzSsids,
       wlan5GhzSsids,
@@ -422,47 +377,40 @@ export class ZteH199ADriver extends BaseRouter {
 
   /**
    * Reads all SSID rows that are currently visible in the SSID configuration
-   * table. The H199A can expose up to 4 SSIDs per band; indices 0–3 are
+   * table. The H3601 can expose up to 4 SSIDs per band; indices 0–3 are
    * typically 2.4GHz and 4–7 are 5GHz.
    *
    * This helper is intentionally defensive: it skips rows that are not present
    * or have an empty SSID name so that we only surface SSIDs that are actually
    * configured.
    */
-  private extractMultiSsidConfigs(startIndex: number, count: number): {
-    ssidName: string;
-    ssidPassword: string;
-    ssidHideMode: string;
-    wpa2SecurityType: string;
-    maxClients: number;
-  }[] {
-    const results: {
-      ssidName: string;
-      ssidPassword: string;
-      ssidHideMode: string;
-      wpa2SecurityType: string;
-      maxClients: number;
-    }[] = [];
+  private extractMultiSsidConfigs(
+    startIndex: number,
+    count: number
+  ): ExtractionResult["wlan24GhzSsids"] | ExtractionResult["wlan5GhzSsids"] {
+    const results:
+      | ExtractionResult["wlan24GhzSsids"]
+      | ExtractionResult["wlan5GhzSsids"] = [];
 
     for (let offset = 0; offset < count; offset++) {
       const index = startIndex + offset;
 
+      const enabledSelector = `#Enable1\\:${index}`;
+      const enabled = DomService.getInputElement(enabledSelector).checked;
+
       const ssidNameSelector = `#ESSID\\:${index}`;
-      const ssidName =
-        DomService.getOptionalValue(ssidNameSelector) ?? "";
+      const ssidName = DomService.getOptionalValue(ssidNameSelector) ?? "";
       if (!ssidName.trim()) {
         continue;
       }
 
       const passwordSelector = `#KeyPassphrase\\:${index}`;
-      const ssidPassword =
-        DomService.getOptionalValue(passwordSelector) ?? "";
+      const ssidPassword = DomService.getOptionalValue(passwordSelector) ?? "";
 
       const hideModeInput = document.querySelector<HTMLInputElement>(
         `#ESSIDHideEnable0\\:${index}`
       );
-      const ssidHideMode =
-        hideModeInput && hideModeInput.checked ? "Hidden" : "Visible";
+      const ssidHideMode = hideModeInput && hideModeInput.checked;
 
       const wpa2SecuritySelector = `#EncryptionType\\:${index}`;
       const wpa2SecurityType =
@@ -474,9 +422,10 @@ export class ZteH199ADriver extends BaseRouter {
       const maxClients = Number(maxClientsRaw) || 0;
 
       results.push({
+        enabled,
         ssidName: ssidName.trim(),
         ssidPassword: ssidPassword.trim(),
-        ssidHideMode,
+        ssidHideMode: ssidHideMode ?? false,
         wpa2SecurityType,
         maxClients,
       });
@@ -527,6 +476,9 @@ export class ZteH199ADriver extends BaseRouter {
     if (!dhcpIspDnsEnabled) {
       dhcpPrimaryDns = this.readDhcpOctetFields("dhcpPrimaryDnsField");
       dhcpSecondaryDns = this.readDhcpOctetFields("dhcpSecondaryDnsField");
+    } else {
+      dhcpPrimaryDns = ["-"];
+      dhcpSecondaryDns = ["-"];
     }
 
     const dhcpLeaseTimeModeValue = DomService.getOptionalValue(
@@ -547,8 +499,18 @@ export class ZteH199ADriver extends BaseRouter {
       dhcpStartIp: dhcpStartIp.join("."),
       dhcpEndIp: dhcpEndIp.join("."),
       dhcpIspDnsEnabled,
-      dhcpPrimaryDns: dhcpPrimaryDns.join("."),
-      dhcpSecondaryDns: dhcpSecondaryDns.join("."),
+      dhcpPrimaryDns:
+        dhcpPrimaryDns.length > 0
+          ? dhcpPrimaryDns[0] !== "-"
+            ? dhcpPrimaryDns.join(".")
+            : "Auto"
+          : undefined,
+      dhcpSecondaryDns:
+        dhcpSecondaryDns.length > 0
+          ? dhcpSecondaryDns[0] !== "-"
+            ? dhcpSecondaryDns.join(".")
+            : "Auto"
+          : undefined,
       dhcpLeaseTimeMode: dhcpLeaseTimeMode ?? "",
       dhcpLeaseTime: dhcpLeaseTime ?? "",
     };
@@ -641,16 +603,16 @@ export class ZteH199ADriver extends BaseRouter {
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
+    let bytes = undefined;
     const headerLine = lines.find((line) => line.startsWith("PING "));
-    if (!headerLine) return null;
-
-    const headerMatch = headerLine.match(
-      /PING\s+.*\(([^)]+)\):\s+(\d+)\s+data bytes/i
-    );
-    if (!headerMatch) return null;
-
-    const targetIp = headerMatch[1] || ip;
-    let bytes = Number(headerMatch[2]);
+    if (headerLine) {
+      const headerMatch = headerLine.match(
+        /PING\s+.*\(([^)]+)\):\s+(\d+)\s+data bytes/i
+      );
+      if (headerMatch) {
+        bytes = Number(headerMatch[2]);
+      }
+    }
 
     const replyLines = lines.filter((line) =>
       line.toLowerCase().startsWith("reply from")
@@ -658,7 +620,7 @@ export class ZteH199ADriver extends BaseRouter {
 
     const times: number[] = [];
     const sequences: number[] = [];
-    let ttl = 0;
+    let ttl = undefined;
 
     if (replyLines.length > 0) {
       replyLines.forEach((reply) => {
@@ -681,29 +643,27 @@ export class ZteH199ADriver extends BaseRouter {
       line.toLowerCase().includes("min/avg/max")
     );
 
-    if (!statsLine || !rttLine) return null;
+    const statsMatch =
+      statsLine &&
+      statsLine.match(
+        /(\d+)\s+packets transmitted,\s+(\d+)\s+packets received,\s+(\d+)% packet loss/i
+      );
+    const rttMatch =
+      rttLine &&
+      rttLine.match(/min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i);
 
-    const statsMatch = statsLine.match(
-      /(\d+)\s+packets transmitted,\s+(\d+)\s+packets received,\s+(\d+)% packet loss/i
-    );
-    const rttMatch = rttLine.match(
-      /min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i
-    );
-
-    if (!statsMatch || !rttMatch) return null;
-
-    const transmitted = Number(statsMatch[1]);
-    const received = Number(statsMatch[2]);
-    const loss = Number(statsMatch[3]);
-    const min = Number(rttMatch[1]);
-    const avg = Number(rttMatch[2]);
-    const max = Number(rttMatch[3]);
+    const transmitted = statsMatch ? Number(statsMatch[1]) : undefined;
+    const received = statsMatch ? Number(statsMatch[2]) : undefined;
+    const loss = statsMatch ? Number(statsMatch[3]) : undefined;
+    const min = rttMatch ? Number(rttMatch[1]) : undefined;
+    const avg = rttMatch ? Number(rttMatch[2]) : undefined;
+    const max = rttMatch ? Number(rttMatch[3]) : undefined;
 
     const base = {
-      ip: targetIp,
+      ip,
       bytes,
-      time: times,
-      sequence: sequences,
+      time: times.length > 0 ? times : undefined,
+      sequence: sequences.length > 0 ? sequences : undefined,
       ttl,
       packets: {
         transmitted,

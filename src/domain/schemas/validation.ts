@@ -42,6 +42,7 @@ export const ExtractionResultSchema = z.object({
             signal: z.number(),
           })
         ),
+        totalClients: z.number(),
       }),
       "5ghz": z.object({
         clients: z.array(
@@ -52,6 +53,7 @@ export const ExtractionResultSchema = z.object({
             signal: z.number(),
           })
         ),
+        totalClients: z.number(),
       }),
       cable: z.object({
         clients: z.array(
@@ -62,6 +64,7 @@ export const ExtractionResultSchema = z.object({
             signal: z.number(),
           })
         ),
+        totalClients: z.number(),
       }),
     })
     .optional(),
@@ -71,15 +74,19 @@ export const ExtractionResultSchema = z.object({
   wlan24GhzConfig: z
     .object({
       enabled: z.boolean(),
-      channel: z.number(),
+      channel: z.string(),
       mode: z.string(),
       bandWidth: z.string(),
       transmittingPower: z.string(),
-      ssidName: z.string(),
-      ssidPassword: z.string(),
-      ssidHideMode: z.string(),
-      wpa2SecurityType: z.string(),
-      maxClients: z.number(),
+    })
+    .optional(),
+  wlan5GhzConfig: z
+    .object({
+      enabled: z.boolean(),
+      channel: z.string(),
+      mode: z.string(),
+      bandWidth: z.string(),
+      transmittingPower: z.string(),
     })
     .optional(),
   /**
@@ -91,9 +98,10 @@ export const ExtractionResultSchema = z.object({
   wlan24GhzSsids: z
     .array(
       z.object({
+        enabled: z.boolean(),
         ssidName: z.string(),
         ssidPassword: z.string(),
-        ssidHideMode: z.string(),
+        ssidHideMode: z.boolean(),
         wpa2SecurityType: z.string(),
         maxClients: z.number(),
       })
@@ -102,27 +110,14 @@ export const ExtractionResultSchema = z.object({
   wlan5GhzSsids: z
     .array(
       z.object({
+        enabled: z.boolean(),
         ssidName: z.string(),
         ssidPassword: z.string(),
-        ssidHideMode: z.string(),
+        ssidHideMode: z.boolean(),
         wpa2SecurityType: z.string(),
         maxClients: z.number(),
       })
     )
-    .optional(),
-  wlan5GhzConfig: z
-    .object({
-      enabled: z.boolean(),
-      channel: z.number(),
-      mode: z.string(),
-      bandWidth: z.string(),
-      transmittingPower: z.string(),
-      ssidName: z.string(),
-      ssidPassword: z.string(),
-      ssidHideMode: z.string(),
-      wpa2SecurityType: z.string(),
-      maxClients: z.number(),
-    })
     .optional(),
   //
   dhcpEnabled: z.boolean().optional(),
@@ -170,17 +165,17 @@ export const CollectMessageSchema = z.object({
 
 export const PingTestResultSchema = z.object({
   ip: z.ipv4(),
-  bytes: z.number(),
-  ttl: z.number(),
-  time: z.array(z.number()),
-  sequence: z.array(z.number()),
+  bytes: z.number().optional(),
+  ttl: z.number().optional(),
+  time: z.array(z.number()).optional(),
+  sequence: z.array(z.number()).optional(),
   packets: z.object({
-    transmitted: z.number(),
-    received: z.number(),
-    loss: z.number(),
-    min: z.number(),
-    avg: z.number(),
-    max: z.number(),
+    transmitted: z.number().optional(),
+    received: z.number().optional(),
+    loss: z.number().optional(),
+    min: z.number().optional(),
+    avg: z.number().optional(),
+    max: z.number().optional(),
   }),
   message: z.string(),
 });

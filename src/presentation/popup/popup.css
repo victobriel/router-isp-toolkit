@@ -206,11 +206,19 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: var(--ri-space-2);
-  padding: var(--ri-space-2) 18px var(--ri-space-4);
+  padding: var(--ri-space-2) 0 var(--ri-space-4);
 }
 
 .popup-panel.popup-hidden {
   display: none;
+}
+
+.popup-panel section {
+  padding: 4px 18px;
+}
+
+.popup-panel section:nth-child(even) {
+  background-color: var(--ri-second-bg);
 }
 
 /* ─── Credentials section ────────────────────────────────────────────────── */
@@ -594,12 +602,13 @@ h1 {
 }
 
 .popup-btn-copy-text {
-  margin-top: var(--ri-margin-3);
+  margin: var(--ri-margin-3) var(--ri-margin-3) 0;
   background: linear-gradient(
     135deg,
     var(--ri-accent) 0%,
     var(--ri-accent-glow) 100%
   );
+  height: 48px;
   color: var(--ri-text);
 }
 
@@ -730,6 +739,9 @@ h1 {
 }
 .popup-data-card--1-2 {
   grid-column: span 6;
+}
+.popup-data-card--3-4 {
+  grid-column: span 9;
 }
 .popup-data-card--full {
   grid-column: span 12;
@@ -880,4 +892,9 @@ h1 {
   background-color: transparent;
   color: var(--ri-muted);
   border: 1px solid var(--ri-muted);
+}
+
+.popup-divider {
+  height: 1px;
+  background-color: var(--ri-muted);
 }

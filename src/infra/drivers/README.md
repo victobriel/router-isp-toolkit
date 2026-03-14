@@ -8,9 +8,9 @@ Infrastructure adapters that implement the domain `IRouter` port. Each vendor/mo
   - `types.ts` — `TopologyBand`, `TopologyClient`
   - `TopologySectionParser.ts` — `ITopologySectionParser`, `TopologySectionParser`, `TopologyRowSelectors`
 
-- **`zte/`** — ZTE ZXHN H199A
-  - `ZteH199ADriver.ts` — Router adapter
-  - `ZteH199ASelectors.ts` — CSS selectors for the admin UI
+- **`zte/`** — ZTE ZXHN H199
+  - `ZteH199Driver.ts` — Router adapter
+  - `ZteH199Selectors.ts` — CSS selectors for the admin UI
   - `constants.ts` — Timeouts and delays
 
 ## Adding a new router driver

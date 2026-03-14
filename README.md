@@ -18,9 +18,9 @@ Router Inspector connects to your router's web interface, authenticates automati
 
 ## Supported Routers
 
-| Model          | Status       |
-| -------------- | ------------ |
-| ZTE ZXHN H199A | ✅ Supported |
+| Model         | Status       |
+| ------------- | ------------ |
+| ZTE ZXHN H199 | ✅ Supported |
 
 New router models can be added by implementing the `IRouter` port (via `BaseRouter`) and registering the driver in `RouterFactory`. See [Adding a New Router Driver](#adding-a-new-router-driver).
 
@@ -51,7 +51,7 @@ src/
 │   │   └── types.ts
 │   ├── drivers/
 │   │   ├── shared/         # TopologySectionParser, shared types
-│   │   └── zte/            # ZTE H199A driver, selectors, constants
+│   │   └── zte/            # ZTE H199 driver, selectors, constants
 │   ├── router/
 │   │   ├── BaseRouter.ts   # Abstract base for router drivers
 │   │   └── RouterFactory.ts
@@ -122,7 +122,11 @@ Alternatively, use the **"Get Data Automatically"** button injected on the route
 
 ```typescript
 import { BaseRouter } from "../../router/BaseRouter.js";
-import type { ButtonConfig, Credentials, ExtractionResult } from "../../../domain/schemas/validation.js";
+import type {
+  ButtonConfig,
+  Credentials,
+  ExtractionResult,
+} from "../../../domain/schemas/validation.js";
 
 export class MyRouterDriver extends BaseRouter {
   constructor() {
@@ -134,11 +138,21 @@ export class MyRouterDriver extends BaseRouter {
     password: "#password",
   };
 
-  isLoginPage(): boolean { /* ... */ }
-  authenticate(credentials: Credentials): void { /* ... */ }
-  async extract(): Promise<ExtractionResult> { /* ... */ }
-  buttonElementConfig(): ButtonConfig | null { /* ... */ }
-  isAuthenticated(): boolean { /* ... */ }
+  isLoginPage(): boolean {
+    /* ... */
+  }
+  authenticate(credentials: Credentials): void {
+    /* ... */
+  }
+  async extract(): Promise<ExtractionResult> {
+    /* ... */
+  }
+  buttonElementConfig(): ButtonConfig | null {
+    /* ... */
+  }
+  isAuthenticated(): boolean {
+    /* ... */
+  }
 }
 ```
 
