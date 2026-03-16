@@ -321,7 +321,7 @@ function setupCloseButton(): void {
   const btn = document.getElementById("popup-btn-close");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    window.parent.postMessage({ type: "router-inspector-close" }, "*");
+    window.parent.postMessage({ type: "router-isp-toolkit-close" }, "*");
   });
 }
 

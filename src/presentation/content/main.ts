@@ -15,7 +15,7 @@ function getOrCreateOverlay(): HTMLDivElement {
   if (overlayContainer) return overlayContainer;
 
   const container = document.createElement("div");
-  container.id = "router-inspector-overlay";
+  container.id = "router-isp-toolkit-overlay";
   Object.assign(container.style, {
     position: "fixed",
     top: "8px",
@@ -48,7 +48,7 @@ function getOrCreateOverlay(): HTMLDivElement {
   window.addEventListener("message", (event) => {
     if (
       event.source === iframe.contentWindow &&
-      (event.data as { type?: string })?.type === "router-inspector-close"
+      (event.data as { type?: string })?.type === "router-isp-toolkit-close"
     ) {
       hideOverlay();
     }

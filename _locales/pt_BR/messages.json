@@ -123,7 +123,7 @@
   "popup_label_secondary_dns": { "message": "DNS secundário" },
   "popup_label_enabled": { "message": "Ativado" },
   "popup_label_internet": { "message": "Internet" },
-  "popup_label_pppoe": { "message": "PPPoE" },
+  "popup_label_pppoe": { "message": "Usuário PPPoE" },
   "popup_label_tr069": { "message": "TR-069" },
 
   "popup_topology_cable_devices": {
@@ -155,20 +155,20 @@
   },
 
   "settings_saved_bookmarks_label": {
-    "message": "Favoritos salvos"
+    "message": "Credenciais salvas"
   },
   "settings_saved_bookmarks_desc": {
-    "message": "Os favoritos de credenciais são armazenados por modelo de roteador e carregados automaticamente quando um roteador correspondente é detectado."
+    "message": "As credenciais salvas são armazenadas por modelo de roteador e carregadas automaticamente quando um roteador correspondente é detectado."
   },
   "settings_bookmark_count_title": {
-    "message": "Total de favoritos de credenciais salvos"
+    "message": "Total de credenciais salvas"
   },
 
   "settings_clear_all_label": {
     "message": "Limpar todos os dados da extensão"
   },
   "settings_clear_all_desc": {
-    "message": "Remove todos os dados de roteador em cache, credenciais salvas, favoritos e estado da interface. Esta ação não pode ser desfeita."
+    "message": "Remove todos os dados de roteador em cache, credenciais salvas, credenciais salvas e estado da interface. Esta ação não pode ser desfeita."
   },
   "settings_clear_all_button": {
     "message": "Limpar tudo"
@@ -357,5 +357,58 @@
   },
   "settings_copy_template_error_empty": {
     "message": "Defina um formato antes de salvar"
-  }
+  },
+  "settings_section_router_preferences": {
+    "message": "Preferências do roteador"
+  },
+  "settings_router_preferences_label": {
+    "message": "Preferências do roteador"
+  },
+  "settings_router_preferences_desc": {
+    "message": "Defina os valores preferidos dos campos extraídos do roteador. Eles serão comparados com os dados extraídos depois (ex.: canais Wi‑Fi esperados: 2,4G e 5G)."
+  },
+  "settings_router_preferences_save": {
+    "message": "Salvar preferências"
+  },
+  "settings_router_preferences_toast_saved": {
+    "message": "Preferências salvas"
+  },
+  "settings_prefs_wlan24_title": {
+    "message": "WLAN 2,4 GHz"
+  },
+  "settings_prefs_wlan5_title": {
+    "message": "WLAN 5 GHz"
+  },
+  "settings_prefs_dhcp_title": {
+    "message": "DHCP"
+  },
+  "settings_prefs_other_summary": {
+    "message": "Outros valores preferidos (versão do roteador, TR-069, PPPoE, status…)"
+  },
+  "settings_pref_wlan_24_channel": { "message": "Canal" },
+  "settings_pref_wlan_24_mode": { "message": "Modo" },
+  "settings_pref_wlan_24_band_width": { "message": "Largura de banda" },
+  "settings_pref_wlan_24_transmitting_power": {
+    "message": "Potência de transmissão"
+  },
+  "settings_pref_wlan_5_channel": { "message": "Canal" },
+  "settings_pref_wlan_5_mode": { "message": "Modo" },
+  "settings_pref_wlan_5_band_width": { "message": "Largura de banda" },
+  "settings_pref_wlan_5_transmitting_power": {
+    "message": "Potência de transmissão"
+  },
+  "settings_pref_dhcp_ip_address": { "message": "Endereço IP" },
+  "settings_pref_dhcp_subnet_mask": { "message": "Máscara de sub-rede" },
+  "settings_pref_dhcp_start_ip": { "message": "IP inicial" },
+  "settings_pref_dhcp_end_ip": { "message": "IP final" },
+  "settings_pref_dhcp_primary_dns": { "message": "DNS primário" },
+  "settings_pref_dhcp_secondary_dns": { "message": "DNS secundário" },
+  "settings_pref_dhcp_lease_time": { "message": "Tempo de concessão" },
+  "settings_pref_router_version": { "message": "Versão do roteador" },
+  "settings_pref_tr069_url": { "message": "URL TR-069" },
+  "settings_pref_pppoe_username": { "message": "Usuário PPPoE" },
+  "settings_pref_band_steering_status": { "message": "Band steering" },
+  "settings_pref_wlan_24_status": { "message": "Status 2,4 GHz" },
+  "settings_pref_wlan_5_status": { "message": "Status 5 GHz" },
+  "settings_pref_upnp_status": { "message": "Status UPnP" }
 }

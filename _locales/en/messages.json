@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "Router Inspector",
+    "message": "Router ISP Toolkit",
     "description": "Extension name shown in Chrome UI and popup header."
   },
   "extDescription": {
@@ -9,7 +9,7 @@
   },
 
   "popup_title": {
-    "message": "Router Inspector",
+    "message": "Router ISP Toolkit",
     "description": "Main title in popup header."
   },
   "popup_theme_aria_label": {
@@ -220,7 +220,7 @@
   "popup_label_secondary_dns": { "message": "Secondary DNS" },
   "popup_label_enabled": { "message": "Enabled" },
   "popup_label_internet": { "message": "Internet" },
-  "popup_label_pppoe": { "message": "PPPoE" },
+  "popup_label_pppoe": { "message": "PPPoE Username" },
   "popup_label_tr069": { "message": "TR-069" },
 
   "popup_topology_cable_devices": {
@@ -242,11 +242,11 @@
   },
 
   "settings_title": {
-    "message": "Router Inspector — Settings",
+    "message": "Router ISP Toolkit — Settings",
     "description": "Document title for settings page."
   },
   "settings_header_title": {
-    "message": "Router Inspector"
+    "message": "Router ISP Toolkit"
   },
   "settings_header_subtitle": {
     "message": "Settings"
@@ -459,5 +459,58 @@
   },
   "settings_copy_template_error_empty": {
     "message": "Provide a format before saving"
-  }
+  },
+  "settings_section_router_preferences": {
+    "message": "Router preferences"
+  },
+  "settings_router_preferences_label": {
+    "message": "Router preferences"
+  },
+  "settings_router_preferences_desc": {
+    "message": "Set your preferred values for extracted router fields. These will be compared with extracted data later (e.g. expected Wi‑Fi channels: 2.4G and 5G)."
+  },
+  "settings_router_preferences_save": {
+    "message": "Save preferences"
+  },
+  "settings_router_preferences_toast_saved": {
+    "message": "Preferences saved"
+  },
+  "settings_prefs_wlan24_title": {
+    "message": "WLAN 2.4 GHz"
+  },
+  "settings_prefs_wlan5_title": {
+    "message": "WLAN 5 GHz"
+  },
+  "settings_prefs_dhcp_title": {
+    "message": "DHCP"
+  },
+  "settings_prefs_other_summary": {
+    "message": "Other preferred values (router version, TR-069, PPPoE, status fields…)"
+  },
+  "settings_pref_wlan_24_channel": { "message": "Channel" },
+  "settings_pref_wlan_24_mode": { "message": "Mode" },
+  "settings_pref_wlan_24_band_width": { "message": "Band width" },
+  "settings_pref_wlan_24_transmitting_power": {
+    "message": "Transmitting power"
+  },
+  "settings_pref_wlan_5_channel": { "message": "Channel" },
+  "settings_pref_wlan_5_mode": { "message": "Mode" },
+  "settings_pref_wlan_5_band_width": { "message": "Band width" },
+  "settings_pref_wlan_5_transmitting_power": {
+    "message": "Transmitting power"
+  },
+  "settings_pref_dhcp_ip_address": { "message": "IP address" },
+  "settings_pref_dhcp_subnet_mask": { "message": "Subnet mask" },
+  "settings_pref_dhcp_start_ip": { "message": "Start IP" },
+  "settings_pref_dhcp_end_ip": { "message": "End IP" },
+  "settings_pref_dhcp_primary_dns": { "message": "Primary DNS" },
+  "settings_pref_dhcp_secondary_dns": { "message": "Secondary DNS" },
+  "settings_pref_dhcp_lease_time": { "message": "Lease time" },
+  "settings_pref_router_version": { "message": "Router version" },
+  "settings_pref_tr069_url": { "message": "TR-069 URL" },
+  "settings_pref_pppoe_username": { "message": "PPPoE username" },
+  "settings_pref_band_steering_status": { "message": "Band steering" },
+  "settings_pref_wlan_24_status": { "message": "2.4 GHz status" },
+  "settings_pref_wlan_5_status": { "message": "5 GHz status" },
+  "settings_pref_upnp_status": { "message": "UPnP status" }
 }

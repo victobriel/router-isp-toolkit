@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Router Inspector — Settings</title>
+    <title>Router ISP Toolkit — Settings</title>
     <link href="./tokens.css" rel="stylesheet" />
     <link href="./settings.css" rel="stylesheet" />
   </head>
@@ -12,291 +12,1135 @@
       <header class="settings-header">
         <div class="settings-header-inner">
           <div class="settings-header-title-group">
-            <h1 class="settings-title">Router Inspector</h1>
-            <span class="settings-subtitle">Settings</span>
+            <h1 class="settings-title">Router ISP Toolkit</h1>
+            <span class="settings-subtitle"></span>
           </div>
         </div>
       </header>
 
-      <main class="settings-main">
-        <!-- Appearance -->
-        <section class="settings-section">
-          <h2
-            class="settings-section-title"
-            data-i18n="settings_section_appearance"
-          >
-            Appearance
-          </h2>
-          <div class="settings-card">
-            <div class="settings-row">
-              <div class="settings-row-info">
-                <span
-                  class="settings-row-label"
-                  data-i18n="settings_theme_label"
+      <div class="settings-body">
+        <!-- Sidebar -->
+        <nav class="settings-sidebar" aria-label="Settings sections">
+          <ul class="settings-sidebar-list">
+            <li>
+              <a
+                class="settings-sidebar-link"
+                href="#appearance"
+                data-i18n="settings_section_appearance"
+              ></a>
+            </li>
+            <li>
+              <a
+                class="settings-sidebar-link"
+                href="#copy-text-template"
+                data-i18n="settings_section_copy_template"
+              ></a>
+            </li>
+            <li>
+              <a
+                class="settings-sidebar-link"
+                href="#data-storage"
+                data-i18n="settings_section_data_storage"
+              ></a>
+            </li>
+            <li>
+              <a
+                class="settings-sidebar-link"
+                href="#router-preferences"
+                data-i18n="settings_section_router_preferences"
+              ></a>
+            </li>
+            <li>
+              <a
+                class="settings-sidebar-link"
+                href="#about"
+                data-i18n="settings_section_about"
+              ></a>
+            </li>
+          </ul>
+        </nav>
+
+        <main class="settings-main">
+          <!-- Appearance -->
+          <section id="appearance" class="settings-section">
+            <h2
+              class="settings-section-title"
+              data-i18n="settings_section_appearance"
+            ></h2>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span
+                    class="settings-row-label"
+                    data-i18n="settings_theme_label"
+                  >
+                  </span>
+                  <span
+                    class="settings-row-desc"
+                    data-i18n="settings_theme_desc"
+                  >
+                  </span>
+                </div>
+                <div
+                  class="theme-toggle theme-toggle--lg"
+                  role="radiogroup"
+                  aria-label="Theme selection"
+                  data-i18n-aria-label="popup_theme_aria_label"
                 >
-                  Theme
-                </span>
-                <span class="settings-row-desc" data-i18n="settings_theme_desc">
-                  Choose your preferred color scheme. Changes apply immediately
-                  and are persisted across sessions.
-                </span>
+                  <button
+                    class="theme-toggle-option"
+                    data-theme="light"
+                    type="button"
+                    role="radio"
+                    aria-checked="false"
+                  ></button>
+                  <button
+                    class="theme-toggle-option"
+                    data-theme="dark"
+                    type="button"
+                    role="radio"
+                    aria-checked="false"
+                  ></button>
+                  <button
+                    class="theme-toggle-option"
+                    data-theme="system"
+                    type="button"
+                    role="radio"
+                    aria-checked="true"
+                  ></button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Copy text template -->
+          <section id="copy-text-template" class="settings-section">
+            <h2
+              class="settings-section-title"
+              data-i18n="settings_section_copy_template"
+            ></h2>
+            <div class="settings-card">
+              <div class="settings-row settings-row--stacked">
+                <div class="settings-row-info">
+                  <span
+                    class="settings-row-label"
+                    data-i18n="settings_copy_template_label"
+                  >
+                  </span>
+                  <span
+                    class="settings-row-desc"
+                    data-i18n="settings_copy_template_desc"
+                  >
+                  </span>
+                </div>
+                <textarea
+                  id="settings-copy-template-input"
+                  class="settings-textarea"
+                  rows="8"
+                  spellcheck="false"
+                ></textarea>
+                <details class="settings-placeholder-accordion">
+                  <summary
+                    class="settings-row-hint"
+                    data-i18n="settings_copy_template_hint"
+                  ></summary>
+                  <ul class="settings-placeholder-list">
+                    <li>%RouterVersion%</li>
+                    <li>%TR069Url%</li>
+                    <li>%InternetStatus%</li>
+                    <li>%TR069Status%</li>
+                    <li>%PPPoEUsername%</li>
+                    <li>%IpVersion%</li>
+                    <li>%LinkMode%</li>
+                    <li>%RequestPdStatus%</li>
+                    <li>%SlaacStatus%</li>
+                    <li>%Dhcpv6Status%</li>
+                    <li>%PdStatus%</li>
+                    <li>%RemoteAccessIpv4Status%</li>
+                    <li>%RemoteAccessIpv6Status%</li>
+                    <li>%BandSteeringStatus%</li>
+                    <li>%Wlan24Status%</li>
+                    <li>%Wlan24Channel%</li>
+                    <li>%Wlan24Mode%</li>
+                    <li>%Wlan24BandWidth%</li>
+                    <li>%Wlan24TransmittingPower%</li>
+                    <li>%Wlan5Status%</li>
+                    <li>%Wlan5Channel%</li>
+                    <li>%Wlan5Mode%</li>
+                    <li>%Wlan5BandWidth%</li>
+                    <li>%Wlan5TransmittingPower%</li>
+                    <li>%DhcpStatus%</li>
+                    <li>%DhcpIpAddress%</li>
+                    <li>%DhcpSubnetMask%</li>
+                    <li>%DhcpStartIp%</li>
+                    <li>%DhcpEndIp%</li>
+                    <li>%DhcpIspDnsStatus%</li>
+                    <li>%DhcpPrimaryDns%</li>
+                    <li>%DhcpSecondaryDns%</li>
+                    <li>%DhcpLeaseTimeMode%</li>
+                    <li>%DhcpLeaseTime%</li>
+                    <li>%UpnpStatus%</li>
+                    <li>%LastInternalPingMessage%</li>
+                    <li>%LastExternalPingMessage%</li>
+                    <li>%LastInternalPingIp%</li>
+                    <li>%LastExternalPingIp%</li>
+                    <li>%LastInternalPingBytes%</li>
+                    <li>%LastExternalPingBytes%</li>
+                    <li>%LastInternalPingTtl%</li>
+                    <li>%LastExternalPingTtl%</li>
+                    <li>%LastInternalPingMinAvgMax%</li>
+                    <li>%LastExternalPingMinAvgMax%</li>
+                    <li>%LastInternalPingMin%</li>
+                    <li>%LastExternalPingMin%</li>
+                    <li>%LastInternalPingAvg%</li>
+                    <li>%LastExternalPingAvg%</li>
+                    <li>%LastInternalPingMax%</li>
+                    <li>%LastExternalPingMax%</li>
+                    <li>%TotalClientsConnected%</li>
+                    <li>%CableTotalClientsConnected%</li>
+                    <li>%Wlan24TotalClientsConnected%</li>
+                    <li>%Wlan5TotalClientsConnected%</li>
+                  </ul>
+                </details>
+                <button
+                  class="settings-btn"
+                  id="settings-copy-template-save"
+                  type="button"
+                  data-i18n="settings_copy_template_save"
+                ></button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Data & Storage -->
+          <section id="data-storage" class="settings-section">
+            <h2
+              class="settings-section-title"
+              data-i18n="settings_section_data_storage"
+            ></h2>
+            <div class="settings-card">
+              <div
+                class="settings-row settings-accordion-trigger"
+                id="settings-bookmarks-trigger"
+                role="button"
+                tabindex="0"
+                aria-expanded="false"
+                aria-controls="settings-bookmarks-panel"
+              >
+                <div class="settings-row-info">
+                  <span
+                    class="settings-row-label"
+                    data-i18n="settings_saved_bookmarks_label"
+                  >
+                  </span>
+                  <span
+                    class="settings-row-desc"
+                    data-i18n="settings_saved_bookmarks_desc"
+                  >
+                  </span>
+                </div>
+                <div class="settings-row-end">
+                  <span
+                    class="settings-badge"
+                    id="settings-bookmark-count"
+                    title="Total saved credential bookmarks"
+                    data-i18n-title="settings_bookmark_count_title"
+                    >—</span
+                  >
+                  <span
+                    class="settings-icon settings-icon--chevron settings-accordion-chevron"
+                    aria-hidden="true"
+                  ></span>
+                </div>
               </div>
               <div
-                class="theme-toggle theme-toggle--lg"
-                role="radiogroup"
-                aria-label="Theme selection"
-                data-i18n-aria-label="popup_theme_aria_label"
+                class="settings-accordion-panel"
+                id="settings-bookmarks-panel"
+                role="region"
+                aria-labelledby="settings-bookmarks-trigger"
               >
+                <div
+                  id="settings-bookmarks-list"
+                  class="settings-bookmarks-list"
+                ></div>
+              </div>
+
+              <div class="settings-row settings-row--top-border">
+                <div class="settings-row-info">
+                  <span
+                    class="settings-row-label"
+                    data-i18n="settings_clear_all_label"
+                  >
+                  </span>
+                  <span
+                    class="settings-row-desc"
+                    data-i18n="settings_clear_all_desc"
+                  >
+                  </span>
+                </div>
                 <button
-                  class="theme-toggle-option"
-                  data-theme="light"
+                  class="settings-btn settings-btn--danger"
+                  id="settings-btn-clear-all"
                   type="button"
-                  role="radio"
-                  aria-checked="false"
                 >
-                  Light
-                </button>
-                <button
-                  class="theme-toggle-option"
-                  data-theme="dark"
-                  type="button"
-                  role="radio"
-                  aria-checked="false"
-                >
-                  Dark
-                </button>
-                <button
-                  class="theme-toggle-option"
-                  data-theme="system"
-                  type="button"
-                  role="radio"
-                  aria-checked="true"
-                >
-                  System
+                  <span
+                    class="settings-icon settings-icon--trash"
+                    aria-hidden="true"
+                  ></span>
+                  <span data-i18n="settings_clear_all_button"></span>
                 </button>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <!-- Copy text template -->
-        <section class="settings-section">
-          <h2
-            class="settings-section-title"
-            data-i18n="settings_section_copy_template"
-          >
-            Copy text template
-          </h2>
-          <div class="settings-card">
-            <div class="settings-row settings-row--stacked">
-              <div class="settings-row-info">
+          <!-- Router Preferences -->
+          <section id="router-preferences" class="settings-section">
+            <h2
+              class="settings-section-title"
+              data-i18n="settings_section_router_preferences"
+            ></h2>
+            <div class="settings-card">
+              <div class="settings-row">
+                <div class="settings-row-info">
+                  <span
+                    class="settings-row-label"
+                    data-i18n="settings_router_preferences_label"
+                  ></span>
+                  <span
+                    class="settings-row-desc"
+                    data-i18n="settings_router_preferences_desc"
+                  ></span>
+                </div>
+              </div>
+
+              <div class="settings-prefs-container">
+                <!-- WAN -->
+                <div class="settings-prefs-subsection" data-prefs-group="wan">
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_wan"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- PPPoE Username -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-PPPoEUsername"
+                        class="settings-prefs-label"
+                        data-i18n="settings_pref_PPPoEUsername"
+                      ></label>
+                      <input
+                        id="pref-PPPoEUsername"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="PPPoEUsername"
+                      />
+                    </div>
+                    <!-- Internet Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-InternetStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_internet"
+                      ></label>
+                      <input
+                        id="pref-InternetStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="InternetStatus"
+                      />
+                    </div>
+                    <!-- TR-069 Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Tr069Status"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_tr069"
+                      ></label>
+                      <input
+                        id="pref-Tr069Status"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Tr069Status"
+                      />
+                    </div>
+                    <!-- Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Mode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_mode"
+                      ></label>
+                      <input
+                        id="pref-Mode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Mode"
+                      />
+                    </div>
+                    <!-- IP Version -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-IpVersion"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ip_version"
+                      ></label>
+                      <input
+                        id="pref-Mode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="IpVersion"
+                      />
+                    </div>
+                    <!-- DHCPv6 Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-Dhcpv6Status"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_dhcpv6_status"
+                      ></label>
+                      <input
+                        id="pref-Dhcpv6Status"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Dhcpv6Status"
+                      />
+                    </div>
+                    <!-- PD Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-PdStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_pd_status"
+                      ></label>
+                      <input
+                        id="pref-PdStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="PdStatus"
+                      />
+                    </div>
+                    <!-- SLAAC Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-SlaacStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_slaac_status"
+                      ></label>
+                      <input
+                        id="pref-SlaacStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="SlaacStatus"
+                      />
+                    </div>
+                    <!-- Request PD Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-RequestPdStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_gua_pd_status"
+                      ></label>
+                      <input
+                        id="pref-RequestPdStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="RequestPdStatus"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Remote Access -->
+                <div
+                  class="settings-prefs-subsection"
+                  data-prefs-group="remote-access"
+                >
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_remote_access"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- Remote Access IPv4 -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-RemoteAccessIpv4"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_remote_access_ipv4"
+                      ></label>
+                      <input
+                        id="pref-RemoteAccessIpv4"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="RemoteAccessIpv4"
+                      />
+                    </div>
+                    <!-- Remote Access IPv6 -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-RemoteAccessIpv6"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_remote_access_ipv6"
+                      ></label>
+                      <input
+                        id="pref-RemoteAccessIpv6"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="RemoteAccessIpv6"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Band Steering -->
+                <div
+                  class="settings-prefs-subsection"
+                  data-prefs-group="band-steering"
+                >
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_band_steering"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- Band Steering Status -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-BandSteeringStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-BandSteeringStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="BandSteeringStatus"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WLAN 2.4 GHz -->
+                <div
+                  class="settings-prefs-subsection"
+                  data-prefs-group="wlan-24"
+                >
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_wlan_24"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- WLAN 2.4 Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan24Status"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-Wlan24Status"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24Status"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Channel -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan24Channel"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_channel"
+                      ></label>
+                      <input
+                        id="pref-Wlan24Channel"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24Channel"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Bandwidth -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan24BandWidth"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_bandwidth"
+                      ></label>
+                      <input
+                        id="pref-Wlan24BandWidth"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24BandWidth"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Transmitting Power -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan24TransmittingPower"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_transmitting_power"
+                      ></label>
+                      <input
+                        id="pref-Wlan24TransmittingPower"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24TransmittingPower"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--3-4">
+                      <label
+                        for="pref-Wlan24Mode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_mode"
+                      ></label>
+                      <input
+                        id="pref-Wlan24Mode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24Mode"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Total Clients -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan24TotalClientsConnected"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_total_clients"
+                      ></label>
+                      <input
+                        id="pref-Wlan24TotalClientsConnected"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24TotalClientsConnected"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 SSID Status -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan24SsidStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-Wlan24SsidStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24SsidStatus"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 SSID Name -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan24SsidName"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_name"
+                      ></label>
+                      <input
+                        id="pref-Wlan24SsidName"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24SsidName"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 SSID Password -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan24SsidPassword"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_password"
+                      ></label>
+                      <input
+                        id="pref-Wlan24SsidPassword"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24SsidPassword"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 SSID Hide Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan24SsidHideMode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_hide_mode"
+                      ></label>
+                      <input
+                        id="pref-Wlan24SsidHideMode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24SsidHideMode"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 WPA2 Security -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan24Wpa2Security"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_wpa2_security"
+                      ></label>
+                      <input
+                        id="pref-Wlan24Wpa2Security"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24Wpa2Security"
+                      />
+                    </div>
+                    <!-- WLAN 2.4 Max Clients -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan24MaxClients"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_max_clients"
+                      ></label>
+                      <input
+                        id="pref-Wlan24MaxClients"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan24MaxClients"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- WLAN 5 GHz -->
+                <div
+                  class="settings-prefs-subsection"
+                  data-prefs-group="wlan-5"
+                >
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_wlan_5"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- WLAN 5 Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan5Status"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-Wlan5Status"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5Status"
+                      />
+                    </div>
+                    <!-- WLAN 5 Channel -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan5Channel"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_channel"
+                      ></label>
+                      <input
+                        id="pref-Wlan5Channel"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5Channel"
+                      />
+                    </div>
+                    <!-- WLAN 5 Bandwidth -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan5BandWidth"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_bandwidth"
+                      ></label>
+                      <input
+                        id="pref-Wlan5BandWidth"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5BandWidth"
+                      />
+                    </div>
+                    <!-- WLAN 5 Transmitting Power -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan5TransmittingPower"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_transmitting_power"
+                      ></label>
+                      <input
+                        id="pref-Wlan5TransmittingPower"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5TransmittingPower"
+                      />
+                    </div>
+                    <!-- WLAN 5 Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--3-4">
+                      <label
+                        for="pref-Wlan5Mode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_mode"
+                      ></label>
+                      <input
+                        id="pref-Wlan5Mode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5Mode"
+                      />
+                    </div>
+                    <!-- WLAN 5 Total Clients -->
+                    <div class="settings-prefs-field settings-prefs-field--1-4">
+                      <label
+                        for="pref-Wlan5TotalClientsConnected"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_total_clients"
+                      ></label>
+                      <input
+                        id="pref-Wlan5TotalClientsConnected"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5TotalClientsConnected"
+                      />
+                    </div>
+                    <!-- WLAN 5 SSID Status -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan5SsidStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-Wlan5SsidStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5SsidStatus"
+                      />
+                    </div>
+                    <!-- WLAN 5 SSID Name -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan5SsidName"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_name"
+                      ></label>
+                      <input
+                        id="pref-Wlan5SsidName"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5SsidName"
+                      />
+                    </div>
+                    <!-- WLAN 5 SSID Password -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Wlan5SsidPassword"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_password"
+                      ></label>
+                      <input
+                        id="pref-Wlan5SsidPassword"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5SsidPassword"
+                      />
+                    </div>
+                    <!-- WLAN 5 SSID Hide Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan5SsidHideMode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ssid_hide_mode"
+                      ></label>
+                      <input
+                        id="pref-Wlan5SsidHideMode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5SsidHideMode"
+                      />
+                    </div>
+                    <!-- WLAN 5 WPA2 Security -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan5Wpa2Security"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_wpa2_security"
+                      ></label>
+                      <input
+                        id="pref-Wlan5Wpa2Security"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5Wpa2Security"
+                      />
+                    </div>
+                    <!-- WLAN 5 Max Clients -->
+                    <div class="settings-prefs-field settings-prefs-field--1-3">
+                      <label
+                        for="pref-Wlan5MaxClients"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_max_clients"
+                      ></label>
+                      <input
+                        id="pref-Wlan5MaxClients"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Wlan5MaxClients"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DHCP -->
+                <div class="settings-prefs-subsection" data-prefs-group="dhcp">
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_dhcp"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- DHCP Status -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-DhcpStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-DhcpStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpStatus"
+                      />
+                    </div>
+                    <!-- DHCP IP Address -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpIpAddress"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_ip_address"
+                      ></label>
+                      <input
+                        id="pref-DhcpIpAddress"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpIpAddress"
+                      />
+                    </div>
+                    <!-- DHCP Subnet Mask -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpSubnetMask"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_subnet_mask"
+                      ></label>
+                      <input
+                        id="pref-DhcpSubnetMask"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpSubnetMask"
+                      />
+                    </div>
+                    <!-- DHCP Start IP -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpStartIp"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_start_ip"
+                      ></label>
+                      <input
+                        id="pref-DhcpStartIp"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpStartIp"
+                      />
+                    </div>
+                    <!-- DHCP End IP -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpEndIp"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_end_ip"
+                      ></label>
+                      <input
+                        id="pref-DhcpEndIp"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpEndIp"
+                      />
+                    </div>
+                    <!-- DHCP ISP DNS Status -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpIspDnsStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_isp_dns_status"
+                      ></label>
+                      <input
+                        id="pref-DhcpIspDnsStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpIspDnsStatus"
+                      />
+                    </div>
+                    <!-- DHCP Primary DNS -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpPrimaryDns"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_primary_dns"
+                      ></label>
+                      <input
+                        id="pref-DhcpPrimaryDns"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpPrimaryDns"
+                      />
+                    </div>
+                    <!-- DHCP Secondary DNS -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpSecondaryDns"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_secondary_dns"
+                      ></label>
+                      <input
+                        id="pref-DhcpSecondaryDns"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpSecondaryDns"
+                      />
+                    </div>
+                    <!-- DHCP Lease Time Mode -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpLeaseTimeMode"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_lease_time_mode"
+                      ></label>
+                      <input
+                        id="pref-DhcpLeaseTimeMode"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpLeaseTimeMode"
+                      />
+                    </div>
+                    <!-- DHCP Lease Time -->
+                    <div class="settings-prefs-field settings-prefs-field--1-2">
+                      <label
+                        for="pref-DhcpLeaseTime"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_lease_time"
+                      ></label>
+                      <input
+                        id="pref-DhcpLeaseTime"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="DhcpLeaseTime"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- UPnP -->
+                <div class="settings-prefs-subsection" data-prefs-group="upnp">
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_upnp"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- UPnP Status -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-UpnpStatus"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_status"
+                      ></label>
+                      <input
+                        id="pref-UpnpStatus"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="UpnpStatus"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- TR-069 URL -->
+                <div class="settings-prefs-subsection" data-prefs-group="tr069">
+                  <h3
+                    class="settings-prefs-subtitle"
+                    data-i18n="popup_section_tr069"
+                  ></h3>
+                  <div class="settings-prefs-grid">
+                    <!-- TR-069 URL -->
+                    <div
+                      class="settings-prefs-field settings-prefs-field--full"
+                    >
+                      <label
+                        for="pref-Tr069Url"
+                        class="settings-prefs-label"
+                        data-i18n="popup_label_url"
+                      ></label>
+                      <input
+                        id="pref-Tr069Url"
+                        type="text"
+                        class="settings-input"
+                        data-pref-key="Tr069Url"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-row settings-row--top-border">
+                <button
+                  class="settings-btn"
+                  id="settings-router-preferences-save"
+                  type="button"
+                  data-i18n="settings_router_preferences_save"
+                ></button>
+              </div>
+            </div>
+          </section>
+
+          <!-- About -->
+          <section id="about" class="settings-section">
+            <h2
+              class="settings-section-title"
+              data-i18n="settings_section_about"
+            ></h2>
+            <div class="settings-card">
+              <div class="settings-row">
                 <span
                   class="settings-row-label"
-                  data-i18n="settings_copy_template_label"
+                  data-i18n="settings_about_extension_label"
                 >
                 </span>
-                <span
-                  class="settings-row-desc"
-                  data-i18n="settings_copy_template_desc"
-                >
-                </span>
+                <span class="settings-meta-value" data-i18n="extName"></span>
               </div>
-              <textarea
-                id="settings-copy-template-input"
-                class="settings-textarea"
-                rows="8"
-                spellcheck="false"
-              ></textarea>
-              <details class="settings-placeholder-accordion">
-                <summary
-                  class="settings-row-hint"
-                  data-i18n="settings_copy_template_hint"
-                ></summary>
-                <ul class="settings-placeholder-list">
-                  <li>%RouterVersion%</li>
-                  <li>%TR069Url%</li>
-                  <li>%InternetStatus%</li>
-                  <li>%TR069Status%</li>
-                  <li>%PPPoEUsername%</li>
-                  <li>%IpVersion%</li>
-                  <li>%LinkMode%</li>
-                  <li>%RequestPdStatus%</li>
-                  <li>%SlaacStatus%</li>
-                  <li>%Dhcpv6Status%</li>
-                  <li>%PdStatus%</li>
-                  <li>%RemoteAccessIpv4Status%</li>
-                  <li>%RemoteAccessIpv6Status%</li>
-                  <li>%BandSteeringStatus%</li>
-                  <li>%Wlan24Status%</li>
-                  <li>%Wlan24Channel%</li>
-                  <li>%Wlan24Mode%</li>
-                  <li>%Wlan24BandWidth%</li>
-                  <li>%Wlan24TransmittingPower%</li>
-                  <li>%Wlan5Status%</li>
-                  <li>%Wlan5Channel%</li>
-                  <li>%Wlan5Mode%</li>
-                  <li>%Wlan5BandWidth%</li>
-                  <li>%Wlan5TransmittingPower%</li>
-                  <li>%DhcpStatus%</li>
-                  <li>%DhcpIpAddress%</li>
-                  <li>%DhcpSubnetMask%</li>
-                  <li>%DhcpStartIp%</li>
-                  <li>%DhcpEndIp%</li>
-                  <li>%DhcpIspDnsStatus%</li>
-                  <li>%DhcpPrimaryDns%</li>
-                  <li>%DhcpSecondaryDns%</li>
-                  <li>%DhcpLeaseTimeMode%</li>
-                  <li>%DhcpLeaseTime%</li>
-                  <li>%UpnpStatus%</li>
-                  <li>%LastInternalPingMessage%</li>
-                  <li>%LastExternalPingMessage%</li>
-                  <li>%LastInternalPingIp%</li>
-                  <li>%LastExternalPingIp%</li>
-                  <li>%LastInternalPingBytes%</li>
-                  <li>%LastExternalPingBytes%</li>
-                  <li>%LastInternalPingTtl%</li>
-                  <li>%LastExternalPingTtl%</li>
-                  <li>%LastInternalPingMinAvgMax%</li>
-                  <li>%LastExternalPingMinAvgMax%</li>
-                  <li>%LastInternalPingMin%</li>
-                  <li>%LastExternalPingMin%</li>
-                  <li>%LastInternalPingAvg%</li>
-                  <li>%LastExternalPingAvg%</li>
-                  <li>%LastInternalPingMax%</li>
-                  <li>%LastExternalPingMax%</li>
-                  <li>%TotalClientsConnected%</li>
-                  <li>%CableTotalClientsConnected%</li>
-                  <li>%Wlan24TotalClientsConnected%</li>
-                  <li>%Wlan5TotalClientsConnected%</li>
-                </ul>
-              </details>
-              <button
-                class="settings-btn"
-                id="settings-copy-template-save"
-                type="button"
-                data-i18n="settings_copy_template_save"
-              ></button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Data & Storage -->
-        <section class="settings-section">
-          <h2
-            class="settings-section-title"
-            data-i18n="settings_section_data_storage"
-          >
-            Data &amp; Storage
-          </h2>
-          <div class="settings-card">
-            <div
-              class="settings-row settings-accordion-trigger"
-              id="settings-bookmarks-trigger"
-              role="button"
-              tabindex="0"
-              aria-expanded="false"
-              aria-controls="settings-bookmarks-panel"
-            >
-              <div class="settings-row-info">
+              <div class="settings-row settings-row--top-border">
                 <span
                   class="settings-row-label"
-                  data-i18n="settings_saved_bookmarks_label"
+                  data-i18n="settings_about_version_label"
                 >
-                  Saved bookmarks
                 </span>
-                <span
-                  class="settings-row-desc"
-                  data-i18n="settings_saved_bookmarks_desc"
-                >
-                  Credential bookmarks are stored per router model and
-                  auto-loaded when a matching router is detected.
-                </span>
-              </div>
-              <div class="settings-row-end">
-                <span
-                  class="settings-badge"
-                  id="settings-bookmark-count"
-                  title="Total saved credential bookmarks"
-                  data-i18n-title="settings_bookmark_count_title"
-                  >—</span
-                >
-                <span
-                  class="settings-icon settings-icon--chevron settings-accordion-chevron"
-                  aria-hidden="true"
-                ></span>
+                <span class="settings-meta-value" id="settings-version">—</span>
               </div>
             </div>
-            <div
-              class="settings-accordion-panel"
-              id="settings-bookmarks-panel"
-              role="region"
-              aria-labelledby="settings-bookmarks-trigger"
-            >
-              <div
-                id="settings-bookmarks-list"
-                class="settings-bookmarks-list"
-              ></div>
-            </div>
+          </section>
+        </main>
+      </div>
 
-            <div class="settings-row settings-row--top-border">
-              <div class="settings-row-info">
-                <span
-                  class="settings-row-label"
-                  data-i18n="settings_clear_all_label"
-                >
-                  Clear all extension data
-                </span>
-                <span
-                  class="settings-row-desc"
-                  data-i18n="settings_clear_all_desc"
-                >
-                  Removes all cached router data, saved credentials, bookmarks
-                  and UI state. This action cannot be undone.
-                </span>
-              </div>
-              <button
-                class="settings-btn settings-btn--danger"
-                id="settings-btn-clear-all"
-                type="button"
-              >
-                <span
-                  class="settings-icon settings-icon--trash"
-                  aria-hidden="true"
-                ></span>
-                Clear all
-              </button>
-            </div>
-          </div>
-        </section>
-
-        <!-- About -->
-        <section class="settings-section">
-          <h2 class="settings-section-title" data-i18n="settings_section_about">
-            About
-          </h2>
-          <div class="settings-card">
-            <div class="settings-row">
-              <span
-                class="settings-row-label"
-                data-i18n="settings_about_extension_label"
-              >
-                Extension
-              </span>
-              <span class="settings-meta-value">Router Inspector</span>
-            </div>
-            <div class="settings-row settings-row--top-border">
-              <span
-                class="settings-row-label"
-                data-i18n="settings_about_version_label"
-              >
-                Version
-              </span>
-              <span class="settings-meta-value" id="settings-version">—</span>
-            </div>
-          </div>
-        </section>
-      </main>
-
+      <!-- Toast -->
       <div
         class="settings-toast"
         id="settings-toast"

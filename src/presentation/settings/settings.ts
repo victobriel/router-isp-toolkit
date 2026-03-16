@@ -3,7 +3,10 @@ import { ThemeManager } from "../popup/ThemeManager.js";
 import { translator } from "../../infra/i18n/I18nService.js";
 
 import { defaultBookmarksService } from "../../application/BookmarksService.js";
-import { COPY_TEXT_TEMPLATE_STORAGE_KEY } from "../../application/constants/index.js";
+import {
+  COPY_TEXT_TEMPLATE_STORAGE_KEY,
+  ROUTER_PREFERENCES_STORAGE_KEY,
+} from "../../application/constants/index.js";
 
 let toastTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -114,6 +117,42 @@ async function loadCopyTemplate(): Promise<void> {
   );
   textarea.value =
     typeof stored === "string" && stored.trim() !== "" ? stored : "";
+}
+
+type RouterPreferences = Record<string, string>;
+
+async function loadRouterPreferences(): Promise<void> {
+  const stored = await StorageService.get<RouterPreferences>(
+    ROUTER_PREFERENCES_STORAGE_KEY
+  );
+  const prefs = stored && typeof stored === "object" ? stored : {};
+
+  document.querySelectorAll<HTMLInputElement>("[data-pref-key]").forEach((el) => {
+    const key = el.getAttribute("data-pref-key");
+    if (!key) return;
+    const value = prefs[key];
+    el.value = typeof value === "string" ? value : "";
+  });
+}
+
+function setupRouterPreferences(): void {
+  const saveBtn = document.getElementById("settings-router-preferences-save");
+  if (!saveBtn) return;
+
+  saveBtn.addEventListener("click", async () => {
+    const prefs: RouterPreferences = {};
+    document
+      .querySelectorAll<HTMLInputElement>("[data-pref-key]")
+      .forEach((el) => {
+        const key = el.getAttribute("data-pref-key");
+        if (!key) return;
+        const value = el.value.trim();
+        prefs[key] = value;
+      });
+
+    await StorageService.save(ROUTER_PREFERENCES_STORAGE_KEY, prefs);
+    showToast(translator.t("settings_router_preferences_toast_saved"), "ok");
+  });
 }
 
 function setupCopyTemplate(): void {
@@ -262,7 +301,9 @@ document.addEventListener("DOMContentLoaded", () => {
     setupBookmarksList();
     setupClearAll();
     setupCopyTemplate();
+    setupRouterPreferences();
     await loadBookmarks();
     await loadCopyTemplate();
+    await loadRouterPreferences();
   })();
 });

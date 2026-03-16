@@ -1,10 +1,10 @@
-# Router Inspector
+# Router ISP Toolkit
 
 A Chrome extension for automated data extraction from home routers, built for ISP technicians and network administrators.
 
 ## Overview
 
-Router Inspector connects to your router's web interface, authenticates automatically, and extracts configuration data (PPPoE credentials, network settings, router version, topology, etc.) into a clean popup UI — with CSV export support.
+Router ISP Toolkit connects to your router's web interface, authenticates automatically, and extracts configuration data (PPPoE credentials, network settings, router version, topology, etc.) into a clean popup UI — with CSV export support.
 
 ## Features
 
@@ -102,12 +102,12 @@ The compiled extension is output to the `dist/` directory.
 1. Open Chrome and go to `chrome://extensions`
 2. Enable **Developer mode** (top right)
 3. Click **Load unpacked** and select the `dist/` folder
-4. The Router Inspector icon will appear in the toolbar
+4. The Router ISP toolkit icon will appear in the toolbar
 
 ## Usage
 
 1. Navigate to your router's admin page (e.g. `http://192.168.1.1`)
-2. Click the Router Inspector icon in the Chrome toolbar
+2. Click the Router ISP Toolkit icon in the Chrome toolbar
 3. Enter your router credentials (default username: `admin`)
 4. Click **Collect Data**
 5. When collection finishes, use **Export CSV** to download the data

@@ -1,52 +1,35 @@
 {
-  "name": "",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "router-isp-toolkit",
+  "private": true,
+  "version": "1.4.0",
   "type": "module",
-  "license": "AGPL-version-3.0",
-  "private": false,
-  "engines": {
-    "node": ">= 14.0.0",
-    "npm": ">= 6.0.0"
-  },
-  "homepage": "",
-  "repository": {
-    "type": "git",
-    "url": ""
-  },
-  "bugs": "",
-  "keywords": [],
-  "author": {
-    "name": "",
-    "email": "",
-    "url": ""
-  },
-  "contributors": [],
   "scripts": {
-    "clean": "rm -rf dist",
-    "compile": "npx tsc",
-    "copy-assets": "rsync -av --exclude 'tsconfig.json' --exclude 'src' --exclude 'dist' ./ dist/",
-    "copy-static": "find src -type f \\( -name '*.html' -o -name '*.css' -o -name '*.png' -o -name '*.svg' \\) | xargs -I{} rsync -av {} dist/{}",
-    "build": "npm run clean && node build.js",
+    "dev": "vite",
+    "build": "tsc -b && vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\"",
-    "lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix"
-  },
-  "devDependencies": {
-    "prettier": "^3.4.2",
-    "@types/chrome": "^0.1.37",
-    "esbuild": "^0.27.3",
-    "typescript": "^5.9.3",
-    "eslint": "^8.57.0",
-    "@typescript-eslint/parser": "^7.18.0",
-    "@typescript-eslint/eslint-plugin": "^7.18.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-promise": "^7.1.0",
-    "eslint-config-prettier": "^9.1.0"
+    "lint:fix": "eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "zod": "^4.3.6"
+    "prettier": "^3.4.2",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "vite-plugin-static-copy": "^3.3.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^24.12.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^8.0.0"
   }
 }

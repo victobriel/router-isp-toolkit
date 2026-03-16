@@ -1,8 +1,8 @@
-/* ─── Router Inspector — Shared Design Tokens ────────────────────────────────
+/* ─── Router ISP Toolkit — Shared Design Tokens ────────────────────────────────
  *
  *  Single source of truth for all design tokens.
  *  Both popup.css and settings.css import this file.
- *  Namespace: --ri-* (Router Inspector)
+ *  Namespace: --ri-* (Router ISP Toolkit)
  *
  * ─────────────────────────────────────────────────────────────────────────── */
 
