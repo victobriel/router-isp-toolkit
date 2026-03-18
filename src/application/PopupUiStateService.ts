@@ -1,11 +1,8 @@
-import {
-  LAST_DATA_STORAGE_KEY,
-  UI_STATE_STORAGE_KEY,
-} from "./constants/index.js";
-import type { IStorage } from "./ports/IStorage.js";
-import type { PopupStatusType } from "./types/index.js";
-import type { ExtractionResult } from "../domain/schemas/validation.js";
-import { defaultSessionStorageService } from "../infra/storage/SessionStorageService.js";
+import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from './constants/index';
+import type { IStorage } from './ports/IStorage';
+import type { PopupStatusType } from './types/index';
+import type { ExtractionResult } from '../domain/schemas/validation';
+import { defaultSessionStorageService } from '../infra/storage/SessionStorageService';
 
 export interface PopupStatusState {
   type: PopupStatusType;
@@ -42,9 +39,7 @@ export class PopupUiStateService {
     if (!raw) return null;
 
     const status: PopupStatusState | null =
-      raw.status &&
-      raw.status.type !== undefined &&
-      typeof raw.status.text === "string"
+      raw.status && raw.status.type !== undefined && typeof raw.status.text === 'string'
         ? { type: raw.status.type, text: raw.status.text }
         : null;
 
@@ -52,9 +47,9 @@ export class PopupUiStateService {
       ? raw.logs
           .filter(
             (log) =>
-              typeof log?.msg === "string" &&
+              typeof log?.msg === 'string' &&
               log.type !== undefined &&
-              typeof log.time === "string"
+              typeof log.time === 'string',
           )
           .map((log) => ({
             msg: log.msg as string,
@@ -70,17 +65,14 @@ export class PopupUiStateService {
       status:
         status ??
         ({
-          type: "none",
-          text: "",
+          type: 'none',
+          text: '',
         } as unknown as PopupStatusState),
       logs,
     };
   }
 
-  public async saveUiState(
-    tabId: number | null,
-    state: PopupUiState
-  ): Promise<void> {
+  public async saveUiState(tabId: number | null, state: PopupUiState): Promise<void> {
     const key = this.tabKey(UI_STATE_STORAGE_KEY, tabId);
     if (key === null) return;
     await this.storage.save(
@@ -89,28 +81,21 @@ export class PopupUiStateService {
         status: state.status,
         logs: state.logs,
       },
-      24 * 60 * 1000
+      24 * 60 * 1000,
     );
   }
 
-  public async loadLastExtraction(
-    tabId: number | null
-  ): Promise<ExtractionResult | null> {
+  public async loadLastExtraction(tabId: number | null): Promise<ExtractionResult | null> {
     const key = this.tabKey(LAST_DATA_STORAGE_KEY, tabId);
     if (key === null) return null;
     return await this.storage.get<ExtractionResult>(key);
   }
 
-  public async saveLastExtraction(
-    tabId: number | null,
-    data: ExtractionResult
-  ): Promise<void> {
+  public async saveLastExtraction(tabId: number | null, data: ExtractionResult): Promise<void> {
     const key = this.tabKey(LAST_DATA_STORAGE_KEY, tabId);
     if (key === null) return;
     await this.storage.save(key, data, 24 * 60 * 1000);
   }
 }
 
-export const defaultPopupUiStateService = new PopupUiStateService(
-  defaultSessionStorageService
-);
+export const defaultPopupUiStateService = new PopupUiStateService(defaultSessionStorageService);

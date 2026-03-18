@@ -1,19 +1,17 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export enum DiagnosticsMode {
-  INTERNAL = "internal",
-  EXTERNAL = "external",
+  INTERNAL = 'internal',
+  EXTERNAL = 'external',
 }
 
 export type ValidationIssue = z.ZodIssue;
 
-export type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; issues: ValidationIssue[] };
+export type ValidationResult<T> = { ok: true; value: T } | { ok: false; issues: ValidationIssue[] };
 
 export const CredentialsSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 export const ExtractionResultSchema = z.object({
@@ -33,25 +31,25 @@ export const ExtractionResultSchema = z.object({
   //
   topology: z
     .object({
-      "24ghz": z.object({
+      '24ghz': z.object({
         clients: z.array(
           z.object({
             name: z.string(),
             ip: z.string(),
             mac: z.string(),
             signal: z.number(),
-          })
+          }),
         ),
         totalClients: z.number(),
       }),
-      "5ghz": z.object({
+      '5ghz': z.object({
         clients: z.array(
           z.object({
             name: z.string(),
             ip: z.string(),
             mac: z.string(),
             signal: z.number(),
-          })
+          }),
         ),
         totalClients: z.number(),
       }),
@@ -62,7 +60,7 @@ export const ExtractionResultSchema = z.object({
             ip: z.string(),
             mac: z.string(),
             signal: z.number(),
-          })
+          }),
         ),
         totalClients: z.number(),
       }),
@@ -104,7 +102,7 @@ export const ExtractionResultSchema = z.object({
         ssidHideMode: z.boolean(),
         wpa2SecurityType: z.string(),
         maxClients: z.number(),
-      })
+      }),
     )
     .optional(),
   wlan5GhzSsids: z
@@ -116,7 +114,7 @@ export const ExtractionResultSchema = z.object({
         ssidHideMode: z.boolean(),
         wpa2SecurityType: z.string(),
         maxClients: z.number(),
-      })
+      }),
     )
     .optional(),
   //
@@ -140,19 +138,15 @@ export const ExtractionResultSchema = z.object({
 });
 
 export enum CollectMessageAction {
-  AUTHENTICATE = "authenticate",
-  COLLECT = "collect",
-  PING = "ping",
+  AUTHENTICATE = 'authenticate',
+  COLLECT = 'collect',
+  PING = 'ping',
 }
 
 export const CollectMessageSchema = z.object({
   action: z.enum(
-    [
-      CollectMessageAction.AUTHENTICATE,
-      CollectMessageAction.COLLECT,
-      CollectMessageAction.PING,
-    ],
-    "Invalid action type"
+    [CollectMessageAction.AUTHENTICATE, CollectMessageAction.COLLECT, CollectMessageAction.PING],
+    'Invalid action type',
   ),
   credentials: z
     .object({
@@ -185,9 +179,7 @@ export type CollectMessage = z.infer<typeof CollectMessageSchema>;
 export type ExtractionResult = z.infer<typeof ExtractionResultSchema>;
 export type PingTestResult = z.infer<typeof PingTestResultSchema>;
 
-export function validateCredentials(
-  raw: unknown
-): ValidationResult<Credentials> {
+export function validateCredentials(raw: unknown): ValidationResult<Credentials> {
   const result = CredentialsSchema.safeParse(raw);
   if (result.success) {
     return { ok: true, value: result.data };
@@ -195,9 +187,7 @@ export function validateCredentials(
   return { ok: false, issues: result.error.issues };
 }
 
-export function validateCollectMessage(
-  raw: unknown
-): ValidationResult<CollectMessage> {
+export function validateCollectMessage(raw: unknown): ValidationResult<CollectMessage> {
   const result = CollectMessageSchema.safeParse(raw);
   if (result.success) {
     return { ok: true, value: result.data };
@@ -207,15 +197,12 @@ export function validateCollectMessage(
 
 export function createExtractionResult(
   raw: unknown,
-  options?: { withTimestamp?: boolean }
+  options?: { withTimestamp?: boolean },
 ): ValidationResult<ExtractionResult> {
-  const base =
-    typeof raw === "object" && raw !== null ? (raw as object) : ({} as object);
+  const base = typeof raw === 'object' && raw !== null ? (raw as object) : ({} as object);
 
   const payload =
-    options?.withTimestamp === false
-      ? base
-      : { ...base, timestamp: new Date().toISOString() };
+    options?.withTimestamp === false ? base : { ...base, timestamp: new Date().toISOString() };
 
   const result = ExtractionResultSchema.safeParse(payload as unknown);
   if (result.success) {

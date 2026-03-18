@@ -1,19 +1,13 @@
-import { DomService } from "../infra/dom/DomService.js";
-import { RouterFactory } from "../infra/router/RouterFactory.js";
-import { StorageService } from "../infra/storage/StorageService.js";
+import { DomService } from '../infra/dom/DomService';
+import { RouterFactory } from '../infra/router/RouterFactory';
+import { StorageService } from '../infra/storage/StorageService';
 
-import {
-  BOOKMARKS_STORAGE_KEY,
-  PENDING_AUTH_ERROR_STORAGE_KEY,
-} from "./constants/index.js";
+import { BOOKMARKS_STORAGE_KEY, PENDING_AUTH_ERROR_STORAGE_KEY } from './constants/index';
 
-import type { BookmarkStore } from "./types/index.js";
-import type { Router } from "../domain/models/Router.js";
-import {
-  CollectMessageAction,
-  type ButtonConfig,
-} from "../domain/schemas/validation.js";
-import { CollectionService } from "./CollectionService.js";
+import type { BookmarkStore } from './types/index';
+import type { Router } from '../domain/models/Router';
+import { CollectMessageAction, type ButtonConfig } from '../domain/schemas/validation';
+import { CollectionService } from './CollectionService';
 
 /**
  * Application use case: bootstrap content script on router page.
@@ -29,18 +23,18 @@ export class ContentPageUseCase {
     }
 
     const result = await chrome.runtime.sendMessage({
-      action: "saveDetectedRouterModel",
+      action: 'saveDetectedRouterModel',
       model: router.model,
     });
 
     if (!result?.success) {
-      console.error("Failed to save detected router model", result?.message);
+      console.error('Failed to save detected router model', result?.message);
     }
 
-    const loginPending = sessionStorage.getItem("router_login_pending");
-    const loginTimeStr = sessionStorage.getItem("router_login_time");
+    const loginPending = sessionStorage.getItem('router_login_pending');
+    const loginTimeStr = sessionStorage.getItem('router_login_time');
 
-    if (loginPending === "true" && loginTimeStr !== null) {
+    if (loginPending === 'true' && loginTimeStr !== null) {
       await this.handlePostLoginRedirect(router, parseInt(loginTimeStr, 10));
     }
 
@@ -48,21 +42,18 @@ export class ContentPageUseCase {
     this.fillLoginFields(router);
   }
 
-  private static async handlePostLoginRedirect(
-    router: Router,
-    loginTime: number
-  ): Promise<void> {
-    sessionStorage.removeItem("router_login_pending");
-    sessionStorage.removeItem("router_login_time");
+  private static async handlePostLoginRedirect(router: Router, loginTime: number): Promise<void> {
+    sessionStorage.removeItem('router_login_pending');
+    sessionStorage.removeItem('router_login_time');
 
     if (!router.isAuthenticated()) {
       const storageKey = PENDING_AUTH_ERROR_STORAGE_KEY;
       await StorageService.save(
         storageKey,
-        "Authentication failed. Please verify your username and password and try again",
-        5 * 60 * 1000
+        'Authentication failed. Please verify your username and password and try again',
+        5 * 60 * 1000,
       );
-      void chrome.runtime.sendMessage({ action: "openPopup" });
+      void chrome.runtime.sendMessage({ action: 'openPopup' });
       return;
     }
 
@@ -75,10 +66,10 @@ export class ContentPageUseCase {
 
       if (result.success && result.data) {
         await chrome.runtime.sendMessage({
-          action: "saveLastExtractionData",
+          action: 'saveLastExtractionData',
           data: result.data,
         });
-        void chrome.runtime.sendMessage({ action: "openPopup" });
+        void chrome.runtime.sendMessage({ action: 'openPopup' });
       }
     }
   }
@@ -92,37 +83,33 @@ export class ContentPageUseCase {
 
     const dataBtnParentElement = DomService.getElement(
       btnElementConfig.targetSelector,
-      HTMLElement
+      HTMLElement,
     );
-    dataBtnParentElement.style.position = "relative";
+    dataBtnParentElement.style.position = 'relative';
 
     try {
       const btn = this.createGetDataBtn(router, btnElementConfig);
       dataBtnParentElement.appendChild(btn);
     } catch (error) {
-      console.warn("UI Injection failed:", error);
+      console.warn('UI Injection failed:', error);
     }
   }
 
   private static createGetDataBtn(
     router: Router,
-    btnElementConfig: ButtonConfig
+    btnElementConfig: ButtonConfig,
   ): HTMLButtonElement {
-    const btn = document.createElement("button");
-    btn.id = "routerCollectDataBtn";
+    const btn = document.createElement('button');
+    btn.id = 'routerCollectDataBtn';
     btn.textContent = btnElementConfig.text;
     btn.style.cssText = btnElementConfig.style;
 
-    btn.addEventListener("click", async () => {
-      const username = DomService.getValueElement(
-        router.usernameSelector
-      ).value.trim();
-      const password = DomService.getValueElement(
-        router.passwordSelector
-      ).value;
+    btn.addEventListener('click', async () => {
+      const username = DomService.getValueElement(router.usernameSelector).value.trim();
+      const password = DomService.getValueElement(router.passwordSelector).value;
 
-      if (username === "" || password === "") {
-        alert("Please enter credentials in the router login fields first");
+      if (username === '' || password === '') {
+        alert('Please enter credentials in the router login fields first');
         return;
       }
 
@@ -132,7 +119,7 @@ export class ContentPageUseCase {
       });
 
       if (result.success) {
-        void chrome.runtime.sendMessage({ action: "openPopup" });
+        void chrome.runtime.sendMessage({ action: 'openPopup' });
       }
     });
     return btn;
@@ -147,12 +134,11 @@ export class ContentPageUseCase {
     const passwordElement = DomService.getValueElement(router.passwordSelector);
 
     if (!usernameElement || !passwordElement) {
-      console.warn("Failed to find username or password element");
+      console.warn('Failed to find username or password element');
       return;
     }
 
-    const store =
-      (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
+    const store = (await StorageService.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
 
     const modelEntry = store[router.model];
 
@@ -167,10 +153,7 @@ export class ContentPageUseCase {
     }
   }
 
-  public static fillLoginFieldsWithCredentials(
-    username: string,
-    password: string
-  ): void {
+  public static fillLoginFieldsWithCredentials(username: string, password: string): void {
     let router: Router;
     try {
       router = RouterFactory.create();
@@ -183,16 +166,12 @@ export class ContentPageUseCase {
     }
 
     try {
-      const usernameElement = DomService.getValueElement(
-        router.usernameSelector
-      );
-      const passwordElement = DomService.getValueElement(
-        router.passwordSelector
-      );
+      const usernameElement = DomService.getValueElement(router.usernameSelector);
+      const passwordElement = DomService.getValueElement(router.passwordSelector);
       DomService.updateField(usernameElement, username);
       DomService.updateField(passwordElement, password);
     } catch {
-      console.warn("Failed to fill login fields from popup selection");
+      console.warn('Failed to fill login fields from popup selection');
     }
   }
 }

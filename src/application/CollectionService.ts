@@ -1,16 +1,11 @@
-import type { CollectResponse } from "./types/index.js";
-import type { Router } from "../domain/models/Router.js";
-import {
-  CredentialsSchema,
-  type CollectMessage,
-} from "../domain/schemas/validation.js";
-import { RouterFactory } from "../infra/router/RouterFactory.js";
-import { SessionStorageService } from "../infra/storage/SessionStorageService.js";
+import type { CollectResponse } from './types/index';
+import type { Router } from '../domain/models/Router';
+import { CredentialsSchema, type CollectMessage } from '../domain/schemas/validation';
+import { RouterFactory } from '../infra/router/RouterFactory';
+import { SessionStorageService } from '../infra/storage/SessionStorageService';
 
 export class CollectionService {
-  public static async handleCollect(
-    message: CollectMessage
-  ): Promise<CollectResponse> {
+  public static async handleCollect(message: CollectMessage): Promise<CollectResponse> {
     const router = RouterFactory.create();
     const { action, credentials, ip } = message;
 
@@ -20,59 +15,55 @@ export class CollectionService {
         if (router.isAuthenticated()) {
           return {
             success: true,
-            message: "Router is already authenticated",
+            message: 'Router is already authenticated',
           };
         }
 
         if (!credentials) {
           return {
             success: false,
-            message: "Credentials are required for authentication",
+            message: 'Credentials are required for authentication',
           };
         }
 
         const { username, password } = CredentialsSchema.parse(credentials);
 
         const loginTime = Date.now();
-        await SessionStorageService.save("router_login_pending", "true");
-        await SessionStorageService.save(
-          "router_login_time",
-          loginTime.toString()
-        );
+        await SessionStorageService.save('router_login_pending', 'true');
+        await SessionStorageService.save('router_login_time', loginTime.toString());
 
         router.authenticate({ username, password });
 
         const authRedirected = await this.waitForAuthRedirect(router, 1000);
 
         if (!authRedirected && !router.isAuthenticated()) {
-          await SessionStorageService.remove("router_login_pending");
-          await SessionStorageService.remove("router_login_time");
+          await SessionStorageService.remove('router_login_pending');
+          await SessionStorageService.remove('router_login_time');
 
           return {
             success: false,
             message:
-              "Authentication failed. Please verify your username and password and try again",
+              'Authentication failed. Please verify your username and password and try again',
           };
         }
 
         return {
           success: true,
-          message: "Authentication in progress",
+          message: 'Authentication in progress',
         };
       },
       ping: async () => {
         if (!router.isAuthenticated()) {
           return {
             success: false,
-            message:
-              "Router is not authenticated. Please authenticate before running diagnostics.",
+            message: 'Router is not authenticated. Please authenticate before running diagnostics.',
           };
         }
 
         if (!ip) {
           return {
             success: false,
-            message: "IP address is required for ping diagnostics.",
+            message: 'IP address is required for ping diagnostics.',
           };
         }
 
@@ -80,7 +71,7 @@ export class CollectionService {
 
         return {
           success: result ? true : false,
-          message: result ? "Ping request successful" : "Ping request failed",
+          message: result ? 'Ping request successful' : 'Ping request failed',
           pingResult: result,
         };
       },
@@ -90,24 +81,22 @@ export class CollectionService {
     if (!handler) {
       return {
         success: false,
-        message: "Internal error: Unknown collect action requested",
+        message: 'Internal error: Unknown collect action requested',
       };
     }
 
     return await handler();
   }
 
-  private static async executeExtraction(
-    router: Router
-  ): Promise<CollectResponse> {
+  private static async executeExtraction(router: Router): Promise<CollectResponse> {
     const data = await router.extract();
     const hasData = Object.values(data).some((value) => value !== null);
 
     return {
       success: hasData,
       message: hasData
-        ? "Data extracted successfully from the router"
-        : "No data could be extracted from the router",
+        ? 'Data extracted successfully from the router'
+        : 'No data could be extracted from the router',
       data,
     };
   }
@@ -118,10 +107,7 @@ export class CollectionService {
    * @param timeoutMs - The timeout in milliseconds.
    * @returns True if the router became authenticated, false on timeout.
    */
-  private static async waitForAuthRedirect(
-    router: Router,
-    timeoutMs = 8000
-  ): Promise<boolean> {
+  private static async waitForAuthRedirect(router: Router, timeoutMs = 8000): Promise<boolean> {
     const startTime = Date.now();
 
     return new Promise((resolve) => {

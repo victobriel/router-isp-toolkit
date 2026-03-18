@@ -1,13 +1,13 @@
-const LAST_DATA_STORAGE_KEY = "last_extraction_data";
-const UI_STATE_STORAGE_KEY = "last_popup_ui_state";
-const BOOKMARKS_STORAGE_KEY = "router_bookmarks";
-const ROUTER_MODEL_STORAGE_KEY = "detected_router_model";
-const PENDING_AUTH_ERROR_STORAGE_KEY = "pending_auth_error_message";
-const COPY_TEXT_TEMPLATE_STORAGE_KEY = "copy_text_template";
-const ROUTER_PREFERENCES_STORAGE_KEY = "router_preferences";
-const LAST_EXTERNAL_IP_STORAGE_KEY = "last_external_ip";
-const LAST_INTERNAL_PING_TEST_STORAGE_KEY = "last_internal_ping_ip";
-const LAST_EXTERNAL_PING_TEST_STORAGE_KEY = "last_external_ping_ip";
+const LAST_DATA_STORAGE_KEY = 'last_extraction_data';
+const UI_STATE_STORAGE_KEY = 'last_popup_ui_state';
+const BOOKMARKS_STORAGE_KEY = 'router_bookmarks';
+const ROUTER_MODEL_STORAGE_KEY = 'detected_router_model';
+const PENDING_AUTH_ERROR_STORAGE_KEY = 'pending_auth_error_message';
+const COPY_TEXT_TEMPLATE_STORAGE_KEY = 'copy_text_template';
+const ROUTER_PREFERENCES_STORAGE_KEY = 'router_preferences';
+const LAST_EXTERNAL_IP_STORAGE_KEY = 'last_external_ip';
+const LAST_INTERNAL_PING_TEST_STORAGE_KEY = 'last_internal_ping_ip';
+const LAST_EXTERNAL_PING_TEST_STORAGE_KEY = 'last_external_ping_ip';
 const MAX_BOOKMARK_CREDENTIALS = 6;
 
 export {

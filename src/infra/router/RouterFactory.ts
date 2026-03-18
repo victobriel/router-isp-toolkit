@@ -1,7 +1,7 @@
-import { ZteH199Driver } from "../drivers/zte/ZteH199Driver/ZteH199Driver.js";
-import { TopologySectionParser } from "../drivers/shared/TopologySectionParser.js";
-import type { IRouter } from "../../domain/ports/IRouter.js";
-import { ZteH3601Driver } from "../drivers/zte/ZteH3601Driver/ZteH3601Driver.js";
+import { ZteH199Driver } from '../drivers/zte/ZteH199Driver/ZteH199Driver';
+import { TopologySectionParser } from '../drivers/shared/TopologySectionParser';
+import type { IRouter } from '../../domain/ports/IRouter';
+import { ZteH3601Driver } from '../drivers/zte/ZteH3601Driver/ZteH3601Driver';
 
 /**
  * Infrastructure factory: creates a router adapter for the current page.
@@ -20,13 +20,11 @@ export class RouterFactory {
       return new ZteH3601Driver(new TopologySectionParser());
     }
 
-    throw new Error(
-      "Unsupported router model: The extension does not recognize this interface"
-    );
+    throw new Error('Unsupported router model: The extension does not recognize this interface');
   }
 
   private static isZteH199(title: string, body: string): boolean {
-    const indicators = ["h199"];
+    const indicators = ['h199'];
 
     for (const term of indicators) {
       if (title.includes(term) || body.includes(term)) {
@@ -38,7 +36,7 @@ export class RouterFactory {
   }
 
   private static isZteH3601(title: string, body: string): boolean {
-    const indicators = ["h3601"];
+    const indicators = ['h3601'];
 
     for (const term of indicators) {
       if (title.includes(term) || body.includes(term)) {

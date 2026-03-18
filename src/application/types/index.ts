@@ -1,7 +1,4 @@
-import type {
-  ExtractionResult,
-  PingTestResult,
-} from "../../domain/schemas/validation.js";
+import type { ExtractionResult, PingTestResult } from '../../domain/schemas/validation';
 
 /** Application-level response for collect/authenticate operations. */
 export interface CollectResponse {
@@ -13,13 +10,13 @@ export interface CollectResponse {
 
 /** Status type for popup UI feedback. */
 export enum PopupStatusType {
-  NONE = "none",
-  OK = "ok",
-  WARN = "warn",
-  ERR = "err",
+  NONE = 'none',
+  OK = 'ok',
+  WARN = 'warn',
+  ERR = 'err',
 }
 
-export type CredentialBookmark = { username: string; password: string };
+export type CredentialBookmark = { id: string; username: string; password: string };
 export type ModelBookmarks = {
   model: string;
   credentials: CredentialBookmark[];

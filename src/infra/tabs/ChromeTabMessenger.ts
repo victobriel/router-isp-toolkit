@@ -1,4 +1,4 @@
-import type { ITabMessenger } from "../../application/ports/ITabMessenger.js";
+import type { ITabMessenger } from '../../application/ports/ITabMessenger';
 
 /**
  * Chrome-specific implementation of the ITabMessenger port.
@@ -6,7 +6,7 @@ import type { ITabMessenger } from "../../application/ports/ITabMessenger.js";
 export class ChromeTabMessenger implements ITabMessenger {
   public async sendToTab<TRequest, TResponse = unknown>(
     tabId: number,
-    message: TRequest
+    message: TRequest,
   ): Promise<TResponse> {
     const response = await chrome.tabs.sendMessage(tabId, message as unknown);
     return response as TResponse;
@@ -18,4 +18,3 @@ export class ChromeTabMessenger implements ITabMessenger {
  * Composition roots (popup, background, etc.) can use this directly.
  */
 export const defaultTabMessenger: ITabMessenger = new ChromeTabMessenger();
-

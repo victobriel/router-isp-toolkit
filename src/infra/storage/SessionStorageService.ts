@@ -1,32 +1,27 @@
-import type { IStorage } from "../../application/ports/IStorage.js";
+import type { IStorage } from '../../application/ports/IStorage';
 
-const TTL_PREFIX = "__ttl:";
-const VALUE_KEY = "__v";
+const TTL_PREFIX = '__ttl:';
+const VALUE_KEY = '__v';
 
 // In-memory fallback used when neither chrome.storage.session nor window.sessionStorage
 // are available (e.g. tests or non-extension environments).
 const inMemorySessionStore = new Map<string, unknown>();
 
-function isTtlEntry(
-  raw: unknown
-): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
+function isTtlEntry(raw: unknown): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
   return (
-    typeof raw === "object" &&
-    raw !== null &&
-    VALUE_KEY in raw &&
-    TTL_PREFIX + "expiresAt" in raw
+    typeof raw === 'object' && raw !== null && VALUE_KEY in raw && TTL_PREFIX + 'expiresAt' in raw
   );
 }
 
 function unwrapWithTtl<T>(
   key: string,
   raw: unknown,
-  remove: (key: string) => Promise<void> | void
+  remove: (key: string) => Promise<void> | void,
 ): T | null {
   if (raw === undefined || raw === null) return null;
 
   if (isTtlEntry(raw)) {
-    const expiresAt = raw[TTL_PREFIX + "expiresAt"] as number;
+    const expiresAt = raw[TTL_PREFIX + 'expiresAt'] as number;
     if (Date.now() >= expiresAt) {
       void remove(key);
       return null;
@@ -39,7 +34,7 @@ function unwrapWithTtl<T>(
 
 function getChromeSessionArea(): chrome.storage.StorageArea | null | undefined {
   try {
-    if (typeof chrome === "undefined") return null;
+    if (typeof chrome === 'undefined') return null;
     if (!chrome.storage || !chrome.storage.session) return null;
     return chrome.storage.session;
   } catch {
@@ -49,8 +44,8 @@ function getChromeSessionArea(): chrome.storage.StorageArea | null | undefined {
 
 function getWindowSessionStorage(): Storage | null {
   try {
-    if (typeof window === "undefined") return null;
-    if (!("sessionStorage" in window)) return null;
+    if (typeof window === 'undefined') return null;
+    if (!('sessionStorage' in window)) return null;
     return window.sessionStorage;
   } catch {
     return null;
@@ -124,7 +119,7 @@ export class SessionStorageService implements IStorage {
       ttlMs != null && ttlMs > 0
         ? {
             [VALUE_KEY]: value,
-            [TTL_PREFIX + "expiresAt"]: now + ttlMs,
+            [TTL_PREFIX + 'expiresAt']: now + ttlMs,
           }
         : value;
 
@@ -140,8 +135,7 @@ export class SessionStorageService implements IStorage {
     const storage = getWindowSessionStorage();
     if (storage) {
       try {
-        const serialized =
-          typeof payload === "string" ? payload : JSON.stringify(payload);
+        const serialized = typeof payload === 'string' ? payload : JSON.stringify(payload);
         storage.setItem(key, serialized);
         return;
       } catch {
@@ -211,11 +205,7 @@ export class SessionStorageService implements IStorage {
     }
 
     const raw = inMemorySessionStore.get(key);
-    return typeof raw === "string"
-      ? raw
-      : raw === undefined
-        ? null
-        : String(raw);
+    return typeof raw === 'string' ? raw : raw === undefined ? null : String(raw);
   }
 
   static removeItem(key: string): void {

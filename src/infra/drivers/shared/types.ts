@@ -1,4 +1,4 @@
-export type TopologyBand = "24ghz" | "5ghz" | "cable";
+export type TopologyBand = '24ghz' | '5ghz' | 'cable';
 
 export type TopologyClient = {
   name: string;

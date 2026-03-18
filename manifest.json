@@ -15,14 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": [
-        "assets/icon.png",
-        "popup.html",
-        "popup.css",
-        "popup.js",
-        "tokens.css",
-        "assets/*"
-      ],
+      "resources": ["popup.html", "popup.js", "public/*"],
       "matches": ["http://*/*"]
     }
   ],
@@ -32,10 +25,10 @@
   "action": {
     "default_title": "__MSG_extName__",
     "default_icon": {
-      "16": "assets/icon.png",
-      "32": "assets/icon.png",
-      "48": "assets/icon.png",
-      "128": "assets/icon.png"
+      "16": "public/icon.png",
+      "32": "public/icon.png",
+      "48": "public/icon.png",
+      "128": "public/icon.png"
     }
   },
   "options_ui": {

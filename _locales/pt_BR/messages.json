@@ -1,6 +1,6 @@
 {
   "extName": {
-    "message": "Inspector de Roteador",
+    "message": "Router ISP Toolkit",
     "description": "Nome da extensão exibido na UI do Chrome e no cabeçalho do popup."
   },
   "extDescription": {
@@ -9,7 +9,7 @@
   },
 
   "popup_title": {
-    "message": "Inspector de Roteador"
+    "message": "Router ISP Toolkit"
   },
   "popup_theme_aria_label": {
     "message": "Seleção de tema"
@@ -140,9 +140,9 @@
   "popup_logs_title": { "message": "Logs" },
 
   "settings_title": {
-    "message": "Inspector de Roteador — Configurações"
+    "message": "Router ISP Toolkit — Configurações"
   },
-  "settings_header_title": { "message": "Inspector de Roteador" },
+  "settings_header_title": { "message": "Router ISP Toolkit" },
   "settings_header_subtitle": { "message": "Configurações" },
 
   "settings_section_appearance": { "message": "Aparência" },

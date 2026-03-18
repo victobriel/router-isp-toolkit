@@ -1,4 +1,4 @@
-import type { TopologyClient } from "./types.js";
+import type { TopologyClient } from './types';
 
 /**
  * Selectors to locate client rows and cells within a topology section (LAN or WLAN).
@@ -28,10 +28,7 @@ function parseRssiFromText(text: string): number {
  * Drivers depend on this interface; concrete parser is an infrastructure detail (DIP).
  */
 export interface ITopologySectionParser {
-  parse(
-    container: HTMLElement,
-    selectors: TopologyRowSelectors
-  ): TopologyClient[];
+  parse(container: HTMLElement, selectors: TopologyRowSelectors): TopologyClient[];
 }
 
 /**
@@ -42,25 +39,20 @@ export interface ITopologySectionParser {
 export class TopologySectionParser implements ITopologySectionParser {
   public parse(
     container: HTMLElement,
-    { rows, hostName, macAddr, ipAddr, rssi }: TopologyRowSelectors
+    { rows, hostName, macAddr, ipAddr, rssi }: TopologyRowSelectors,
   ): TopologyClient[] {
     const result: TopologyClient[] = [];
     const rowElements = container.querySelectorAll<HTMLElement>(rows);
 
     for (const row of rowElements) {
-      const name =
-        row.querySelector<HTMLElement>(hostName)?.textContent?.trim() ?? "";
-      const mac =
-        row.querySelector<HTMLElement>(macAddr)?.textContent?.trim() ?? "";
-      const ip =
-        row.querySelector<HTMLElement>(ipAddr)?.textContent?.trim() ?? "";
+      const name = row.querySelector<HTMLElement>(hostName)?.textContent?.trim() ?? '';
+      const mac = row.querySelector<HTMLElement>(macAddr)?.textContent?.trim() ?? '';
+      const ip = row.querySelector<HTMLElement>(ipAddr)?.textContent?.trim() ?? '';
 
       if (!mac) continue;
 
       const signal = rssi
-        ? parseRssiFromText(
-            row.querySelector<HTMLElement>(rssi)?.textContent?.trim() ?? ""
-          )
+        ? parseRssiFromText(row.querySelector<HTMLElement>(rssi)?.textContent?.trim() ?? '')
         : 0;
 
       result.push({

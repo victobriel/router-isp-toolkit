@@ -1,14 +1,7 @@
-import {
-  BOOKMARKS_STORAGE_KEY,
-  MAX_BOOKMARK_CREDENTIALS,
-} from "./constants/index.js";
-import type {
-  BookmarkStore,
-  ModelBookmarks,
-  CredentialBookmark,
-} from "./types/index.js";
-import type { IStorage } from "./ports/IStorage.js";
-import { defaultStorage } from "../infra/storage/StorageService.js";
+import { BOOKMARKS_STORAGE_KEY, MAX_BOOKMARK_CREDENTIALS } from './constants/index';
+import type { BookmarkStore, ModelBookmarks, CredentialBookmark } from './types/index';
+import type { IStorage } from './ports/IStorage';
+import { defaultStorage } from '../infra/storage/StorageService';
 
 export interface BookmarkSummary {
   total: number;
@@ -19,8 +12,7 @@ export class BookmarksService {
   constructor(private readonly storage: IStorage) {}
 
   private async loadStore(): Promise<BookmarkStore> {
-    const store =
-      (await this.storage.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
+    const store = (await this.storage.get<BookmarkStore>(BOOKMARKS_STORAGE_KEY)) ?? {};
     return store;
   }
 
@@ -36,10 +28,8 @@ export class BookmarksService {
 
   public async addCredential(
     model: string,
-    credential: CredentialBookmark
-  ): Promise<
-    { kind: "ok"; entry: ModelBookmarks } | { kind: "max_reached"; max: number }
-  > {
+    credential: Omit<CredentialBookmark, 'id'>,
+  ): Promise<{ kind: 'ok'; entry: ModelBookmarks } | { kind: 'max_reached'; max: number }> {
     const store = await this.loadStore();
     const existing = store[model] ?? {
       model,
@@ -49,10 +39,10 @@ export class BookmarksService {
     const updatedCredentials = [...existing.credentials];
 
     if (updatedCredentials.length >= MAX_BOOKMARK_CREDENTIALS) {
-      return { kind: "max_reached", max: MAX_BOOKMARK_CREDENTIALS };
+      return { kind: 'max_reached', max: MAX_BOOKMARK_CREDENTIALS };
     }
 
-    updatedCredentials.push(credential);
+    updatedCredentials.push({ ...credential, id: crypto.randomUUID() });
 
     const entry: ModelBookmarks = {
       model,
@@ -62,24 +52,21 @@ export class BookmarksService {
     store[model] = entry;
     await this.saveStore(store);
 
-    return { kind: "ok", entry };
+    return { kind: 'ok', entry };
   }
 
-  public async removeCredential(
-    model: string,
-    index: number
-  ): Promise<ModelBookmarks | null> {
+  public async removeCredential(routerModel: string, id: string): Promise<ModelBookmarks | null> {
     const store = await this.loadStore();
-    const existing = store[model];
+    const existing = store[routerModel];
     if (!existing) return null;
 
     const updated = [...existing.credentials];
-    if (index < 0 || index >= updated.length) return existing;
-
-    updated.splice(index, 1);
+    const bookmark = updated.find((bookmark) => bookmark.id === id);
+    if (!bookmark) return existing;
+    updated.splice(updated.indexOf(bookmark), 1);
 
     if (updated.length === 0) {
-      delete store[model];
+      delete store[routerModel];
       await this.saveStore(store);
       return null;
     }
@@ -88,20 +75,15 @@ export class BookmarksService {
       model: existing.model,
       credentials: updated,
     };
-    store[model] = entry;
+    store[routerModel] = entry;
     await this.saveStore(store);
     return entry;
   }
 
   public async getSummary(): Promise<BookmarkSummary> {
     const store = await this.loadStore();
-    const entries = Object.entries(store).filter(
-      ([, entry]) => entry.credentials.length > 0
-    );
-    const total = entries.reduce(
-      (sum, [, entry]) => sum + entry.credentials.length,
-      0
-    );
+    const entries = Object.entries(store).filter(([, entry]) => entry.credentials.length > 0);
+    const total = entries.reduce((sum, [, entry]) => sum + entry.credentials.length, 0);
     return { total, entries };
   }
 }

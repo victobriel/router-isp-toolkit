@@ -1,32 +1,27 @@
-import type { IStorage } from "../../application/ports/IStorage.js";
+import type { IStorage } from '../../application/ports/IStorage';
 
-const TTL_PREFIX = "__ttl:";
-const VALUE_KEY = "__v";
+const TTL_PREFIX = '__ttl:';
+const VALUE_KEY = '__v';
 
 // In-memory fallback used when neither chrome.storage.local nor window.localStorage
 // are available (e.g. tests or non-extension environments).
 const inMemoryLocalStore = new Map<string, unknown>();
 
-function isTtlEntry(
-  raw: unknown
-): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
+function isTtlEntry(raw: unknown): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
   return (
-    typeof raw === "object" &&
-    raw !== null &&
-    VALUE_KEY in raw &&
-    TTL_PREFIX + "expiresAt" in raw
+    typeof raw === 'object' && raw !== null && VALUE_KEY in raw && TTL_PREFIX + 'expiresAt' in raw
   );
 }
 
 function unwrapWithTtl<T>(
   key: string,
   raw: unknown,
-  remove: (key: string) => Promise<void> | void
+  remove: (key: string) => Promise<void> | void,
 ): T | null {
   if (raw === undefined || raw === null) return null;
 
   if (isTtlEntry(raw)) {
-    const expiresAt = raw[TTL_PREFIX + "expiresAt"] as number;
+    const expiresAt = raw[TTL_PREFIX + 'expiresAt'] as number;
     if (Date.now() >= expiresAt) {
       void remove(key);
       return null;
@@ -37,12 +32,9 @@ function unwrapWithTtl<T>(
   return raw as T;
 }
 
-function getChromeLocalArea():
-  | chrome.storage.StorageArea
-  | null
-  | undefined {
+function getChromeLocalArea(): chrome.storage.StorageArea | null | undefined {
   try {
-    if (typeof chrome === "undefined") return null;
+    if (typeof chrome === 'undefined') return null;
     if (!chrome.storage || !chrome.storage.local) return null;
     return chrome.storage.local;
   } catch {
@@ -52,8 +44,8 @@ function getChromeLocalArea():
 
 function getWindowLocalStorage(): Storage | null {
   try {
-    if (typeof window === "undefined") return null;
-    if (!("localStorage" in window)) return null;
+    if (typeof window === 'undefined') return null;
+    if (!('localStorage' in window)) return null;
     return window.localStorage;
   } catch {
     return null;
@@ -117,7 +109,7 @@ export class StorageService implements IStorage {
       ttlMs != null && ttlMs > 0
         ? {
             [VALUE_KEY]: value,
-            [TTL_PREFIX + "expiresAt"]: now + ttlMs,
+            [TTL_PREFIX + 'expiresAt']: now + ttlMs,
           }
         : value;
 
@@ -133,8 +125,7 @@ export class StorageService implements IStorage {
     const windowLocal = getWindowLocalStorage();
     if (windowLocal) {
       try {
-        const serialized =
-          typeof payload === "string" ? payload : JSON.stringify(payload);
+        const serialized = typeof payload === 'string' ? payload : JSON.stringify(payload);
         windowLocal.setItem(key, serialized);
         return;
       } catch {
