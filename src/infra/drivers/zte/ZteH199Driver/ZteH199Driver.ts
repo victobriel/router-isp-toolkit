@@ -364,6 +364,9 @@ export class ZteH199Driver extends BaseRouter {
       DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
     );
     await this.clickElementAndWait(this.s.dhcpServerContainer, this.s.dhcpEnabled);
+    await this.waitForInputPopulated(this.s.dhcpIpAddressField1).catch(() => {});
+
+    await this.delay(500);
 
     const dhcpEnabled = DomService.getInputElement(this.s.dhcpEnabled).checked;
 
@@ -426,18 +429,24 @@ export class ZteH199Driver extends BaseRouter {
     };
   }
 
-  private async extractRouterVersionData(): Promise<Pick<ExtractionResult, 'routerVersion'>> {
+  private async extractRouterVersionData(): Promise<
+    Pick<ExtractionResult, 'routerModel' | 'routerVersion'>
+  > {
     await this.clickElementAndWait(this.s.managementTab, this.s.routerVersionContainer);
     await this.clickElementAndWait(this.s.routerVersionContainer, this.s.routerVersion);
 
     const routerVersion = (DomService.getOptionalValue(this.s.routerVersion) ?? '').trim();
+    const routerModel = (DomService.getOptionalValue(this.s.routerModel) ?? '').trim();
 
-    return { routerVersion };
+    return { routerModel, routerVersion };
   }
 
   private async extractTr069UrlData(): Promise<Pick<ExtractionResult, 'tr069Url'>> {
     await this.clickElementAndWait(this.s.managementTab, this.s.tr069UrlContainer);
     await this.clickElementAndWait(this.s.tr069UrlContainer, this.s.tr069Url);
+    await this.waitForInputPopulated(this.s.tr069Url).catch(() => {});
+
+    await this.delay(500);
 
     const tr069Url = (DomService.getOptionalValue(this.s.tr069Url) ?? '').trim();
 

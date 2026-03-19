@@ -17,7 +17,7 @@ import {
  * Lives in infra because it depends on DomService; implements domain IRouter (DIP).
  */
 export abstract class BaseRouter implements IRouter {
-  private static readonly CLICK_SETTLE_MS = 150;
+  private static readonly CLICK_SETTLE_MS = 200;
 
   private readonly name: string;
 
@@ -110,7 +110,7 @@ export abstract class BaseRouter implements IRouter {
       const isPopulated = (): boolean => {
         const el = document.querySelector<HTMLInputElement>(selector);
         const value = el?.value?.trim() ?? '';
-        return value.length > 0 && value !== '...';
+        return value.length > 0 && value !== '';
       };
 
       if (isPopulated()) {

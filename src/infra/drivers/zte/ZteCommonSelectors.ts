@@ -157,9 +157,13 @@ export const ZteCommonSelectors = {
   upnpContainer: '#upnp',
   upnpEnabled: "input[id^='OBJ_UPNPCONFIG_ID.EnableUPnPIGD1:LocalUPnP']",
 
-  // Management -> Router Version
   routerVersionContainer: '#statusMgr',
+
+  // Management -> Router Version
   routerVersion: '#SoftwareVer',
+
+  // Management -> Router Model
+  routerModel: '#ModelName',
 
   // Management -> TR069 URL
   tr069UrlContainer: '#remoteMgr',

@@ -132,6 +132,7 @@ export const ExtractionResultSchema = z.object({
   //
   upnpEnabled: z.boolean().optional(),
   //
+  routerModel: z.string().optional(),
   routerVersion: z.string().optional(),
   //
   tr069Url: z.string().optional(),
