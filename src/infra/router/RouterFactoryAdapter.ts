@@ -1,6 +1,6 @@
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 
-import { RouterFactory } from './RouterFactory';
+import { RouterFactory } from '@/infra/router/RouterFactory';
 
 /**
  * Thin adapter to expose the infra router factory behind an application port.

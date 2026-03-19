@@ -1,6 +1,6 @@
-import { BOOKMARKS_STORAGE_KEY, MAX_BOOKMARK_CREDENTIALS } from './constants/index';
-import type { BookmarkStore, ModelBookmarks, CredentialBookmark } from './types/index';
-import type { IStorage } from './ports/IStorage';
+import { BOOKMARKS_STORAGE_KEY, MAX_BOOKMARK_CREDENTIALS } from '@/application/constants/index';
+import type { BookmarkStore, ModelBookmarks, CredentialBookmark } from '@/application/types/index';
+import type { IStorage } from '@/application/ports/IStorage';
 
 export interface BookmarkSummary {
   total: number;

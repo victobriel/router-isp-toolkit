@@ -1,8 +1,8 @@
-import type { CollectResponse } from './types/index';
-import { CredentialsSchema, type CollectMessage } from '../domain/schemas/validation';
-import type { IRouterFactory } from './ports/IRouterFactory';
-import type { IStorage } from './ports/IStorage';
-import { IRouter as Router } from '@/domain/ports/IRouter';
+import type { CollectResponse } from '@/application/types/index';
+import { CredentialsSchema, type CollectMessage } from '@/domain/schemas/validation';
+import type { IRouterFactory } from '@/application/ports/IRouterFactory';
+import type { IStorage } from '@/application/ports/IStorage';
+import type { IRouter as Router } from '@/domain/ports/IRouter';
 
 export class CollectionService {
   constructor(

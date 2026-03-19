@@ -1,4 +1,4 @@
-import type { TopologyClient } from './types';
+import type { TopologyClient } from '@/infra/drivers/shared/types';
 
 /**
  * Selectors to locate client rows and cells within a topology section (LAN or WLAN).

@@ -1,21 +1,23 @@
-import { BaseRouter } from '../../../router/BaseRouter';
+import { BaseRouter } from '@/infra/router/BaseRouter';
 import {
   ExtractionResultSchema,
-  PingTestResultSchema,
   type ButtonConfig,
   type Credentials,
   type ExtractionResult,
   type PingTestResult,
-} from '../../../../domain/schemas/validation';
-import { DomService } from '../../../dom/DomService';
-import type { TopologyBand, TopologyClient } from '../../shared/types';
+} from '@/domain/schemas/validation';
+import { DomService } from '@/infra/dom/DomService';
+import type { TopologyBand, TopologyClient } from '@/infra/drivers/shared/types';
 import {
   DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
   TOPOLOGY_CLIENTS_LOAD_MAX_WAIT_MS,
   TOPOLOGY_POPUP_SETTLE_MS,
-} from './constants';
-import { ZteH3601LoginSelectors, ZteH3601Selectors as Selectors } from './ZteH3601Selectors';
-import type { ITopologySectionParser } from '../../shared/TopologySectionParser';
+} from '@/infra/drivers/zte/ZteH3601Driver/constants';
+import {
+  ZteH3601LoginSelectors,
+  ZteH3601Selectors as Selectors,
+} from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Selectors';
+import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 export class ZteH3601Driver extends BaseRouter {
   private readonly s = Selectors;
@@ -473,76 +475,6 @@ export class ZteH3601Driver extends BaseRouter {
     const internetTab = document.querySelector(this.s.internetTab);
     const onLoginPage = this.isLoginPage();
     return !onLoginPage && internetTab instanceof HTMLElement;
-  }
-
-  private parsePingTestResult(raw: string, ip: string): PingTestResult | null {
-    const lines = raw
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-
-    let bytes = undefined;
-    const headerLine = lines.find((line) => line.startsWith('PING '));
-    if (headerLine) {
-      const headerMatch = headerLine.match(/PING\s+.*\(([^)]+)\):\s+(\d+)\s+data bytes/i);
-      if (headerMatch) {
-        bytes = Number(headerMatch[2]);
-      }
-    }
-
-    const replyLines = lines.filter((line) => line.toLowerCase().startsWith('reply from'));
-
-    const times: number[] = [];
-    const sequences: number[] = [];
-    let ttl = undefined;
-
-    if (replyLines.length > 0) {
-      replyLines.forEach((reply) => {
-        const replyMatch = reply.match(/bytes=(\d+)\s+ttl=(\d+)\s+time=([\d.]+)ms\s+seq=(\d+)/i);
-        if (replyMatch) {
-          bytes = Number(replyMatch[1]);
-          ttl = Number(replyMatch[2]);
-          times.push(Number(replyMatch[3]));
-          sequences.push(Number(replyMatch[4]));
-        }
-      });
-    }
-
-    const statsLine = lines.find((line) => line.toLowerCase().includes('packets transmitted'));
-    const rttLine = lines.find((line) => line.toLowerCase().includes('min/avg/max'));
-
-    const statsMatch =
-      statsLine &&
-      statsLine.match(
-        /(\d+)\s+packets transmitted,\s+(\d+)\s+packets received,\s+(\d+)% packet loss/i,
-      );
-    const rttMatch = rttLine && rttLine.match(/min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i);
-
-    const transmitted = statsMatch ? Number(statsMatch[1]) : undefined;
-    const received = statsMatch ? Number(statsMatch[2]) : undefined;
-    const loss = statsMatch ? Number(statsMatch[3]) : undefined;
-    const min = rttMatch ? Number(rttMatch[1]) : undefined;
-    const avg = rttMatch ? Number(rttMatch[2]) : undefined;
-    const max = rttMatch ? Number(rttMatch[3]) : undefined;
-
-    const base = {
-      ip,
-      bytes,
-      time: times.length > 0 ? times : undefined,
-      sequence: sequences.length > 0 ? sequences : undefined,
-      ttl,
-      packets: {
-        transmitted,
-        received,
-        loss,
-        min,
-        avg,
-        max,
-      },
-      message: raw,
-    };
-
-    return PingTestResultSchema.parse(base);
   }
 
   public async ping(ip: string): Promise<PingTestResult | null> {

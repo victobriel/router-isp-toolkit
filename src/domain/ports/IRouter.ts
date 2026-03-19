@@ -3,7 +3,7 @@ import type {
   Credentials,
   ExtractionResult,
   PingTestResult,
-} from '../schemas/validation';
+} from '@/domain/schemas/validation';
 
 /**
  * Port for router adapter: domain contract for authentication and data extraction.

@@ -1,7 +1,7 @@
 import { ZodError } from 'zod';
 
-import { CollectMessageSchema } from '../domain/schemas/validation';
-import { services } from '@/compositionRoot';
+import { CollectMessageSchema } from '@/domain/schemas/validation';
+import { services } from '@/index';
 
 export enum ContentPageMessageAction {
   SHOW_OVERLAY = 'showOverlay',

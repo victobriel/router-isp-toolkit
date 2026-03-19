@@ -4,11 +4,11 @@
   "version": "1.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
-  "permissions": ["activeTab", "scripting", "downloads", "storage"],
-  "host_permissions": ["http://*/*"],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
-      "matches": ["http://*/*"],
+      "matches": ["<all_urls>"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }
@@ -16,7 +16,7 @@
   "web_accessible_resources": [
     {
       "resources": ["popup.html", "popup.js", "public/*"],
-      "matches": ["http://*/*"]
+      "matches": ["<all_urls>"]
     }
   ],
   "background": {

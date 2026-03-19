@@ -1,7 +1,7 @@
-import { ZteH199Driver } from '../drivers/zte/ZteH199Driver/ZteH199Driver';
-import { TopologySectionParser } from '../drivers/shared/TopologySectionParser';
-import type { IRouter } from '../../domain/ports/IRouter';
-import { ZteH3601Driver } from '../drivers/zte/ZteH3601Driver/ZteH3601Driver';
+import { ZteH199Driver } from '@/infra/drivers/zte/ZteH199Driver/ZteH199Driver';
+import { TopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import type { IRouter } from '@/domain/ports/IRouter';
+import { ZteH3601Driver } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Driver';
 
 /**
  * Infrastructure factory: creates a router adapter for the current page.

@@ -7,8 +7,8 @@ export default {
   entry: {
     content: './src/content/index.ts',
     background: './src/background/index.ts',
-    popup: './src/ui/popup/index.tsx',
-    settings: './src/ui/settings/index.tsx',
+    popup: './src/ui/modules/popup/index.tsx',
+    settings: './src/ui/modules/settings/index.tsx',
   },
   output: {
     path: path.resolve('dist'),

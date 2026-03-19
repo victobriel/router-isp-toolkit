@@ -1,6 +1,6 @@
 import type { IDomGateway, ValueElement } from '@/application/ports/IDomGateway';
 
-import { DomService } from './DomService';
+import { DomService } from '@/infra/dom/DomService';
 
 /**
  * Adapter that exposes `DomService` behind an application port.

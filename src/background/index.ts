@@ -1,9 +1,11 @@
-import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '../application/constants';
-import { ExtractionResultSchema, type ExtractionResult } from '../domain/schemas/validation';
-import type { CollectResponse } from '../application/types';
-import { services } from '@/compositionRoot';
+import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '@/application/constants';
+import { ExtractionResultSchema, type ExtractionResult } from '@/domain/schemas/validation';
+import type { CollectResponse } from '@/application/types';
+import { defaultTabMessenger } from '@/infra/tabs/ChromeTabMessenger';
+import { defaultSessionStorageService } from '@/infra/storage/SessionStorageService';
 
-const { tabMessenger, sessionStorage } = services;
+const tabMessenger = defaultTabMessenger;
+const sessionStorage = defaultSessionStorageService;
 
 class ExtensionManager {
   public static async saveLastExtractionData(

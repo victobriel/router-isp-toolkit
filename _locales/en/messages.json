@@ -60,10 +60,6 @@
     "message": "Password",
     "description": "Label for password field."
   },
-  "popup_credentials_username_placeholder": {
-    "message": "admin",
-    "description": "Placeholder for username input."
-  },
   "popup_credentials_save_aria_label": {
     "message": "Save credentials",
     "description": "ARIA label for save credentials button."
@@ -512,5 +508,75 @@
   "settings_pref_band_steering_status": { "message": "Band steering" },
   "settings_pref_wlan_24_status": { "message": "2.4 GHz status" },
   "settings_pref_wlan_5_status": { "message": "5 GHz status" },
-  "settings_pref_upnp_status": { "message": "UPnP status" }
+  "settings_pref_upnp_status": { "message": "UPnP status" },
+
+  "popup_go_to_settings": { "message": "Go to Settings" },
+  "popup_no_supported_router_title": { "message": "No supported router detected" },
+  "popup_no_supported_router_desc": {
+    "message": "Navigate to a supported router admin page and reload this popup."
+  },
+
+  "popup_action_edit_credentials": { "message": "Edit credentials" },
+  "popup_action_collapse": { "message": "Collapse" },
+
+  "popup_collect_collecting": { "message": "Collecting..." },
+  "popup_collect_refresh_button": { "message": "Refresh data" },
+  "popup_collect_button": { "message": "Collect data" },
+  "popup_empty_no_data_title": { "message": "No data collected yet." },
+  "popup_empty_no_data_desc": {
+    "message": "Click $collect_button$ to see router information.",
+    "placeholders": {
+      "collect_button": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_collected_at_prefix": { "message": "Collected at" },
+
+  "popup_diagnostics_ip_required": { "message": "Please select or enter an IP address." },
+  "popup_diagnostics_ip_placeholder": { "message": "IP address (e.g. 8.8.8.8)" },
+  "popup_diagnostics_pinging": { "message": "Pinging..." },
+  "popup_diagnostics_copy_result_status_copied": {
+    "message": "Ping result copied to clipboard"
+  },
+
+  "popup_log_collect_starting": { "message": "Starting data collection..." },
+  "popup_log_auth_sent_waiting": { "message": "Authentication sent, waiting for router..." },
+  "popup_error_auth_failed": {
+    "message": "Authentication failed. Please verify your username and password and try again"
+  },
+  "popup_error_no_copy_template": {
+    "message": "No template found. Create one in the settings."
+  },
+
+  "settings_danger_zone_title": { "message": "Danger Zone" },
+  "settings_copy_template_textarea_placeholder": {
+    "message": "Enter your copy template here…"
+  },
+  "settings_clear_all_confirm_prompt": {
+    "message": "Clear all extension data? This action cannot be undone."
+  },
+
+  "popup_label_link_speed": { "message": "Link speed" },
+  "popup_label_request_pd": { "message": "Request PD" },
+  "popup_section_misc_router_info": { "message": "Router Info" },
+
+  "popup_label_radio": { "message": "Radio" },
+  "popup_label_ssid": { "message": "SSID" },
+  "popup_aria_previous_ssid": { "message": "Previous SSID" },
+  "popup_aria_next_ssid": { "message": "Next SSID" },
+
+  "popup_label_mac": { "message": "MAC" },
+  "popup_label_signal": { "message": "Signal" },
+
+  "popup_topology_empty_title": { "message": "No topology data available." },
+  "popup_topology_empty_desc": {
+    "message": "Click \"$collect_button$\" to see topology.",
+    "placeholders": {
+      "collect_button": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_topology_no_clients_connected": { "message": "No clients connected." }
 }

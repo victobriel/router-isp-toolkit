@@ -1,15 +1,16 @@
-import { DomService } from '../dom/DomService';
-import type {
-  ButtonConfig,
-  Credentials,
-  ExtractionResult,
-  PingTestResult,
-} from '../../domain/schemas/validation';
-import type { IRouter } from '../../domain/ports/IRouter';
+import { DomService } from '@/infra/dom/DomService';
+import {
+  PingTestResultSchema,
+  type ButtonConfig,
+  type Credentials,
+  type ExtractionResult,
+  type PingTestResult,
+} from '@/domain/schemas/validation';
+import type { IRouter } from '@/domain/ports/IRouter';
 import {
   DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
-} from '../../infra/drivers/shared/constants';
+} from '@/infra/drivers/shared/constants';
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.
@@ -188,6 +189,82 @@ export abstract class BaseRouter implements IRouter {
         reject(new Error(`Timeout: Element "${selector}" not disappeared after ${maxWaitMs}ms`));
       }, maxWaitMs);
     });
+  }
+
+  /**
+   * Parses the raw ping test result into a PingTestResult object.
+   * @param raw - The raw ping test result.
+   * @param ip - The IP address being pinged.
+   * @returns The parsed PingTestResult object.
+   */
+  protected parsePingTestResult(raw: string, ip: string): PingTestResult | null {
+    const lines = raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    let bytes = undefined;
+    const headerLine = lines.find((line) => line.startsWith('PING '));
+    if (headerLine) {
+      const headerMatch = headerLine.match(/PING\s+.*\(([^)]+)\):\s+(\d+)\s+data bytes/i);
+      if (headerMatch) {
+        bytes = Number(headerMatch[2]);
+      }
+    }
+
+    const replyLines = lines.filter((line) => line.toLowerCase().startsWith('reply from'));
+
+    const times: number[] = [];
+    const sequences: number[] = [];
+    let ttl = undefined;
+
+    if (replyLines.length > 0) {
+      replyLines.forEach((reply) => {
+        const replyMatch = reply.match(/bytes=(\d+)\s+ttl=(\d+)\s+time=([\d.]+)ms\s+seq=(\d+)/i);
+        if (replyMatch) {
+          bytes = Number(replyMatch[1]);
+          ttl = Number(replyMatch[2]);
+          times.push(Number(replyMatch[3]));
+          sequences.push(Number(replyMatch[4]));
+        }
+      });
+    }
+
+    const statsLine = lines.find((line) => line.toLowerCase().includes('packets transmitted'));
+    const rttLine = lines.find((line) => line.toLowerCase().includes('min/avg/max'));
+
+    const statsMatch =
+      statsLine &&
+      statsLine.match(
+        /(\d+)\s+packets transmitted,\s+(\d+)\s+packets received,\s+(\d+)% packet loss/i,
+      );
+    const rttMatch = rttLine && rttLine.match(/min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i);
+
+    const transmitted = statsMatch ? Number(statsMatch[1]) : undefined;
+    const received = statsMatch ? Number(statsMatch[2]) : undefined;
+    const loss = statsMatch ? Number(statsMatch[3]) : undefined;
+    const min = rttMatch ? Number(rttMatch[1]) : undefined;
+    const avg = rttMatch ? Number(rttMatch[2]) : undefined;
+    const max = rttMatch ? Number(rttMatch[3]) : undefined;
+
+    const base = {
+      ip,
+      bytes,
+      time: times.length > 0 ? times : undefined,
+      sequence: sequences.length > 0 ? sequences : undefined,
+      ttl,
+      packets: {
+        transmitted,
+        received,
+        loss,
+        min,
+        avg,
+        max,
+      },
+      message: raw,
+    };
+
+    return PingTestResultSchema.parse(base);
   }
 
   protected delay(ms: number): Promise<void> {

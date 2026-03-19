@@ -1,4 +1,4 @@
-import type { ITabMessenger } from '../../application/ports/ITabMessenger';
+import type { ITabMessenger } from '@/application/ports/ITabMessenger';
 
 /**
  * Chrome-specific implementation of the ITabMessenger port.

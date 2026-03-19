@@ -1,8 +1,6 @@
-import type { IStorage } from '../../application/ports/IStorage';
-import { InMemoryFallbackStore } from './InMemoryFallbackStore';
-
-const TTL_PREFIX = '__ttl:';
-const VALUE_KEY = '__v';
+import type { IStorage } from '@/application/ports/IStorage';
+import { InMemoryFallbackStore } from '@/infra/storage/InMemoryFallbackStore';
+import { getTtlExpiresAt, isTtlEntry, unwrapWithTtl, wrapWithTtl } from '@/infra/storage/ttl';
 
 // In-memory fallback used when neither chrome.storage.local nor window.localStorage
 // are available (e.g. tests or non-extension environments).
@@ -11,43 +9,10 @@ const inMemoryLocalStore = new InMemoryFallbackStore<string, unknown>({
   maxEntries: 500,
   sweepIntervalMs: 60_000,
   isStale: (raw, now) => {
-    if (
-      typeof raw === 'object' &&
-      raw !== null &&
-      VALUE_KEY in raw &&
-      TTL_PREFIX + 'expiresAt' in raw
-    ) {
-      const expiresAt = (raw as Record<string, unknown>)[TTL_PREFIX + 'expiresAt'] as number;
-      return now >= expiresAt;
-    }
+    if (isTtlEntry(raw)) return now >= getTtlExpiresAt(raw);
     return false;
   },
 });
-
-function isTtlEntry(raw: unknown): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
-  return (
-    typeof raw === 'object' && raw !== null && VALUE_KEY in raw && TTL_PREFIX + 'expiresAt' in raw
-  );
-}
-
-function unwrapWithTtl<T>(
-  key: string,
-  raw: unknown,
-  remove: (key: string) => Promise<void> | void,
-): T | null {
-  if (raw === undefined || raw === null) return null;
-
-  if (isTtlEntry(raw)) {
-    const expiresAt = raw[TTL_PREFIX + 'expiresAt'] as number;
-    if (Date.now() >= expiresAt) {
-      void remove(key);
-      return null;
-    }
-    return raw[VALUE_KEY] as T;
-  }
-
-  return raw as T;
-}
 
 function getChromeLocalArea(): chrome.storage.StorageArea | null | undefined {
   try {
@@ -120,14 +85,7 @@ export class StorageService implements IStorage {
 
   async save(key: string, value: unknown, ttlMs?: number): Promise<void> {
     const chromeLocal = getChromeLocalArea();
-    const now = Date.now();
-    const payload =
-      ttlMs != null && ttlMs > 0
-        ? {
-            [VALUE_KEY]: value,
-            [TTL_PREFIX + 'expiresAt']: now + ttlMs,
-          }
-        : value;
+    const payload = wrapWithTtl(value, ttlMs);
 
     if (chromeLocal) {
       try {

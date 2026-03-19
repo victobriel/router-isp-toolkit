@@ -1,4 +1,4 @@
-import type { ValueElement } from './types';
+import type { ValueElement } from '@/infra/dom/types';
 
 export class DomService {
   private static isValueElement(element: Element): element is ValueElement {

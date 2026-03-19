@@ -30,7 +30,6 @@
   "popup_credentials_title": { "message": "Credenciais" },
   "popup_credentials_user_label": { "message": "Usuário" },
   "popup_credentials_password_label": { "message": "Senha" },
-  "popup_credentials_username_placeholder": { "message": "admin" },
   "popup_credentials_save_aria_label": {
     "message": "Salvar credenciais"
   },
@@ -410,5 +409,75 @@
   "settings_pref_band_steering_status": { "message": "Band steering" },
   "settings_pref_wlan_24_status": { "message": "Status 2,4 GHz" },
   "settings_pref_wlan_5_status": { "message": "Status 5 GHz" },
-  "settings_pref_upnp_status": { "message": "Status UPnP" }
+  "settings_pref_upnp_status": { "message": "Status UPnP" },
+
+  "popup_go_to_settings": { "message": "Ir para Configurações" },
+  "popup_no_supported_router_title": { "message": "Nenhum roteador compatível detectado" },
+  "popup_no_supported_router_desc": {
+    "message": "Acesse a página de administração de um roteador compatível e recarregue este popup."
+  },
+
+  "popup_action_edit_credentials": { "message": "Editar credenciais" },
+  "popup_action_collapse": { "message": "Recolher" },
+
+  "popup_collect_collecting": { "message": "Coletando..." },
+  "popup_collect_refresh_button": { "message": "Recarregar dados" },
+  "popup_collect_button": { "message": "Coletar dados" },
+  "popup_empty_no_data_title": { "message": "Nenhum dado coletado ainda." },
+  "popup_empty_no_data_desc": {
+    "message": "Clique em $collect_button$ para ver as informações do roteador.",
+    "placeholders": {
+      "collect_button": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_collected_at_prefix": { "message": "Coletado em" },
+
+  "popup_diagnostics_ip_required": { "message": "Selecione ou informe um endereço IP." },
+  "popup_diagnostics_ip_placeholder": { "message": "Endereço IP (ex.: 8.8.8.8)" },
+  "popup_diagnostics_pinging": { "message": "Enviando ping..." },
+  "popup_diagnostics_copy_result_status_copied": {
+    "message": "Resultado do ping copiado para a área de transferência"
+  },
+
+  "popup_log_collect_starting": { "message": "Iniciando coleta de dados..." },
+  "popup_log_auth_sent_waiting": { "message": "Autenticação enviada; aguardando o roteador..." },
+  "popup_error_auth_failed": {
+    "message": "Falha na autenticação. Verifique seu nome de usuário e senha e tente novamente"
+  },
+  "popup_error_no_copy_template": {
+    "message": "Nenhum modelo encontrado. Crie um nas configurações."
+  },
+
+  "settings_danger_zone_title": { "message": "Zona de Perigo" },
+  "settings_copy_template_textarea_placeholder": {
+    "message": "Digite aqui seu modelo de texto de cópia…"
+  },
+  "settings_clear_all_confirm_prompt": {
+    "message": "Limpar todos os dados da extensão? Esta ação não pode ser desfeita."
+  },
+
+  "popup_label_link_speed": { "message": "Velocidade do link" },
+  "popup_label_request_pd": { "message": "Request PD" },
+  "popup_section_misc_router_info": { "message": "Informações do roteador" },
+
+  "popup_label_radio": { "message": "Rádio" },
+  "popup_label_ssid": { "message": "SSID" },
+  "popup_aria_previous_ssid": { "message": "SSID anterior" },
+  "popup_aria_next_ssid": { "message": "Próximo SSID" },
+
+  "popup_label_mac": { "message": "MAC" },
+  "popup_label_signal": { "message": "Sinal" },
+
+  "popup_topology_empty_title": { "message": "Nenhum dado de topologia disponível." },
+  "popup_topology_empty_desc": {
+    "message": "Clique em \"$collect_button$\" para ver a topologia.",
+    "placeholders": {
+      "collect_button": {
+        "content": "$1"
+      }
+    }
+  },
+  "popup_topology_no_clients_connected": { "message": "Nenhum cliente conectado." }
 }

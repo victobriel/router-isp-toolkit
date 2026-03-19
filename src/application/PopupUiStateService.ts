@@ -1,8 +1,8 @@
-import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from './constants/index';
-import type { IStorage } from './ports/IStorage';
-import type { PopupStatusType } from './types/index';
-import type { ExtractionResult } from '../domain/schemas/validation';
-import { defaultSessionStorageService } from '../infra/storage/SessionStorageService';
+import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from '@/application/constants/index';
+import type { IStorage } from '@/application/ports/IStorage';
+import type { PopupStatusType } from '@/application/types/index';
+import type { ExtractionResult } from '@/domain/schemas/validation';
+import { defaultSessionStorageService } from '@/infra/storage/SessionStorageService';
 
 export interface PopupStatusState {
   type: PopupStatusType;

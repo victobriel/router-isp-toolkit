@@ -1,4 +1,4 @@
-import type { ExtractionResult, PingTestResult } from '../../domain/schemas/validation';
+import type { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 
 /** Application-level response for collect/authenticate operations. */
 export interface CollectResponse {

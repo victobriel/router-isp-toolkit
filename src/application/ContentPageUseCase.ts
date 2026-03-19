@@ -1,13 +1,16 @@
-import type { IStorage } from './ports/IStorage';
-import type { IRouterFactory } from './ports/IRouterFactory';
-import type { IDomGateway } from './ports/IDomGateway';
+import type { IStorage } from '@/application/ports/IStorage';
+import type { IRouterFactory } from '@/application/ports/IRouterFactory';
+import type { IDomGateway } from '@/application/ports/IDomGateway';
 
-import { BOOKMARKS_STORAGE_KEY, PENDING_AUTH_ERROR_STORAGE_KEY } from './constants/index';
+import {
+  BOOKMARKS_STORAGE_KEY,
+  PENDING_AUTH_ERROR_STORAGE_KEY,
+} from '@/application/constants/index';
 
-import type { BookmarkStore } from './types/index';
-import type { IRouter as Router } from '../domain/ports/IRouter';
-import { CollectMessageAction, type ButtonConfig } from '../domain/schemas/validation';
-import { CollectionService } from './CollectionService';
+import type { BookmarkStore } from '@/application/types/index';
+import type { IRouter as Router } from '@/domain/ports/IRouter';
+import { CollectMessageAction, type ButtonConfig } from '@/domain/schemas/validation';
+import { CollectionService } from '@/application/CollectionService';
 
 /**
  * Application use case: bootstrap content script on router page.
