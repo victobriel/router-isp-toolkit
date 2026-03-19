@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
-import { StorageService } from '@/infra/storage/StorageService';
-import { defaultBookmarksService } from '@/application/BookmarksService';
-import {
-  COPY_TEXT_TEMPLATE_STORAGE_KEY,
-  ROUTER_PREFERENCES_STORAGE_KEY,
-} from '@/application/constants';
+import { services } from '@/compositionRoot';
+import { COPY_TEXT_TEMPLATE_STORAGE_KEY } from '@/application/constants';
 import type { ModelBookmarks } from '@/application/types';
 import { Button } from '@/ui/components/ui/button';
-import { Input } from '@/ui/components/ui/input';
 import { Badge } from '@/ui/components/ui/badge';
 import { Separator } from '@/ui/components/ui/separator';
 import { Collapsible } from '@/ui/components/ui/collapsible';
@@ -33,6 +28,9 @@ function useToast() {
 
   return { toasts, show };
 }
+
+// Composition-root wiring for this UI entrypoint.
+const { bookmarksService } = services;
 
 type Theme = 'light' | 'dark' | 'system';
 const THEME_KEY = 'app-theme';
@@ -60,7 +58,7 @@ export const Settings = () => {
   const [bookmarkEntries, setBookmarkEntries] = useState<Array<[string, ModelBookmarks]>>([]);
   const [totalBookmarks, setTotalBookmarks] = useState(0);
   const [copyTemplate, setCopyTemplate] = useState('');
-  const [prefs, setPrefs] = useState<Record<string, string>>({});
+  // const [prefs, setPrefs] = useState<Record<string, string>>({});
   const [version, setVersion] = useState('');
 
   // Load data
@@ -68,17 +66,17 @@ export const Settings = () => {
     applyTheme(theme);
 
     void (async () => {
-      const summary = await defaultBookmarksService.getSummary();
+      const summary = await bookmarksService.getSummary();
       setBookmarkEntries(summary.entries);
       setTotalBookmarks(summary.total);
 
-      const tmpl = await StorageService.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
+      const tmpl = await services.storage.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
       setCopyTemplate(typeof tmpl === 'string' ? tmpl : '');
 
-      const storedPrefs = await StorageService.get<Record<string, string>>(
-        ROUTER_PREFERENCES_STORAGE_KEY,
-      );
-      setPrefs(storedPrefs ?? {});
+      // const storedPrefs = await services.storage.get<Record<string, string>>(
+      //   ROUTER_PREFERENCES_STORAGE_KEY,
+      // );
+      // setPrefs(storedPrefs ?? {});
 
       try {
         const manifest = chrome.runtime.getManifest();
@@ -91,13 +89,13 @@ export const Settings = () => {
   }, []);
 
   const refreshBookmarks = async () => {
-    const summary = await defaultBookmarksService.getSummary();
+    const summary = await bookmarksService.getSummary();
     setBookmarkEntries(summary.entries);
     setTotalBookmarks(summary.total);
   };
 
-  const handleDeleteCredential = async (modelKey: string, credIdx: number) => {
-    await defaultBookmarksService.removeCredential(modelKey, String(credIdx));
+  const handleDeleteCredential = async (modelKey: string, credId: string) => {
+    await bookmarksService.removeCredential(modelKey, credId);
     await refreshBookmarks();
     showToast('Credential removed.', 'ok');
   };
@@ -107,21 +105,21 @@ export const Settings = () => {
       showToast('Template cannot be empty.', 'err');
       return;
     }
-    await StorageService.save(COPY_TEXT_TEMPLATE_STORAGE_KEY, copyTemplate.trim());
+    await services.storage.save(COPY_TEXT_TEMPLATE_STORAGE_KEY, copyTemplate.trim());
     showToast('Copy template saved.', 'ok');
   };
 
-  const handleSavePrefs = async () => {
-    await StorageService.save(ROUTER_PREFERENCES_STORAGE_KEY, prefs);
-    showToast('Preferences saved.', 'ok');
-  };
+  // const handleSavePrefs = async () => {
+  //   await services.storage.save(ROUTER_PREFERENCES_STORAGE_KEY, prefs);
+  //   showToast('Preferences saved.', 'ok');
+  // };
 
   const handleClearAll = async () => {
     if (!window.confirm('Clear all extension data? This cannot be undone.')) return;
-    await StorageService.clear();
+    await services.storage.clear?.();
     await refreshBookmarks();
     setCopyTemplate('');
-    setPrefs({});
+    // setPrefs({});
     showToast('All data cleared.', 'ok');
   };
 
@@ -208,9 +206,9 @@ export const Settings = () => {
               {bookmarkEntries.map(([modelKey, { model, credentials }]) => (
                 <Collapsible key={modelKey} title={model}>
                   <div className="space-y-1">
-                    {credentials.map((cred, idx) => (
+                    {credentials.map((cred) => (
                       <div
-                        key={idx}
+                        key={cred.id}
                         className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
                       >
                         <div className="min-w-0">
@@ -221,7 +219,7 @@ export const Settings = () => {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 shrink-0"
-                          onClick={() => void handleDeleteCredential(modelKey, idx)}
+                          onClick={() => void handleDeleteCredential(modelKey, cred.id)}
                           aria-label={`Delete credential ${cred.username}`}
                         >
                           <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -262,7 +260,7 @@ export const Settings = () => {
         <Separator />
 
         {/* Router preferences */}
-        <section className="space-y-3">
+        {/* <section className="space-y-3">
           <div>
             <h2 className="text-sm font-semibold">Router Preferences</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
@@ -291,7 +289,7 @@ export const Settings = () => {
           </Button>
         </section>
 
-        <Separator />
+        <Separator /> */}
 
         {/* Danger zone */}
         <section className="space-y-3">
@@ -302,8 +300,8 @@ export const Settings = () => {
               Permanently delete all saved credentials, preferences, and collected data.
             </p>
             <Button variant="destructive" size="sm" onClick={handleClearAll} className="gap-1.5">
-              <Trash2 className="h-3.5 w-3.5" />
-              Clear all data
+              <Trash2 className="size-3.5 text-white" />
+              <span className="text-white">Clear all data</span>
             </Button>
           </div>
         </section>

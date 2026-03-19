@@ -1,11 +1,28 @@
 import type { IStorage } from '../../application/ports/IStorage';
+import { InMemoryFallbackStore } from './InMemoryFallbackStore';
 
 const TTL_PREFIX = '__ttl:';
 const VALUE_KEY = '__v';
 
 // In-memory fallback used when neither chrome.storage.session nor window.sessionStorage
 // are available (e.g. tests or non-extension environments).
-const inMemorySessionStore = new Map<string, unknown>();
+const inMemorySessionStore = new InMemoryFallbackStore<string, unknown>({
+  // Keep bounded even in long-running contexts; this is a fallback only.
+  maxEntries: 500,
+  sweepIntervalMs: 60_000,
+  isStale: (raw, now) => {
+    if (
+      typeof raw === 'object' &&
+      raw !== null &&
+      VALUE_KEY in raw &&
+      TTL_PREFIX + 'expiresAt' in raw
+    ) {
+      const expiresAt = (raw as Record<string, unknown>)[TTL_PREFIX + 'expiresAt'] as number;
+      return now >= expiresAt;
+    }
+    return false;
+  },
+});
 
 function isTtlEntry(raw: unknown): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
   return (
@@ -57,6 +74,16 @@ function getWindowSessionStorage(): Storage | null {
  * with fallbacks to `window.sessionStorage` and in-memory storage.
  */
 export class SessionStorageService implements IStorage {
+  /**
+   * Static convenience for legacy call sites.
+   *
+   * Note: This is async because `chrome.storage.session` is async.
+   * It follows the same backend precedence as the instance `get()`.
+   */
+  static async getItem<T>(key: string): Promise<T | null> {
+    return await new SessionStorageService().get<T>(key);
+  }
+
   /** IStorage implementation: get value (handles optional TTL wrapper). */
   async get<T>(key: string): Promise<T | null> {
     const chromeSession = getChromeSessionArea();
@@ -102,10 +129,9 @@ export class SessionStorageService implements IStorage {
       }
     }
 
-    if (inMemorySessionStore.has(key)) {
-      return unwrapWithTtl<T>(key, inMemorySessionStore.get(key), (k) => {
-        inMemorySessionStore.delete(k);
-      });
+    const raw = inMemorySessionStore.get(key);
+    if (raw !== undefined) {
+      return unwrapWithTtl<T>(key, raw, (k) => inMemorySessionStore.delete(k));
     }
 
     return null;
@@ -167,100 +193,6 @@ export class SessionStorageService implements IStorage {
     }
 
     inMemorySessionStore.delete(key);
-  }
-
-  /** Simple string helpers for direct usage (e.g. login flags). */
-  static setItem(key: string, value: string): void {
-    const chromeSession = getChromeSessionArea();
-    if (chromeSession) {
-      try {
-        void chromeSession.set({ [key]: value });
-        return;
-      } catch {
-        // fall through to other backends
-      }
-    }
-
-    const storage = getWindowSessionStorage();
-    if (storage) {
-      try {
-        storage.setItem(key, value);
-        return;
-      } catch {
-        // Swallow storage errors (quota, privacy mode, etc.).
-      }
-    }
-
-    inMemorySessionStore.set(key, value);
-  }
-
-  static getItem(key: string): string | null {
-    const storage = getWindowSessionStorage();
-    if (storage) {
-      try {
-        return storage.getItem(key);
-      } catch {
-        return null;
-      }
-    }
-
-    const raw = inMemorySessionStore.get(key);
-    return typeof raw === 'string' ? raw : raw === undefined ? null : String(raw);
-  }
-
-  static removeItem(key: string): void {
-    const chromeSession = getChromeSessionArea();
-    if (chromeSession) {
-      try {
-        void chromeSession.remove(key);
-      } catch {
-        // ignore and continue to other backends
-      }
-    }
-
-    const storage = getWindowSessionStorage();
-    if (storage) {
-      try {
-        storage.removeItem(key);
-      } catch {
-        // Ignore removal errors.
-      }
-    }
-
-    inMemorySessionStore.delete(key);
-  }
-
-  static clear(): void {
-    const chromeSession = getChromeSessionArea();
-    if (chromeSession) {
-      try {
-        void chromeSession.clear();
-      } catch {
-        // ignore and try other backends
-      }
-    }
-
-    const storage = getWindowSessionStorage();
-    if (storage) {
-      try {
-        storage.clear();
-      } catch {
-        // Ignore clear errors.
-      }
-    }
-
-    inMemorySessionStore.clear();
-  }
-
-  /** Static IStorage API; delegates to default instance. */
-  static get<T>(key: string): Promise<T | null> {
-    return sessionStorageInstance.get<T>(key);
-  }
-  static save(key: string, value: unknown, ttlMs?: number): Promise<void> {
-    return sessionStorageInstance.save(key, value, ttlMs);
-  }
-  static remove(key: string): Promise<void> {
-    return sessionStorageInstance.remove(key);
   }
 }
 

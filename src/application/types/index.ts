@@ -16,6 +16,11 @@ export enum PopupStatusType {
   ERR = 'err',
 }
 
+export type PopupStatus = {
+  type: PopupStatusType;
+  message: string;
+};
+
 export type CredentialBookmark = { id: string; username: string; password: string };
 export type ModelBookmarks = {
   model: string;

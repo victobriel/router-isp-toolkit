@@ -10,7 +10,7 @@ import { ZteH3601Driver } from '../drivers/zte/ZteH3601Driver/ZteH3601Driver';
 export class RouterFactory {
   public static create(): IRouter {
     const title = document.title.toLowerCase();
-    const bodyText = document.body.innerText.toLowerCase();
+    const bodyText = document.body.textContent?.toLowerCase();
 
     if (this.isZteH199(title, bodyText)) {
       return new ZteH199Driver(new TopologySectionParser());

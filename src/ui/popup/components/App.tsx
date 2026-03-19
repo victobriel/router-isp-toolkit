@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DiagnosticsMode } from '@/ui/popup/contexts/popup-data-context';
+import { DiagnosticsMode } from '@/domain/schemas/validation';
 import { Button } from '@/ui/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/components/ui/tabs';
 import {
@@ -12,6 +12,8 @@ import {
   Settings,
   MoreVertical,
   Copy,
+  RefreshCw,
+  Trash,
 } from 'lucide-react';
 import { PopupHeader } from './popup-header';
 import { PopupCredentials } from './popup-credentials';
@@ -42,6 +44,8 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/components/ui/dropdown-menu';
 import { usePopupBookmark } from '../hooks/use-popup-bookmark';
+import { PopupStatusType } from '@/application/types';
+import { usePopupStatus } from '../contexts/popup-status-context';
 
 function PopupContent({
   tabId,
@@ -54,6 +58,7 @@ function PopupContent({
   onCollect,
   onPing,
   copyText,
+  onClear,
 }: {
   tabId: number;
   routerModel: string;
@@ -65,12 +70,14 @@ function PopupContent({
   onCollect: (username: string, password: string) => Promise<void>;
   onClear: () => void;
   onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
-  copyText: () => Promise<string | null>;
+  copyText: () => Promise<{ data: string | null; error?: string }>;
 }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('data');
+
+  const { setStatus, setStatusMessage } = usePopupStatus();
 
   const { bookmarks } = usePopupBookmark({
     routerModel,
@@ -84,8 +91,20 @@ function PopupContent({
   }, [bookmarks]);
 
   const handleCopyText = async () => {
-    const text = await copyText();
-    if (!text) return;
+    const { data: text, error } = await copyText();
+
+    if (error) {
+      setStatus(PopupStatusType.ERR);
+      setStatusMessage(error);
+      return;
+    }
+
+    if (!text) {
+      setStatus(PopupStatusType.ERR);
+      setStatusMessage('Nothing to copy.');
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(text);
     } catch {
@@ -98,6 +117,20 @@ function PopupContent({
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
+
+    setStatus(PopupStatusType.OK);
+    setStatusMessage('Text copied to clipboard.');
+  };
+
+  const handleClearData = () => {
+    void onClear();
+    setStatus(PopupStatusType.OK);
+    setStatusMessage('Data cleared.');
+  };
+
+  const handleOpenSettings = () => {
+    setDropdownMenuOpen(false);
+    void chrome.runtime.openOptionsPage();
   };
 
   const menu: {
@@ -110,16 +143,13 @@ function PopupContent({
     { label: 'Data', value: 'data', type: 'tab', icon: DatabaseIcon },
     { label: 'Topology', value: 'topology', type: 'tab', icon: Network },
     { label: 'Diagnostics', value: 'diagnostics', type: 'tab', icon: Activity },
-    { label: 'Logs', value: 'logs', type: 'tab', icon: Activity },
+    // { label: 'Logs', value: 'logs', type: 'tab', icon: Activity },
     {
       label: 'Settings',
       value: 'settings',
       type: 'button',
       icon: Settings,
-      onClick: () => {
-        setDropdownMenuOpen(false);
-        void chrome.runtime.openOptionsPage();
-      },
+      onClick: handleOpenSettings,
     },
   ];
 
@@ -132,16 +162,38 @@ function PopupContent({
         routerModel={routerModel}
         username={username}
         password={password}
+        hasData={!!data}
         onUsernameChange={setUsername}
         onPasswordChange={setPassword}
       />
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="flex flex-col flex-1 min-h-0 p-4"
-      >
-        <TabsList className="shrink-0 gap-1.5">
+      {data && (
+        <div className="bg-background border-t border-border">
+          <div className="grid grid-cols-3 gap-2 py-2 pl-4 pr-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs! h-9!"
+              onClick={() => void onCollect(username, password)}
+              disabled={isCollecting}
+            >
+              <RefreshCw className="size-4" />
+              {isCollecting ? 'Collecting...' : 'Refresh data'}
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs! h-9!" onClick={handleClearData}>
+              <Trash className="size-4" />
+              Clear data
+            </Button>
+            <Button variant="outline" size="sm" className="text-xs! h-9!" onClick={handleCopyText}>
+              <Copy className="size-4" />
+              Copy as text
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+        <TabsList className="shrink-0 gap-1.5 pl-4 pr-2 rounded-none!">
           {menu.map(({ label, value, type, icon: Icon, onClick }, idx) =>
             idx >= 3 ? null : type === 'tab' ? (
               <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 h-9">
@@ -193,21 +245,7 @@ function PopupContent({
           </DropdownMenu>
         </TabsList>
 
-        {data && (
-          <div className="bg-background py-2 mt-2 border-b border-border">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-sm px-4 h-9!"
-              onClick={() => void handleCopyText()}
-            >
-              <Copy className="size-4" />
-              Copy as text
-            </Button>
-          </div>
-        )}
-
-        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2" value="data">
+        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2" value="data">
           {!data ? (
             <Empty>
               <EmptyHeader>
@@ -256,7 +294,10 @@ function PopupContent({
           )}
         </TabsContent>
 
-        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2" value="topology">
+        <TabsContent
+          className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2"
+          value="topology"
+        >
           <TopologySection
             data={data}
             isCollecting={isCollecting}
@@ -264,7 +305,10 @@ function PopupContent({
           />
         </TabsContent>
 
-        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2" value="diagnostics">
+        <TabsContent
+          className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2"
+          value="diagnostics"
+        >
           <PopupDiagnosticsTab
             data={data}
             isPinging={isPinging}
@@ -282,7 +326,7 @@ export const Popup = () => (
   <AppTabProvider>
     {({ tabId, routerModel }) => (
       <PopupStatusProvider>
-        <PopupDataProvider tabId={tabId} routerModel={routerModel}>
+        <PopupDataProvider tabId={tabId}>
           {({
             data,
             isCollecting,

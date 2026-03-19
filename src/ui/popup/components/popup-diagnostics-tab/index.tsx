@@ -1,4 +1,6 @@
+import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/constants';
 import { DiagnosticsMode, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
+import { services } from '@/compositionRoot';
 import { Button } from '@/ui/components/ui/button';
 import { Input } from '@/ui/components/ui/input';
 import {
@@ -10,7 +12,9 @@ import {
 } from '@/ui/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/ui/components/ui/toggle-group';
 import { Copy, Globe, Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePopupStatus } from '../../contexts/popup-status-context';
+import { PopupStatusType } from '@/application/types';
 
 interface PopupDiagnosticsTabProps {
   data: ExtractionResult | null;
@@ -28,8 +32,19 @@ export const PopupDiagnosticsTab = ({
   onPing,
 }: PopupDiagnosticsTabProps) => {
   const [mode, setMode] = useState<DiagnosticsMode>(DiagnosticsMode.INTERNAL);
-  const [selectedIp, setSelectedIp] = useState('');
-  const [pingOutput, setPingOutput] = useState('');
+  const [pingOutput, setPingOutput] = useState<string | null>(null);
+  const [internalIp, setInternalIp] = useState<string | undefined>(undefined);
+  const [externalIp, setExternalIp] = useState<string | undefined>(undefined);
+
+  const { setStatus, setStatusMessage } = usePopupStatus();
+  // Avoid stale prop reads: wait for `internalPingResult`/`externalPingResult` to update,
+  // then copy the *matching* result into `pingOutput`.
+  const pendingPingRef = useRef<{
+    mode: DiagnosticsMode;
+    ip: string;
+    requestId: number;
+  } | null>(null);
+  const pingRequestIdRef = useRef(0);
 
   const topology = data?.topology;
   const allClients = topology
@@ -37,17 +52,19 @@ export const PopupDiagnosticsTab = ({
     : [];
 
   const handlePing = async () => {
-    const ip = selectedIp.trim();
+    const ip = mode === DiagnosticsMode.INTERNAL ? internalIp?.trim() : externalIp?.trim();
     if (!ip) {
       setPingOutput('Please select or enter an IP address.');
       return;
     }
     setPingOutput(`Pinging ${ip}...`);
+    pingRequestIdRef.current += 1;
+    pendingPingRef.current = {
+      mode,
+      ip,
+      requestId: pingRequestIdRef.current,
+    };
     await onPing(ip, mode);
-    const result = mode === DiagnosticsMode.INTERNAL ? internalPingResult : externalPingResult;
-    if (result) {
-      setPingOutput(result.message);
-    }
   };
 
   const items = [
@@ -63,6 +80,37 @@ export const PopupDiagnosticsTab = ({
     },
   ];
 
+  useEffect(() => {
+    void services.storage.get<string>(LAST_EXTERNAL_IP_STORAGE_KEY).then((ip) => {
+      if (ip) setExternalIp(ip);
+    });
+  }, []);
+
+  useEffect(() => {
+    const pending = pendingPingRef.current;
+    if (!pending) return;
+
+    // `PingTestResult` includes the IP, so we can match the result to the request.
+    if (
+      pending.mode === DiagnosticsMode.INTERNAL &&
+      internalPingResult?.ip === pending.ip &&
+      pending.requestId === pingRequestIdRef.current
+    ) {
+      setPingOutput(internalPingResult.message);
+      pendingPingRef.current = null;
+      return;
+    }
+
+    if (
+      pending.mode === DiagnosticsMode.EXTERNAL &&
+      externalPingResult?.ip === pending.ip &&
+      pending.requestId === pingRequestIdRef.current
+    ) {
+      setPingOutput(externalPingResult.message);
+      pendingPingRef.current = null;
+    }
+  }, [internalPingResult, externalPingResult]);
+
   const handleCopyPingResult = () => {
     if (pingOutput)
       void navigator.clipboard.writeText(pingOutput).catch(() => {
@@ -75,6 +123,9 @@ export const PopupDiagnosticsTab = ({
         document.execCommand('copy');
         document.body.removeChild(ta);
       });
+
+    setStatus(PopupStatusType.OK);
+    setStatusMessage('Ping result copied to clipboard.');
   };
 
   return (
@@ -83,8 +134,8 @@ export const PopupDiagnosticsTab = ({
         variant="outline"
         type="single"
         size="default"
-        defaultValue={DiagnosticsMode.INTERNAL}
-        onValueChange={(value) => setMode(value as DiagnosticsMode)}
+        value={mode}
+        onValueChange={(value) => value && setMode(value as DiagnosticsMode)}
         className="w-full"
       >
         {items.map((item) => (
@@ -102,8 +153,8 @@ export const PopupDiagnosticsTab = ({
 
       {mode === DiagnosticsMode.INTERNAL ? (
         <Select
-          value={selectedIp}
-          onValueChange={(value) => setSelectedIp(value)}
+          value={internalIp}
+          onValueChange={(value) => setInternalIp(value)}
           disabled={!allClients.length}
         >
           <SelectTrigger className="w-full h-9!">
@@ -122,8 +173,8 @@ export const PopupDiagnosticsTab = ({
           id="popup-diagnostics-ip-input"
           type="text"
           placeholder="IP address (e.g. 8.8.8.8)"
-          value={selectedIp}
-          onChange={(e) => setSelectedIp(e.target.value)}
+          value={externalIp}
+          onChange={(e) => setExternalIp(e.target.value)}
           className="h-9"
         />
       )}
@@ -131,7 +182,11 @@ export const PopupDiagnosticsTab = ({
       <Button
         size="lg"
         onClick={handlePing}
-        disabled={isPinging || (mode === DiagnosticsMode.INTERNAL && !selectedIp)}
+        disabled={
+          isPinging ||
+          (mode === DiagnosticsMode.INTERNAL && !internalIp) ||
+          (mode === DiagnosticsMode.EXTERNAL && !externalIp)
+        }
         className="w-full"
       >
         <Terminal className="size-5" />

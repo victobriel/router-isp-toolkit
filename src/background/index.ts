@@ -1,8 +1,9 @@
 import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '../application/constants';
 import { ExtractionResultSchema, type ExtractionResult } from '../domain/schemas/validation';
 import type { CollectResponse } from '../application/types';
-import { defaultTabMessenger } from '../infra/tabs/ChromeTabMessenger';
-import { SessionStorageService } from '../infra/storage/SessionStorageService';
+import { services } from '@/compositionRoot';
+
+const { tabMessenger, sessionStorage } = services;
 
 class ExtensionManager {
   public static async saveLastExtractionData(
@@ -30,7 +31,7 @@ class ExtensionManager {
 
     const storageKey = `${LAST_DATA_STORAGE_KEY}:${String(tabId)}`;
     const value: ExtractionResult = parsed.data;
-    await SessionStorageService.save(storageKey, value, 24 * 60 * 1000);
+    await sessionStorage.save(storageKey, value, 24 * 60 * 1000);
 
     return { success: true, data: value };
   }
@@ -51,14 +52,14 @@ class ExtensionManager {
     }
 
     const storageKey = `${ROUTER_MODEL_STORAGE_KEY}:${String(tabId)}`;
-    await SessionStorageService.save(storageKey, model);
+    await sessionStorage.save(storageKey, model);
 
     return { success: true };
   }
 
   public static async showOverlay(tabId: number): Promise<CollectResponse> {
     try {
-      await defaultTabMessenger.sendToTab(tabId, { action: 'showOverlay' });
+      await tabMessenger.sendToTab(tabId, { action: 'showOverlay' });
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

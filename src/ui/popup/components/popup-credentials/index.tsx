@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Input } from '@/ui/components/ui/input';
 import { CredentialBookmark, PopupStatusType } from '@/application/types';
 import { Button } from '@/ui/components/ui/button';
-import { BookmarkIcon, Save, Trash2 } from 'lucide-react';
+import { BookmarkIcon, ChevronDown, ChevronUp, KeyRound, Save, Trash2 } from 'lucide-react';
 import { usePopupBookmark } from '@/ui/popup/hooks/use-popup-bookmark';
 import { usePopupStatus } from '@/ui/popup/contexts/popup-status-context';
 import { Badge } from '@/ui/components/ui/badge';
@@ -12,6 +12,7 @@ interface PopupCredentialsProps {
   routerModel: string;
   username: string;
   password: string;
+  hasData: boolean;
   onUsernameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
 }
@@ -21,15 +22,22 @@ export const PopupCredentials = ({
   routerModel,
   username,
   password,
+  hasData,
   onUsernameChange,
   onPasswordChange,
 }: PopupCredentialsProps) => {
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!hasData);
 
   const { bookmarks, saveCredential, fillLoginFields, deleteCredential } = usePopupBookmark({
     routerModel,
   });
   const { setStatus, setStatusMessage } = usePopupStatus();
+
+  useEffect(() => {
+    setIsExpanded(!hasData);
+    setShowBookmarks(false);
+  }, [hasData]);
 
   const handleSaveCredential = () => {
     void saveCredential(username, password);
@@ -49,11 +57,104 @@ export const PopupCredentials = ({
     setStatusMessage('Credentials removed.');
   };
 
+  const bookmarkList = (
+    <div className="rounded-md border border-border bg-card divide-y divide-border">
+      {bookmarks.map((bookmark) => (
+        <div
+          key={`${bookmark.username}-${bookmark.password}`}
+          className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 cursor-pointer group"
+          role="button"
+          tabIndex={0}
+          onClick={() => handleSelectBookmark(bookmark)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSelectBookmark(bookmark);
+            }
+          }}
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-medium truncate">{bookmark.username}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{bookmark.password}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 opacity-0 group-hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              void handleDeleteBookmark(bookmark.id);
+            }}
+            aria-label="Delete credential"
+          >
+            <Trash2 className="size-3.5" />
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (!isExpanded) {
+    return (
+      <section className="px-4 py-1.5 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <KeyRound className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs font-medium truncate flex-1 min-w-0">{username || '—'}</span>
+          <span className="text-xs text-muted-foreground font-mono tracking-widest">
+            {'•'.repeat(Math.min(password.length || 6, 8))}
+          </span>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 relative"
+              onClick={() => setShowBookmarks((prev) => !prev)}
+              disabled={bookmarks.length === 0}
+              title="Saved credentials"
+            >
+              <BookmarkIcon className="size-3.5" />
+              {bookmarks.length > 0 && (
+                <Badge
+                  variant="warning"
+                  className="bg-warning text-white absolute top-0 right-0 z-10 text-[9px] px-1 min-w-0 h-3.5 leading-none font-medium"
+                >
+                  {bookmarks.length}
+                </Badge>
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => setIsExpanded(true)}
+              title="Edit credentials"
+            >
+              <ChevronDown className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+        {showBookmarks && bookmarkList}
+      </section>
+    );
+  }
+
   return (
-    <section className="space-y-1.5 px-4 pt-4">
-      <p className="text-sm uppercase tracking-wider text-muted-foreground font-semibold">
-        Credentials
-      </p>
+    <section className="space-y-1.5 px-4 pt-3 pb-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+          Credentials
+        </p>
+        {hasData && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5 -mr-0.5"
+            onClick={() => setIsExpanded(false)}
+            title="Collapse"
+          >
+            <ChevronUp className="size-3.5" />
+          </Button>
+        )}
+      </div>
       <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
         <div className="space-y-1">
           <label
@@ -92,7 +193,7 @@ export const PopupCredentials = ({
             onClick={handleSaveCredential}
             title="Save credentials"
           >
-            <Save className="size-5" />
+            <Save className="size-4" />
           </Button>
           <Button
             variant="outline"
@@ -102,7 +203,7 @@ export const PopupCredentials = ({
             title="Saved credentials"
             className="relative"
           >
-            <BookmarkIcon className="size-5" />
+            <BookmarkIcon className="size-4" />
             {bookmarks.length > 0 && (
               <Badge
                 variant="warning"
@@ -114,41 +215,7 @@ export const PopupCredentials = ({
           </Button>
         </div>
       </div>
-      {showBookmarks && (
-        <div className="rounded-md border border-border bg-card divide-y divide-border">
-          {bookmarks.map((bookmark) => (
-            <div
-              key={`${bookmark.username}-${bookmark.password}`}
-              className="flex items-center justify-between px-2 py-1.5 hover:bg-muted/50 cursor-pointer group"
-              role="button"
-              tabIndex={0}
-              onClick={() => handleSelectBookmark(bookmark)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSelectBookmark(bookmark);
-                }
-              }}
-            >
-              <div className="min-w-0">
-                <p className="text-xs font-medium truncate">{bookmark.username}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{bookmark.password}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 opacity-0 group-hover:opacity-100"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  void handleDeleteBookmark(bookmark.id);
-                }}
-                aria-label="Delete credential"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+      {showBookmarks && bookmarkList}
     </section>
   );
 };

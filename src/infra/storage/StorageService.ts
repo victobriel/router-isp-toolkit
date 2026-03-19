@@ -1,11 +1,28 @@
 import type { IStorage } from '../../application/ports/IStorage';
+import { InMemoryFallbackStore } from './InMemoryFallbackStore';
 
 const TTL_PREFIX = '__ttl:';
 const VALUE_KEY = '__v';
 
 // In-memory fallback used when neither chrome.storage.local nor window.localStorage
 // are available (e.g. tests or non-extension environments).
-const inMemoryLocalStore = new Map<string, unknown>();
+const inMemoryLocalStore = new InMemoryFallbackStore<string, unknown>({
+  // Keep bounded even in long-running contexts; this is a fallback only.
+  maxEntries: 500,
+  sweepIntervalMs: 60_000,
+  isStale: (raw, now) => {
+    if (
+      typeof raw === 'object' &&
+      raw !== null &&
+      VALUE_KEY in raw &&
+      TTL_PREFIX + 'expiresAt' in raw
+    ) {
+      const expiresAt = (raw as Record<string, unknown>)[TTL_PREFIX + 'expiresAt'] as number;
+      return now >= expiresAt;
+    }
+    return false;
+  },
+});
 
 function isTtlEntry(raw: unknown): raw is { [VALUE_KEY]: unknown; [key: string]: unknown } {
   return (
@@ -93,10 +110,9 @@ export class StorageService implements IStorage {
       }
     }
 
-    if (inMemoryLocalStore.has(key)) {
-      return unwrapWithTtl<T>(key, inMemoryLocalStore.get(key), (k) => {
-        inMemoryLocalStore.delete(k);
-      });
+    const raw = inMemoryLocalStore.get(key);
+    if (raw !== undefined) {
+      return unwrapWithTtl<T>(key, raw, (k) => inMemoryLocalStore.delete(k));
     }
 
     return null;
@@ -179,20 +195,6 @@ export class StorageService implements IStorage {
     }
 
     inMemoryLocalStore.clear();
-  }
-
-  /** Static API for backward compatibility; delegates to default instance. */
-  static get<T>(key: string): Promise<T | null> {
-    return storageInstance.get<T>(key);
-  }
-  static save(key: string, value: unknown, ttlMs?: number): Promise<void> {
-    return storageInstance.save(key, value, ttlMs);
-  }
-  static remove(key: string): Promise<void> {
-    return storageInstance.remove(key);
-  }
-  static clear(): Promise<void> {
-    return storageInstance.clear();
   }
 }
 

@@ -146,10 +146,12 @@ export class ZteH3601Driver extends BaseRouter {
 
       await this.waitForElement(this.s.topologyPopup);
 
-      await Promise.race([
-        this.waitForElement(this.s.topologyPopupWaitRows, TOPOLOGY_CLIENTS_LOAD_MAX_WAIT_MS),
+      await Promise.all([
+        this.waitForElement(this.s.topologyPopupWaitRows, TOPOLOGY_CLIENTS_LOAD_MAX_WAIT_MS).catch(
+          () => {},
+        ),
         this.delay(TOPOLOGY_POPUP_SETTLE_MS),
-      ]).catch(() => {});
+      ]);
 
       const popup = document.querySelector<HTMLElement>(this.s.topologyPopup);
       if (!popup) continue;
@@ -362,6 +364,10 @@ export class ZteH3601Driver extends BaseRouter {
       DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
     );
     await this.clickElementAndWait(this.s.dhcpServerContainer, this.s.dhcpEnabled);
+    await this.waitForInputPopulated(
+      this.s.dhcpIpAddressField1,
+      DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
+    ).catch(() => {});
 
     const dhcpEnabled = DomService.getInputElement(this.s.dhcpEnabled).checked;
 
@@ -436,6 +442,7 @@ export class ZteH3601Driver extends BaseRouter {
   private async extractTr069UrlData(): Promise<Pick<ExtractionResult, 'tr069Url'>> {
     await this.clickElementAndWait(this.s.managementTab, this.s.tr069UrlContainer);
     await this.clickElementAndWait(this.s.tr069UrlContainer, this.s.tr069Url);
+    await this.waitForInputPopulated(this.s.tr069Url).catch(() => {});
 
     const tr069Url = (DomService.getOptionalValue(this.s.tr069Url) ?? '').trim();
 

@@ -1,12 +1,17 @@
 import type { CollectResponse } from './types/index';
-import type { Router } from '../domain/models/Router';
 import { CredentialsSchema, type CollectMessage } from '../domain/schemas/validation';
-import { RouterFactory } from '../infra/router/RouterFactory';
-import { SessionStorageService } from '../infra/storage/SessionStorageService';
+import type { IRouterFactory } from './ports/IRouterFactory';
+import type { IStorage } from './ports/IStorage';
+import { IRouter as Router } from '@/domain/ports/IRouter';
 
 export class CollectionService {
-  public static async handleCollect(message: CollectMessage): Promise<CollectResponse> {
-    const router = RouterFactory.create();
+  constructor(
+    private readonly routerFactory: IRouterFactory,
+    private readonly sessionStorage: IStorage,
+  ) {}
+
+  public async handleCollect(message: CollectMessage): Promise<CollectResponse> {
+    const router = this.routerFactory.create();
     const { action, credentials, ip } = message;
 
     const actions = {
@@ -29,16 +34,16 @@ export class CollectionService {
         const { username, password } = CredentialsSchema.parse(credentials);
 
         const loginTime = Date.now();
-        await SessionStorageService.save('router_login_pending', 'true');
-        await SessionStorageService.save('router_login_time', loginTime.toString());
+        await this.sessionStorage.save('router_login_pending', 'true');
+        await this.sessionStorage.save('router_login_time', loginTime.toString());
 
         router.authenticate({ username, password });
 
-        const authRedirected = await this.waitForAuthRedirect(router, 1000);
+        const authRedirected = await this.waitForAuthRedirect(router);
 
         if (!authRedirected && !router.isAuthenticated()) {
-          await SessionStorageService.remove('router_login_pending');
-          await SessionStorageService.remove('router_login_time');
+          await this.sessionStorage.remove('router_login_pending');
+          await this.sessionStorage.remove('router_login_time');
 
           return {
             success: false,
@@ -88,7 +93,7 @@ export class CollectionService {
     return await handler();
   }
 
-  private static async executeExtraction(router: Router): Promise<CollectResponse> {
+  private async executeExtraction(router: Router): Promise<CollectResponse> {
     const data = await router.extract();
     const hasData = Object.values(data).some((value) => value !== null);
 
@@ -107,7 +112,7 @@ export class CollectionService {
    * @param timeoutMs - The timeout in milliseconds.
    * @returns True if the router became authenticated, false on timeout.
    */
-  private static async waitForAuthRedirect(router: Router, timeoutMs = 8000): Promise<boolean> {
+  private async waitForAuthRedirect(router: Router, timeoutMs = 10000): Promise<boolean> {
     const startTime = Date.now();
 
     return new Promise((resolve) => {

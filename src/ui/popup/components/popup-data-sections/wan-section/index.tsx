@@ -39,10 +39,10 @@ export const WanSection = ({ data }: WanSectionProps) => {
     >
       <div className="space-y-0.5">
         {rows.map((row, index) => (
-          <>
+          <div key={row.label}>
             {index === 5 && <Separator key={`separator-${index}`} className="my-1" />}
             <PopupDataRow key={row.label} label={row.label} value={row.value} />
-          </>
+          </div>
         ))}
       </div>
     </Collapsible>

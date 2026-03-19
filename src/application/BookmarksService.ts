@@ -1,7 +1,6 @@
 import { BOOKMARKS_STORAGE_KEY, MAX_BOOKMARK_CREDENTIALS } from './constants/index';
 import type { BookmarkStore, ModelBookmarks, CredentialBookmark } from './types/index';
 import type { IStorage } from './ports/IStorage';
-import { defaultStorage } from '../infra/storage/StorageService';
 
 export interface BookmarkSummary {
   total: number;
@@ -87,5 +86,3 @@ export class BookmarksService {
     return { total, entries };
   }
 }
-
-export const defaultBookmarksService = new BookmarksService(defaultStorage);

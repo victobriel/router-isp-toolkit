@@ -8,12 +8,7 @@ export interface PopupStatusContext {
   setStatusMessage: (statusMessage: string) => void;
 }
 
-export const PopupStatusContext = createContext<PopupStatusContext>({
-  status: PopupStatusType.NONE,
-  setStatus: () => {},
-  statusMessage: '',
-  setStatusMessage: () => {},
-});
+export const PopupStatusContext = createContext<PopupStatusContext | null>(null);
 
 export const usePopupStatus = () => {
   const ctx = useContext(PopupStatusContext);

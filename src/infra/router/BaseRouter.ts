@@ -36,14 +36,6 @@ export abstract class BaseRouter implements IRouter {
     return this.name;
   }
 
-  public get usernameSelector(): string {
-    return this.loginSelectors.username;
-  }
-
-  public get passwordSelector(): string {
-    return this.loginSelectors.password;
-  }
-
   public isLoginPage(): boolean {
     const selectors = [this.loginSelectors.username, this.loginSelectors.password];
     return selectors.every((selector) => {
@@ -53,6 +45,31 @@ export abstract class BaseRouter implements IRouter {
   }
 
   public abstract authenticate(credentials: Credentials): void;
+
+  public readLoginCredentials(): Credentials | null {
+    try {
+      const usernameEl = DomService.getValueElement(this.loginSelectors.username);
+      const passwordEl = DomService.getValueElement(this.loginSelectors.password);
+
+      return {
+        username: usernameEl.value.trim(),
+        password: passwordEl.value,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  public fillLoginCredentials(credentials: Credentials): void {
+    const { username, password } = credentials;
+
+    const usernameEl = DomService.getValueElement(this.loginSelectors.username);
+    const passwordEl = DomService.getValueElement(this.loginSelectors.password);
+
+    DomService.updateField(usernameEl, username);
+    DomService.updateField(passwordEl, password);
+  }
+
   public abstract extract(): Promise<ExtractionResult>;
   public abstract buttonElementConfig(): ButtonConfig | null;
   public abstract isAuthenticated(): boolean;
@@ -78,6 +95,38 @@ export abstract class BaseRouter implements IRouter {
       setTimeout(() => {
         observer.disconnect();
         reject(new Error(`Timeout: Element "${selector}" not found after ${timeoutMs}ms`));
+      }, timeoutMs);
+    });
+  }
+
+  /**
+   * Polls until an input's value is non-empty and not a loading placeholder ("...").
+   * Necessary when the router populates input fields asynchronously after the
+   * containing section is already in the DOM.
+   */
+  protected waitForInputPopulated(selector: string, timeoutMs = 5000): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const isPopulated = (): boolean => {
+        const el = document.querySelector<HTMLInputElement>(selector);
+        const value = el?.value?.trim() ?? '';
+        return value.length > 0 && value !== '...';
+      };
+
+      if (isPopulated()) {
+        resolve();
+        return;
+      }
+
+      const interval = setInterval(() => {
+        if (isPopulated()) {
+          clearInterval(interval);
+          resolve();
+        }
+      }, 100);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        reject(new Error(`Timeout: Input "${selector}" not populated after ${timeoutMs}ms`));
       }, timeoutMs);
     });
   }

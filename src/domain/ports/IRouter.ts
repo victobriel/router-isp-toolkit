@@ -11,11 +11,21 @@ import type {
  */
 export interface IRouter {
   readonly model: string;
-  readonly usernameSelector: string;
-  readonly passwordSelector: string;
 
   isLoginPage(): boolean;
   authenticate(credentials: Credentials): void;
+
+  /**
+   * Reads the current values from the router's login form.
+   * Returns `null` if required inputs can't be found.
+   */
+  readLoginCredentials(): Credentials | null;
+
+  /**
+   * Fills the router's login form inputs without submitting.
+   */
+  fillLoginCredentials(credentials: Credentials): void;
+
   extract(): Promise<ExtractionResult>;
   buttonElementConfig(): ButtonConfig | null;
   isAuthenticated(): boolean;

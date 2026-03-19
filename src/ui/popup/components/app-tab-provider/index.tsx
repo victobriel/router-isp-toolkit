@@ -1,5 +1,5 @@
 import { ROUTER_MODEL_STORAGE_KEY } from '@/application/constants';
-import { SessionStorageService } from '@/infra/storage/SessionStorageService';
+import { services } from '@/compositionRoot';
 import {
   Empty,
   EmptyDescription,
@@ -24,7 +24,7 @@ export const AppTabProvider = ({ children }: AppTabProviderProps) => {
       const id = tab?.id ?? null;
       setTabId(id);
       if (id !== null) {
-        const model = await SessionStorageService.get<string>(
+        const model = await services.sessionStorage.get<string>(
           `${ROUTER_MODEL_STORAGE_KEY}:${String(id)}`,
         );
         const detectedModel = typeof model === 'string' && model.trim() !== '' ? model : null;
@@ -35,7 +35,7 @@ export const AppTabProvider = ({ children }: AppTabProviderProps) => {
 
   if (tabId === null || routerModel === null) {
     return (
-      <Empty>
+      <Empty className="my-auto">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <Router />

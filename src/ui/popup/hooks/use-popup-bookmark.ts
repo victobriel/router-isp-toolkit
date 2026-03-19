@@ -1,7 +1,10 @@
-import { defaultBookmarksService } from '@/application/BookmarksService';
 import { CredentialBookmark, PopupStatusType } from '@/application/types';
 import { useCallback, useEffect, useState } from 'react';
 import { usePopupStatus } from '@/ui/popup/contexts/popup-status-context';
+import { services } from '@/compositionRoot';
+
+// Composition-root wiring for this UI entrypoint.
+const { bookmarksService } = services;
 
 interface UsePopupBookmarkProps {
   routerModel: string;
@@ -12,7 +15,7 @@ export const usePopupBookmark = ({ routerModel }: UsePopupBookmarkProps) => {
   const { setStatus, setStatusMessage } = usePopupStatus();
 
   const loadBookmarks = useCallback(async (model: string) => {
-    const entry = await defaultBookmarksService.listByModel(model);
+    const entry = await bookmarksService.listByModel(model);
     if (entry) {
       setBookmarks(entry.credentials);
     }
@@ -34,7 +37,7 @@ export const usePopupBookmark = ({ routerModel }: UsePopupBookmarkProps) => {
         return;
       }
 
-      const result = await defaultBookmarksService.addCredential(routerModel, {
+      const result = await bookmarksService.addCredential(routerModel, {
         username,
         password,
       });
@@ -55,7 +58,7 @@ export const usePopupBookmark = ({ routerModel }: UsePopupBookmarkProps) => {
 
   const deleteCredential = useCallback(
     async (id: string) => {
-      await defaultBookmarksService.removeCredential(routerModel, id);
+      await bookmarksService.removeCredential(routerModel, id);
       await loadBookmarks(routerModel);
 
       setStatus(PopupStatusType.OK);

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PopupStatusType } from '@/application/types';
-import { defaultPopupUiStateService } from '@/application/PopupUiStateService';
-import { StorageService } from '@/infra/storage/StorageService';
-import { SessionStorageService } from '@/infra/storage/SessionStorageService';
+import { services } from '@/compositionRoot';
 import {
   CollectMessageAction,
   ExtractionResultSchema,
@@ -31,7 +29,6 @@ interface LogEntry {
 
 interface PopupDataProviderProps {
   tabId: number;
-  routerModel: string;
   children: (props: {
     data: ExtractionResult | null;
     isCollecting: boolean;
@@ -41,7 +38,7 @@ interface PopupDataProviderProps {
     onCollect: (username: string, password: string) => Promise<void>;
     onClear: () => void;
     onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
-    copyText: () => Promise<string | null>;
+    copyText: () => Promise<{ data: string | null; error?: string }>;
   }) => React.ReactNode;
 }
 
@@ -55,7 +52,9 @@ function isExpectedNavigationError(msg: string): boolean {
   return EXPECTED_ERRORS.some((s) => msg.toLowerCase().includes(s));
 }
 
-export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataProviderProps) => {
+const { popupUiStateService } = services;
+
+export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) => {
   const { setStatus: setStatusType, setStatusMessage } = usePopupStatus();
   const [data, setData] = useState<ExtractionResult | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -93,7 +92,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   // Initialize: load persisted state, pending auth errors, ping results
   useEffect(() => {
     void (async () => {
-      const savedState = await defaultPopupUiStateService.loadUiState(tabId);
+      const savedState = await popupUiStateService.loadUiState(tabId);
       if (savedState) {
         setStatus(savedState.status.type, savedState.status.text);
         setLogs(savedState.logs.slice(0, 30));
@@ -101,30 +100,32 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         setStatus(PopupStatusType.NONE, 'Ready.');
       }
 
-      const pendingError = await SessionStorageService.get<string>(PENDING_AUTH_ERROR_STORAGE_KEY);
+      const pendingError = await services.sessionStorage.get<string>(
+        PENDING_AUTH_ERROR_STORAGE_KEY,
+      );
       if (pendingError) {
-        await SessionStorageService.remove(PENDING_AUTH_ERROR_STORAGE_KEY);
+        await services.sessionStorage.remove(PENDING_AUTH_ERROR_STORAGE_KEY);
         setStatus(PopupStatusType.WARN, pendingError);
       }
 
-      const lastData = await defaultPopupUiStateService.loadLastExtraction(tabId);
+      const lastData = await popupUiStateService.loadLastExtraction(tabId);
       if (lastData) setData(lastData);
 
-      const internalPing = await SessionStorageService.get<PingTestResult>(
+      const internalPing = await services.sessionStorage.get<PingTestResult>(
         LAST_INTERNAL_PING_TEST_STORAGE_KEY,
       );
       if (internalPing) setInternalPingResult(internalPing);
 
-      const externalPing = await SessionStorageService.get<PingTestResult>(
+      const externalPing = await services.sessionStorage.get<PingTestResult>(
         LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
       );
       if (externalPing) setExternalPingResult(externalPing);
     })();
-  }, [tabId, routerModel, setStatus]);
+  }, [tabId, setStatus]);
 
   // Persist UI state when logs change
   useEffect(() => {
-    void defaultPopupUiStateService.saveUiState(tabId, {
+    void popupUiStateService.saveUiState(tabId, {
       status: { type: statusRef.current.type, text: statusRef.current.message },
       logs,
     });
@@ -187,7 +188,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         }
 
         setData(parsed.data);
-        await defaultPopupUiStateService.saveLastExtraction(tabId, parsed.data);
+        await popupUiStateService.saveLastExtraction(tabId, parsed.data);
         setStatus(PopupStatusType.OK, 'Data collected successfully.');
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -203,7 +204,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
               });
               if (parsed.success) {
                 setData(parsed.data);
-                await defaultPopupUiStateService.saveLastExtraction(tabId, parsed.data);
+                await popupUiStateService.saveLastExtraction(tabId, parsed.data);
                 setStatus(PopupStatusType.OK, 'Data collected successfully.');
                 return;
               }
@@ -225,8 +226,8 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     setData(null);
     setLogs([]);
     setStatus(PopupStatusType.NONE, 'Ready.');
-    void SessionStorageService.remove(`${LAST_DATA_STORAGE_KEY}:${String(tabId)}`);
-    void defaultPopupUiStateService.saveUiState(tabId, {
+    void services.sessionStorage.remove(`${LAST_DATA_STORAGE_KEY}:${String(tabId)}`);
+    void popupUiStateService.saveUiState(tabId, {
       status: { type: PopupStatusType.NONE, text: 'Ready.' },
       logs: [],
     });
@@ -235,7 +236,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   const onPing = useCallback(
     async (ip: string, mode: DiagnosticsMode) => {
       if (mode === DiagnosticsMode.EXTERNAL) {
-        await StorageService.save(LAST_EXTERNAL_IP_STORAGE_KEY, ip);
+        await services.storage.save(LAST_EXTERNAL_IP_STORAGE_KEY, ip);
       }
 
       setIsPinging(true);
@@ -254,13 +255,13 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         }
 
         if (mode === DiagnosticsMode.INTERNAL) {
-          await SessionStorageService.save(
+          await services.sessionStorage.save(
             LAST_INTERNAL_PING_TEST_STORAGE_KEY,
             response.pingResult,
           );
           setInternalPingResult(response.pingResult);
         } else {
-          await SessionStorageService.save(
+          await services.sessionStorage.save(
             LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
             response.pingResult,
           );
@@ -279,10 +280,18 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     [addLog, sendToTab, setStatus, tabId],
   );
 
-  const copyText = useCallback(async (): Promise<string | null> => {
-    if (!data) return null;
-    const template = await StorageService.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
-    if (!template || template.trim() === '') return null;
+  const copyText = useCallback(async (): Promise<{ data: string | null; error?: string }> => {
+    if (!data)
+      return {
+        data: null,
+        error: 'No data to copy.',
+      };
+    const template = await services.storage.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
+    if (!template || template.trim() === '')
+      return {
+        data: null,
+        error: 'No template found. Create one in the settings.',
+      };
 
     const asText = (v: unknown): string =>
       v === undefined || v === null || v === '' ? '-' : String(v);
@@ -343,10 +352,12 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       LastExternalPingIp: asText(externalPingResult?.ip),
     };
 
-    return template.replace(
-      /%([A-Za-z0-9_]+)%/g,
-      (_match, key: string) => values[key] ?? `%${key}%`,
-    );
+    return {
+      data: template.replace(
+        /%([A-Za-z0-9_]+)%/g,
+        (_match, key: string) => values[key] ?? `%${key}%`,
+      ),
+    };
   }, [data, internalPingResult, externalPingResult]);
 
   return children({

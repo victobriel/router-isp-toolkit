@@ -19,18 +19,7 @@ interface TopologyBandTableProps {
 }
 
 function TopologyBandTable({ band, clients }: TopologyBandTableProps) {
-  if (!clients.length) {
-    return (
-      <Empty>
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Network />
-          </EmptyMedia>
-          <EmptyTitle>No clients connected.</EmptyTitle>
-        </EmptyHeader>
-      </Empty>
-    );
-  }
+  if (!clients.length) return <span className="text-muted-foreground">No clients connected.</span>;
 
   return (
     <div className="space-y-1">

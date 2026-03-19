@@ -1,8 +1,7 @@
 import { ZodError } from 'zod';
 
-import { ContentPageUseCase } from '../application/ContentPageUseCase';
 import { CollectMessageSchema } from '../domain/schemas/validation';
-import { CollectionService } from '../application/CollectionService';
+import { services } from '@/compositionRoot';
 
 export enum ContentPageMessageAction {
   SHOW_OVERLAY = 'showOverlay',
@@ -15,6 +14,9 @@ export type ContentPageMessage = {
   action: ContentPageMessageAction;
   credentials?: { username: string; password: string };
 };
+
+// Composition root for content-script logic.
+const { collectionService, contentPageUseCase } = services;
 
 // --- Overlay management ---
 let overlayContainer: HTMLDivElement | null = null;
@@ -116,7 +118,7 @@ chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, _sender, s
     [ContentPageMessageAction.FILL_LOGIN_FIELDS]: () => {
       const { credentials } = rawMessage;
       if (credentials) {
-        ContentPageUseCase.fillLoginFieldsWithCredentials(
+        contentPageUseCase.fillLoginFieldsWithCredentials(
           credentials.username,
           credentials.password,
         );
@@ -136,7 +138,8 @@ chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, _sender, s
     return false;
   }
 
-  CollectionService.handleCollect(result.data)
+  void collectionService
+    .handleCollect(result.data)
     .then(sendResponse)
     .catch((error) => {
       if (error instanceof ZodError) {
@@ -155,5 +158,5 @@ chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, _sender, s
 });
 
 window.addEventListener('load', () => {
-  void ContentPageUseCase.bootstrap();
+  void contentPageUseCase.bootstrap();
 });
