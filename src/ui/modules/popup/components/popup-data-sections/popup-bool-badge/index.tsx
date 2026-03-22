@@ -1,15 +1,36 @@
 import { Badge } from '@/ui/components/ui/badge';
 import { translator } from '@/infra/i18n/I18nService';
+import { CircleCheck, CircleX } from 'lucide-react';
+import { cn } from '@/ui/lib/utils';
 
 interface PopupBoolBadgeProps {
   value: boolean | undefined;
 }
 
 export const PopupBoolBadge = ({ value }: PopupBoolBadgeProps) => {
-  if (value === undefined) return <span className="text-muted-foreground text-xs">-</span>;
+  if (value === undefined) return '—';
   return (
-    <Badge variant={value ? 'success' : 'secondary'} className="text-xs px-1.5 py-0">
+    <Badge variant={value ? 'success' : 'secondary'} className="text-sm px-1.5 py-0 w-fit">
       {value ? translator.t('popup_status_enabled') : translator.t('popup_status_disabled')}
+    </Badge>
+  );
+};
+
+interface PopupCompareBadgeProps {
+  /** True => comparison OK, false => comparison not OK, undefined => not configured. */
+  match: boolean;
+}
+
+export const PopupCompareBadge = ({ match }: PopupCompareBadgeProps) => {
+  return (
+    <Badge
+      className={cn(
+        'text-sm p-0!',
+        match ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive',
+      )}
+      aria-label={match ? translator.t('popup_compare_ok') : translator.t('popup_compare_not_ok')}
+    >
+      {match ? <CircleCheck className="size-4" /> : <CircleX className="size-4" />}
     </Badge>
   );
 };

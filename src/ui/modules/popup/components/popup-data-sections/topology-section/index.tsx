@@ -117,23 +117,23 @@ export const TopologySection = ({ data, isCollecting, onCollect }: TopologySecti
       <div className="space-y-2">
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">
-            {translator.t('popup_topology_cable_devices')} ({topology['cable'].totalClients})
+            {translator.t('popup_topology_cable_devices')} ({topology['cable']?.totalClients})
           </p>
-          <TopologyBandTable band="cable" clients={topology['cable'].clients} />
+          <TopologyBandTable band="cable" clients={topology['cable']?.clients ?? []} />
         </div>
         <Separator />
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">
-            {translator.t('popup_topology_24_devices')} ({topology['24ghz'].totalClients})
+            {translator.t('popup_topology_24_devices')} ({topology['24ghz']?.totalClients ?? 0})
           </p>
-          <TopologyBandTable band="24ghz" clients={topology['24ghz'].clients} />
+          <TopologyBandTable band="24ghz" clients={topology['24ghz']?.clients ?? []} />
         </div>
         <Separator />
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-1">
-            {translator.t('popup_topology_5_devices')} ({topology['5ghz'].totalClients})
+            {translator.t('popup_topology_5_devices')} ({topology['5ghz']?.totalClients ?? 0})
           </p>
-          <TopologyBandTable band="5ghz" clients={topology['5ghz'].clients} />
+          <TopologyBandTable band="5ghz" clients={topology['5ghz']?.clients ?? []} />
         </div>
       </div>
     </Collapsible>

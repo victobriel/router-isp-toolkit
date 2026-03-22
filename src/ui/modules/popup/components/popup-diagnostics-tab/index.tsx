@@ -50,7 +50,11 @@ export const PopupDiagnosticsTab = ({
 
   const topology = data?.topology;
   const allClients = topology
-    ? [...topology['24ghz'].clients, ...topology['5ghz'].clients, ...topology['cable'].clients]
+    ? [
+        ...(topology['24ghz']?.clients ?? []),
+        ...(topology['5ghz']?.clients ?? []),
+        ...(topology['cable']?.clients ?? []),
+      ]
     : [];
 
   const handlePing = async () => {
@@ -153,11 +157,15 @@ export const PopupDiagnosticsTab = ({
             <SelectValue placeholder={translator.t('popup_diagnostics_device_placeholder')} />
           </SelectTrigger>
           <SelectContent>
-            {allClients.map((c) => (
-              <SelectItem key={c.mac} value={c.ip}>
-                {[c.ip, c.name || c.mac, c.mac.toUpperCase()].filter(Boolean).join(' -- ')}
-              </SelectItem>
-            ))}
+            {allClients.map(
+              (c) =>
+                c.ip &&
+                c.mac && (
+                  <SelectItem key={c.mac} value={c.ip}>
+                    {[c.ip, c.name || c.mac, c.mac.toUpperCase()].filter(Boolean).join(' -- ')}
+                  </SelectItem>
+                ),
+            )}
           </SelectContent>
         </Select>
       ) : (

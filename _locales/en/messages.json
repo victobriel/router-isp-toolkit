@@ -289,7 +289,7 @@
     "message": "Extension"
   },
   "settings_about_version_label": {
-    "message": "Version"
+    "message": "Router Version"
   },
 
   "settings_bookmarks_empty": {
@@ -316,16 +316,123 @@
   "popup_label_ethernet_mode": { "message": "Mode" },
   "popup_label_ip_version": { "message": "IP Version" },
   "popup_label_dhcpv6_status": { "message": "DHCPv6" },
+  "popup_label_dhcpv6_status_settings": { "message": "DHCPv6 status (enabled/disabled)" },
   "popup_label_pd_status": { "message": "PD" },
+  "popup_label_pd_status_settings": { "message": "PD status (enabled/disabled)" },
   "popup_label_slaac_status": { "message": "SLAAC" },
+  "popup_label_slaac_status_settings": { "message": "SLAAC status (enabled/disabled)" },
   "popup_label_gua_pd_status": { "message": "Gua PD" },
   "popup_label_remote_access_ipv4": { "message": "IPv4 - Remote access" },
   "popup_label_remote_access_ipv6": { "message": "IPv6 - Remote access" },
   "popup_label_isp_dns_enabled": { "message": "ISP DNS Status" },
   "popup_label_lease_time_mode": { "message": "Lease Time Mode" },
   "popup_label_lease_time": { "message": "Lease Time" },
-  "popup_label_version": { "message": "Version" },
+  "popup_label_model": { "message": "Router Model" },
+  "popup_label_version": { "message": "Router Version" },
   "popup_label_url": { "message": "URL" },
+
+  "popup_label_tr069_url": { "message": "TR-069 URL" },
+  "popup_label_internet_status": { "message": "Internet status (enabled/disabled)" },
+  "popup_label_tr069_status": { "message": "TR-069 status (enabled/disabled)" },
+  "popup_label_pppoe_username": { "message": "PPPoE username" },
+  "popup_label_link_mode": { "message": "Link mode / speed" },
+  "popup_label_request_pd_status": { "message": "Request PD status (enabled/disabled)" },
+  "popup_label_remote_access_ipv4_status": {
+    "message": "IPv4 remote access status (enabled/disabled)"
+  },
+  "popup_label_remote_access_ipv6_status": {
+    "message": "IPv6 remote access status (enabled/disabled)"
+  },
+  "popup_label_band_steering_status": { "message": "Band Steering status (enabled/disabled)" },
+  "popup_label_cable_total_clients_connected": {
+    "message": "Ethernet clients connected (count)"
+  },
+  "popup_label_wlan24_status": { "message": "2.4 GHz Wi-Fi status" },
+  "popup_label_wlan24_channel": { "message": "2.4 GHz channel" },
+  "popup_label_wlan24_mode": { "message": "2.4 GHz Wi-Fi mode" },
+  "popup_label_wlan24_band_width": { "message": "2.4 GHz channel width" },
+  "popup_label_wlan24_transmitting_power": { "message": "2.4 GHz transmit power" },
+  "popup_label_wlan24_total_clients_connected": {
+    "message": "2.4 GHz clients connected (count)"
+  },
+  "popup_label_wlan5_status": { "message": "5 GHz Wi-Fi status" },
+  "popup_label_wlan5_channel": { "message": "5 GHz channel" },
+  "popup_label_wlan5_mode": { "message": "5 GHz Wi-Fi mode" },
+  "popup_label_wlan5_band_width": { "message": "5 GHz channel width" },
+  "popup_label_wlan5_transmitting_power": { "message": "5 GHz transmit power" },
+  "popup_label_wlan5_total_clients_connected": {
+    "message": "5 GHz clients connected (count)"
+  },
+  "popup_label_total_clients_connected": {
+    "message": "Total clients — Wi-Fi and Ethernet (count)"
+  },
+  "popup_label_dhcp_status": { "message": "DHCP server status" },
+  "popup_label_dhcp_ip_address": { "message": "DHCP LAN IP address" },
+  "popup_label_dhcp_subnet_mask": { "message": "DHCP subnet mask" },
+  "popup_label_dhcp_start_ip": { "message": "DHCP pool start IP" },
+  "popup_label_dhcp_end_ip": { "message": "DHCP pool end IP" },
+  "popup_label_dhcp_isp_dns_status": { "message": "Use ISP DNS" },
+  "popup_label_dhcp_primary_dns": { "message": "DHCP primary DNS" },
+  "popup_label_dhcp_secondary_dns": { "message": "DHCP secondary DNS" },
+  "popup_label_dhcp_lease_time_mode": { "message": "DHCP lease time mode" },
+  "popup_label_dhcp_lease_time": { "message": "DHCP lease time" },
+  "popup_label_upnp_status": { "message": "UPnP status" },
+  "popup_label_last_internal_ping_message": {
+    "message": "Last internal ping — summary text from the router"
+  },
+  "popup_label_last_internal_ping_time": {
+    "message": "Last internal ping — per-reply times in ms (array as text)"
+  },
+  "popup_label_last_internal_ping_ip": { "message": "Last internal ping — target IP" },
+  "popup_label_last_internal_ping_avg_time": {
+    "message": "Last internal ping — average RTT (ms)"
+  },
+  "popup_label_last_internal_ping_min_time": {
+    "message": "Last internal ping — minimum RTT (ms)"
+  },
+  "popup_label_last_internal_ping_max_time": {
+    "message": "Last internal ping — maximum RTT (ms)"
+  },
+  "popup_label_last_internal_ping_loss": {
+    "message": "Last internal ping — packet loss (%)"
+  },
+  "popup_label_last_internal_ping_transmitted": {
+    "message": "Last internal ping — packets transmitted"
+  },
+  "popup_label_last_internal_ping_received": {
+    "message": "Last internal ping — packets received"
+  },
+  "popup_label_last_internal_ping_min_avg_max": {
+    "message": "Last internal ping — RTT summary (e.g. min/avg/max = 10/20/30 ms)"
+  },
+  "popup_label_last_external_ping_message": {
+    "message": "Last external ping — summary text from the router"
+  },
+  "popup_label_last_external_ping_time": {
+    "message": "Last external ping — per-reply times in ms (array as text)"
+  },
+  "popup_label_last_external_ping_ip": { "message": "Last external ping — target IP" },
+  "popup_label_last_external_ping_avg_time": {
+    "message": "Last external ping — average RTT (ms)"
+  },
+  "popup_label_last_external_ping_min_time": {
+    "message": "Last external ping — minimum RTT (ms)"
+  },
+  "popup_label_last_external_ping_max_time": {
+    "message": "Last external ping — maximum RTT (ms)"
+  },
+  "popup_label_last_external_ping_loss": {
+    "message": "Last external ping — packet loss (%)"
+  },
+  "popup_label_last_external_ping_transmitted": {
+    "message": "Last external ping — packets transmitted"
+  },
+  "popup_label_last_external_ping_received": {
+    "message": "Last external ping — packets received"
+  },
+  "popup_label_last_external_ping_min_avg_max": {
+    "message": "Last external ping — RTT summary (e.g. min/avg/max = 10/20/30 ms)"
+  },
 
   "popup_toggle_wan_aria": { "message": "Toggle WAN section" },
   "popup_toggle_remote_access_aria": {
@@ -354,6 +461,8 @@
   "popup_tabs_aria_label": { "message": "Popup sections" },
   "popup_status_enabled": { "message": "Enabled" },
   "popup_status_disabled": { "message": "Disabled" },
+  "popup_compare_ok": { "message": "OK" },
+  "popup_compare_not_ok": { "message": "Not OK" },
 
   "popup_error_no_active_tab": {
     "message": "Cannot find an active browser tab. Open your router page and try again"
@@ -422,11 +531,14 @@
   "popup_copy_text_aria": {
     "message": "Copy router info text"
   },
-  "popup_copy_text_copied": {
-    "message": "Copied!"
+  "popup_copy_text_copied_to_clipboard": {
+    "message": "Copied to clipboard"
   },
   "popup_copy_text_copied_aria": {
     "message": "Router info text copied"
+  },
+  "popup_go_to_section": {
+    "message": "Go to section"
   },
   "popup_status_copy_success": {
     "message": "Router info copied to clipboard"
@@ -445,7 +557,7 @@
     "message": "Define the text format used when you click the “Copy text” button in the popup. Placeholders will be replaced with the latest collected values."
   },
   "settings_copy_template_hint": {
-    "message": "Available placeholders (click to expand)"
+    "message": "Available placeholders"
   },
   "settings_copy_template_save": {
     "message": "Save"
@@ -463,13 +575,31 @@
     "message": "Router preferences"
   },
   "settings_router_preferences_desc": {
-    "message": "Set your preferred values for extracted router fields. These will be compared with extracted data later (e.g. expected Wi‑Fi channels: 2.4G and 5G)."
+    "message": "Choose a router model key (same as in saved bookmarks, e.g. ZXHN H199), then set preferred values for that model. Stored as one object per model."
   },
   "settings_router_preferences_save": {
     "message": "Save preferences"
   },
   "settings_router_preferences_toast_saved": {
     "message": "Preferences saved"
+  },
+  "settings_prefs_model_label": {
+    "message": "Router model"
+  },
+  "settings_prefs_model_placeholder_select": {
+    "message": "Select a model…"
+  },
+  "settings_prefs_model_custom_hint": {
+    "message": "Or enter the model key"
+  },
+  "settings_prefs_model_apply": {
+    "message": "Use model"
+  },
+  "settings_prefs_model_required": {
+    "message": "Choose or enter a router model first"
+  },
+  "settings_prefs_model_pick_first": {
+    "message": "Select a router model above before editing preferences."
   },
   "settings_prefs_wlan24_title": {
     "message": "WLAN 2.4 GHz"
@@ -505,10 +635,10 @@
   "settings_pref_router_version": { "message": "Router version" },
   "settings_pref_tr069_url": { "message": "TR-069 URL" },
   "settings_pref_pppoe_username": { "message": "PPPoE username" },
-  "settings_pref_band_steering_status": { "message": "Band steering" },
-  "settings_pref_wlan_24_status": { "message": "2.4 GHz status" },
-  "settings_pref_wlan_5_status": { "message": "5 GHz status" },
-  "settings_pref_upnp_status": { "message": "UPnP status" },
+  "settings_pref_band_steering_status": { "message": "Band Steering status (enabled/disabled)" },
+  "settings_pref_wlan_24_status": { "message": "2.4 GHz network status" },
+  "settings_pref_wlan_5_status": { "message": "5 GHz network status" },
+  "settings_pref_upnp_status": { "message": "UPnP status (enabled/disabled)" },
 
   "popup_go_to_settings": { "message": "Go to Settings" },
   "popup_no_supported_router_title": { "message": "No supported router detected" },
@@ -557,7 +687,66 @@
     "message": "Clear all extension data? This action cannot be undone."
   },
 
-  "popup_label_link_speed": { "message": "Link speed" },
+  "settings_import_export_section_title": { "message": "Import / Export" },
+  "settings_import_export_section_desc": {
+    "message": "Back up and restore your settings."
+  },
+  "settings_import_button": { "message": "Import" },
+  "settings_export_button": { "message": "Export" },
+
+  "settings_import_dialog_title": { "message": "Import settings" },
+  "settings_import_dialog_desc": {
+    "message": "Select sections and choose a JSON file exported from this extension."
+  },
+  "settings_export_dialog_title": { "message": "Export settings" },
+  "settings_export_dialog_desc": {
+    "message": "Select sections to include in the export JSON file."
+  },
+
+  "settings_dialog_sections_label": { "message": "Sections" },
+  "settings_import_file_label": { "message": "Import file" },
+  "settings_import_file_hint": { "message": "Only .json files are supported." },
+  "settings_export_file_label": { "message": "Export file" },
+  "settings_export_file_hint": { "message": "A .json file will be downloaded." },
+
+  "settings_dialog_cancel": { "message": "Cancel" },
+  "settings_import_confirm_button": { "message": "Import" },
+  "settings_export_confirm_button": { "message": "Download" },
+
+  "settings_import_error_no_sections": {
+    "message": "Select at least one section to import."
+  },
+  "settings_import_error_no_file": { "message": "Select a file to import." },
+  "settings_import_error_invalid_json": { "message": "Invalid import file." },
+  "settings_import_error_missing_section": {
+    "message": "The import file doesn't contain: $section$",
+    "placeholders": {
+      "section": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_import_error_invalid_bookmarks": {
+    "message": "Invalid saved credentials data in file."
+  },
+  "settings_import_error_invalid_copy_template": {
+    "message": "Invalid copy text template data in file."
+  },
+  "settings_import_error_invalid_router_preferences": {
+    "message": "Invalid router preferences data in file."
+  },
+  "settings_import_toast_success": {
+    "message": "Settings imported successfully."
+  },
+  "settings_import_toast_error": { "message": "Failed to import settings." },
+
+  "settings_export_error_no_sections": {
+    "message": "Select at least one section to export."
+  },
+  "settings_export_toast_success": { "message": "Settings exported." },
+  "settings_export_toast_error": { "message": "Failed to export settings." },
+
+  "popup_label_link_speed": { "message": "Link Mode" },
   "popup_label_request_pd": { "message": "Request PD" },
   "popup_section_misc_router_info": { "message": "Router Info" },
 
@@ -578,5 +767,8 @@
       }
     }
   },
-  "popup_topology_no_clients_connected": { "message": "No clients connected." }
+  "popup_topology_no_clients_connected": { "message": "No clients connected." },
+  "settings_copy_template_toast_copied": {
+    "message": "Copied!"
+  }
 }

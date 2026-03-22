@@ -2,28 +2,46 @@ import { ExtractionResult } from '@/domain/schemas/validation';
 import { Collapsible } from '@/ui/components/ui/collapsible';
 import { val } from '@/ui/lib/utils';
 import { Router } from 'lucide-react';
-import { PopupBoolBadge } from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
-import { PopupDataRow } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
+import {
+  PopupDataRow,
+  PopupDataRowProps,
+} from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
 import { translator } from '@/infra/i18n/I18nService';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
 
 interface MiscSectionProps {
   data: ExtractionResult;
+  routerPreferencesComparison: RouterPreferencesComparison | null;
 }
 
-export const MiscSection = ({ data }: MiscSectionProps) => {
-  const rows: { label: string; value: string | React.ReactNode }[] = [
-    { label: translator.t('popup_label_version'), value: val(data.routerVersion) },
+export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionProps) => {
+  const rows: PopupDataRowProps[] = [
+    {
+      label: translator.t('popup_label_model'),
+      value: val(data.routerModel),
+      ableToCopy: true,
+    },
+    {
+      label: translator.t('popup_label_version'),
+      compareMatch: routerPreferencesComparison?.routerVersion,
+      value: val(data.routerVersion),
+      ableToCopy: true,
+    },
     {
       label: `${translator.t('popup_label_tr069')} ${translator.t('popup_label_url')}`,
+      compareMatch: routerPreferencesComparison?.tr069Url,
       value: val(data.tr069Url),
+      ableToCopy: true,
     },
     {
       label: translator.t('popup_section_upnp'),
-      value: <PopupBoolBadge value={data.upnpEnabled} />,
+      compareMatch: routerPreferencesComparison?.upnpEnabled,
+      value: data.upnpEnabled,
     },
     {
       label: translator.t('popup_section_band_steering'),
-      value: <PopupBoolBadge value={data.bandSteeringEnabled} />,
+      compareMatch: routerPreferencesComparison?.bandSteeringEnabled,
+      value: data.bandSteeringEnabled,
     },
   ];
 
@@ -39,7 +57,13 @@ export const MiscSection = ({ data }: MiscSectionProps) => {
     >
       <div className="space-y-0.5">
         {rows.map((row) => (
-          <PopupDataRow key={row.label} label={row.label} value={row.value} />
+          <PopupDataRow
+            key={row.label}
+            label={row.label}
+            value={row.value}
+            compareMatch={row.compareMatch}
+            ableToCopy={row.ableToCopy}
+          />
         ))}
       </div>
     </Collapsible>

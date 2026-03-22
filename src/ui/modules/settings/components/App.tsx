@@ -1,15 +1,48 @@
 import { useState, useEffect } from 'react';
 import { services } from '@/index';
-import { COPY_TEXT_TEMPLATE_STORAGE_KEY } from '@/application/constants';
-import type { ModelBookmarks } from '@/application/types';
+import {
+  BOOKMARKS_STORAGE_KEY,
+  COPY_TEXT_TEMPLATE_STORAGE_KEY,
+  ROUTER_PREFERENCES_STORAGE_KEY,
+} from '@/application/constants';
+import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
+import type {
+  BookmarkStore,
+  CredentialBookmark,
+  ModelBookmarks,
+  RouterPreferencesByModel,
+  RouterPreferencesStore,
+} from '@/application/types';
+import { RouterPreferencesByModelSchema } from '@/application/types';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
 import { Badge } from '@/ui/components/ui/badge';
 import { Separator } from '@/ui/components/ui/separator';
 import { Collapsible } from '@/ui/components/ui/collapsible';
 import { cn } from '@/ui/lib/utils';
-import { Trash2, Save, Sun, Moon, Monitor, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Trash2,
+  Save,
+  Sun,
+  Moon,
+  Monitor,
+  CheckCircle,
+  XCircle,
+  Copy,
+  Upload,
+  Download,
+} from 'lucide-react';
 import { useAppTheme, type AppThemePreference } from '@/ui/hooks/use-app-theme';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/ui/components/ui/accordion';
+import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider';
+import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { RouterPreferenceSection } from './router-preference-section';
+import { Input } from '@/ui/components/ui/input';
 
 interface Toast {
   id: number;
@@ -31,6 +64,48 @@ function useToast() {
   return { toasts, show };
 }
 
+function normalizeImportBookmarkStore(raw: unknown): BookmarkStore | null {
+  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const obj = raw as Record<string, unknown>;
+
+  const next: BookmarkStore = {};
+  for (const [modelKey, v] of Object.entries(obj)) {
+    if (v == null || typeof v !== 'object' || Array.isArray(v)) return null;
+
+    const candidate = v as Record<string, unknown>;
+    if (typeof candidate.model !== 'string') return null;
+
+    const credsRaw = candidate.credentials;
+    if (!Array.isArray(credsRaw)) return null;
+
+    const credentials: CredentialBookmark[] = [];
+    for (const c of credsRaw) {
+      if (c == null || typeof c !== 'object' || Array.isArray(c)) return null;
+      const cc = c as Record<string, unknown>;
+      if (typeof cc.id !== 'string') return null;
+      if (typeof cc.username !== 'string') return null;
+      if (typeof cc.password !== 'string') return null;
+      credentials.push({ id: cc.id, username: cc.username, password: cc.password });
+    }
+
+    // Keep the stored shape, but normalize based on the outer key.
+    next[modelKey] = { model: candidate.model, credentials };
+  }
+
+  return next;
+}
+
+function downloadJsonFile(filename: string, value: unknown) {
+  const json = JSON.stringify(value, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;
 
@@ -42,8 +117,26 @@ export const Settings = () => {
   const [bookmarkEntries, setBookmarkEntries] = useState<Array<[string, ModelBookmarks]>>([]);
   const [totalBookmarks, setTotalBookmarks] = useState(0);
   const [copyTemplate, setCopyTemplate] = useState('');
-  // const [prefs, setPrefs] = useState<Record<string, string>>({});
+  const [prefsByModel, setPrefsByModel] = useState<RouterPreferencesByModel>({});
+  const [selectedModelKey, setSelectedModelKey] = useState('');
   const [version, setVersion] = useState('');
+
+  type SettingsConfigSectionKey = 'bookmarks' | 'copyTextTemplate' | 'routerPreferences';
+  const [importOpen, setImportOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importSections, setImportSections] = useState<Record<SettingsConfigSectionKey, boolean>>({
+    bookmarks: true,
+    copyTextTemplate: true,
+    routerPreferences: true,
+  });
+  const [exportSections, setExportSections] = useState<Record<SettingsConfigSectionKey, boolean>>({
+    bookmarks: true,
+    copyTextTemplate: true,
+    routerPreferences: true,
+  });
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load data
   useEffect(() => {
@@ -55,10 +148,8 @@ export const Settings = () => {
       const tmpl = await services.storage.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
       setCopyTemplate(typeof tmpl === 'string' ? tmpl : '');
 
-      // const storedPrefs = await services.storage.get<Record<string, string>>(
-      //   ROUTER_PREFERENCES_STORAGE_KEY,
-      // );
-      // setPrefs(storedPrefs ?? {});
+      const rawPrefs = await services.storage.get<unknown>(ROUTER_PREFERENCES_STORAGE_KEY);
+      setPrefsByModel(normalizeRouterPreferencesStorage(rawPrefs));
 
       try {
         const manifest = chrome.runtime.getManifest();
@@ -67,7 +158,6 @@ export const Settings = () => {
         setVersion('—');
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshBookmarks = async () => {
@@ -91,22 +181,193 @@ export const Settings = () => {
     showToast(translator.t('settings_copy_template_toast_saved'), 'ok');
   };
 
-  // const handleSavePrefs = async () => {
-  //   await services.storage.save(ROUTER_PREFERENCES_STORAGE_KEY, prefs);
-  //   showToast('Preferences saved.', 'ok');
-  // };
+  const handleSavePrefsForModel = async (modelKey: string, prefs: RouterPreferencesStore) => {
+    const key = modelKey.trim();
+    if (!key) {
+      showToast(translator.t('settings_prefs_model_required'), 'err');
+      return;
+    }
+    const next = { ...prefsByModel, [key]: prefs };
+    await services.storage.save(ROUTER_PREFERENCES_STORAGE_KEY, next);
+    setPrefsByModel(next);
+    showToast(translator.t('settings_router_preferences_toast_saved'), 'ok');
+  };
 
   const handleClearAll = async () => {
     if (!window.confirm(translator.t('settings_clear_all_confirm_prompt'))) return;
     await services.storage.clear?.();
     await refreshBookmarks();
     setCopyTemplate('');
-    // setPrefs({});
+    setPrefsByModel({});
+    setSelectedModelKey('');
     showToast(translator.t('settings_toast_all_cleared'), 'ok');
+  };
+
+  const getSectionLabel = (key: SettingsConfigSectionKey) => {
+    if (key === 'bookmarks') return translator.t('settings_saved_bookmarks_label');
+    if (key === 'copyTextTemplate') return translator.t('settings_section_copy_template');
+    return translator.t('settings_section_router_preferences');
+  };
+
+  const selectedImportSectionKeys = (
+    Object.keys(importSections) as SettingsConfigSectionKey[]
+  ).filter((k) => importSections[k]);
+  const selectedExportSectionKeys = (
+    Object.keys(exportSections) as SettingsConfigSectionKey[]
+  ).filter((k) => exportSections[k]);
+
+  const handleExport = async () => {
+    if (!selectedExportSectionKeys.length) {
+      showToast(translator.t('settings_export_error_no_sections'), 'err');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const data: Record<string, unknown> = {};
+
+      if (exportSections.bookmarks) {
+        data.bookmarks = (await services.storage.get<unknown>(BOOKMARKS_STORAGE_KEY)) ?? {};
+      }
+
+      if (exportSections.copyTextTemplate) {
+        data.copyTextTemplate =
+          (await services.storage.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY)) ?? '';
+      }
+
+      if (exportSections.routerPreferences) {
+        const rawPrefs = await services.storage.get<unknown>(ROUTER_PREFERENCES_STORAGE_KEY);
+        data.routerPreferences = normalizeRouterPreferencesStorage(rawPrefs);
+      }
+
+      const exportFile = {
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        data,
+      };
+
+      const ts = new Date().toISOString().replace(/[:.]/g, '-');
+      downloadJsonFile(`router-isp-toolkit-settings-${ts}.json`, exportFile);
+      showToast(translator.t('settings_export_toast_success'), 'ok');
+      setExportOpen(false);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      showToast(translator.t('settings_export_toast_error'), 'err');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!selectedImportSectionKeys.length) {
+      showToast(translator.t('settings_import_error_no_sections'), 'err');
+      return;
+    }
+    if (!importFile) {
+      showToast(translator.t('settings_import_error_no_file'), 'err');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const rawText = await importFile.text();
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(rawText);
+      } catch {
+        showToast(translator.t('settings_import_error_invalid_json'), 'err');
+        return;
+      }
+
+      if (parsed == null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        showToast(translator.t('settings_import_error_invalid_json'), 'err');
+        return;
+      }
+
+      const root = parsed as Record<string, unknown>;
+      const exportData = root.data;
+      if (exportData == null || typeof exportData !== 'object' || Array.isArray(exportData)) {
+        showToast(translator.t('settings_import_error_invalid_json'), 'err');
+        return;
+      }
+
+      // Validate all selected sections exist before writing anything.
+      const next = exportData as Record<string, unknown>;
+      for (const k of selectedImportSectionKeys) {
+        if (k === 'bookmarks' && next.bookmarks == null) {
+          showToast(
+            translator.t('settings_import_error_missing_section', getSectionLabel(k)),
+            'err',
+          );
+          return;
+        }
+        if (k === 'copyTextTemplate' && next.copyTextTemplate == null) {
+          showToast(
+            translator.t('settings_import_error_missing_section', getSectionLabel(k)),
+            'err',
+          );
+          return;
+        }
+        if (k === 'routerPreferences' && next.routerPreferences == null) {
+          showToast(
+            translator.t('settings_import_error_missing_section', getSectionLabel(k)),
+            'err',
+          );
+          return;
+        }
+      }
+
+      if (importSections.bookmarks) {
+        const bm = normalizeImportBookmarkStore(next.bookmarks);
+        if (!bm) {
+          showToast(translator.t('settings_import_error_invalid_bookmarks'), 'err');
+          return;
+        }
+        await services.storage.save(BOOKMARKS_STORAGE_KEY, bm);
+      }
+
+      if (importSections.copyTextTemplate) {
+        const t = next.copyTextTemplate;
+        if (typeof t !== 'string') {
+          showToast(translator.t('settings_import_error_invalid_copy_template'), 'err');
+          return;
+        }
+        await services.storage.save(COPY_TEXT_TEMPLATE_STORAGE_KEY, t);
+        setCopyTemplate(t);
+      }
+
+      if (importSections.routerPreferences) {
+        const parsedPrefs = RouterPreferencesByModelSchema.safeParse(next.routerPreferences);
+        if (!parsedPrefs.success) {
+          showToast(translator.t('settings_import_error_invalid_router_preferences'), 'err');
+          return;
+        }
+        await services.storage.save(ROUTER_PREFERENCES_STORAGE_KEY, parsedPrefs.data);
+        setPrefsByModel(parsedPrefs.data);
+      }
+
+      if (importSections.bookmarks) await refreshBookmarks();
+
+      showToast(translator.t('settings_import_toast_success'), 'ok');
+      setImportFile(null);
+      setImportOpen(false);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(err);
+      showToast(translator.t('settings_import_toast_error'), 'err');
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const handleTheme = (t: AppThemePreference) => {
     setTheme(t);
+  };
+
+  const handleCopyPlaceholder = (key: string) => {
+    void copyTextToClipboard(`%${key}%`);
+    showToast(translator.t('settings_copy_template_toast_copied'), 'ok');
   };
 
   return (
@@ -252,6 +513,34 @@ export const Settings = () => {
             onChange={(e) => setCopyTemplate(e.target.value)}
             placeholder={translator.t('settings_copy_template_textarea_placeholder')}
           />
+          <Accordion type="single" collapsible>
+            <AccordionItem value="available_placeholders">
+              <AccordionTrigger>{translator.t('settings_copy_template_hint')}</AccordionTrigger>
+              <AccordionContent>
+                <ul className="list-disc list-inside text-xs text-muted-foreground">
+                  {COPY_TEXT_VALUE_KEYS.map(({ key, description }) => (
+                    <li
+                      key={key}
+                      className="flex items-center justify-between gap-2 h-7 border-b border-border hover:bg-muted/50"
+                    >
+                      <div className="flex items-center">
+                        <span className="font-medium">{`%${key}%`}</span>
+                        <span className="mx-1">-</span>
+                        <span>{description}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => void handleCopyPlaceholder(key)}
+                      >
+                        <Copy className="size-3.5" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
           <Button size="sm" onClick={handleSaveTemplate} className="gap-1.5">
             <Save className="h-3.5 w-3.5" />
             {translator.t('settings_copy_template_save')}
@@ -261,36 +550,223 @@ export const Settings = () => {
         <Separator />
 
         {/* Router preferences */}
-        {/* <section className="space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold">Router Preferences</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Expected channel values used to detect mis-configuration.
+        <RouterPreferenceSection
+          bookmarkEntries={bookmarkEntries}
+          existingPreferenceModelKeys={Object.keys(prefsByModel)}
+          selectedModelKey={selectedModelKey}
+          onSelectedModelKeyChange={setSelectedModelKey}
+          prefs={prefsByModel[selectedModelKey] ?? {}}
+          onSavePrefs={(prefs) => void handleSavePrefsForModel(selectedModelKey, prefs)}
+        />
+
+        <Separator />
+
+        {/* Import / Export */}
+        <section className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold">
+              {translator.t('settings_import_export_section_title')}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {translator.t('settings_import_export_section_desc')}
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { key: 'expectedChannel24ghz', label: 'Expected 2.4 GHz channel' },
-              { key: 'expectedChannel5ghz', label: 'Expected 5 GHz channel' },
-            ].map(({ key, label }) => (
-              <div key={key} className="space-y-1">
-                <label className="text-xs text-muted-foreground">{label}</label>
-                <Input
-                  type="text"
-                  value={prefs[key] ?? ''}
-                  onChange={(e) => setPrefs((p) => ({ ...p, [key]: e.target.value }))}
-                  data-pref-key={key}
-                />
-              </div>
-            ))}
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setImportOpen(true)}
+              className="gap-1.5 flex-1"
+              type="button"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              {translator.t('settings_import_button')}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setExportOpen(true)}
+              className="gap-1.5 flex-1"
+              type="button"
+              disabled={isExporting}
+            >
+              <Download className="h-3.5 w-3.5" />
+              {translator.t('settings_export_button')}
+            </Button>
           </div>
-          <Button size="sm" onClick={handleSavePrefs} className="gap-1.5">
-            <Save className="h-3.5 w-3.5" />
-            Save preferences
-          </Button>
         </section>
 
-        <Separator /> */}
+        {/* Import dialog */}
+        {importOpen ? (
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => {
+                setImportOpen(false);
+                setImportFile(null);
+              }}
+            />
+
+            <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-4 shadow-lg">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">
+                  {translator.t('settings_import_dialog_title')}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {translator.t('settings_import_dialog_desc')}
+                </p>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-foreground">
+                    {translator.t('settings_dialog_sections_label')}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {(Object.keys(importSections) as SettingsConfigSectionKey[]).map((k) => (
+                      <label key={k} className="flex items-center gap-2 text-xs select-none">
+                        <input
+                          type="checkbox"
+                          checked={importSections[k]}
+                          onChange={(e) =>
+                            setImportSections((prev) => ({
+                              ...prev,
+                              [k]: e.target.checked,
+                            }))
+                          }
+                        />
+                        <span>{getSectionLabel(k)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-foreground">
+                    {translator.t('settings_import_file_label')}
+                  </div>
+                  <Input
+                    type="file"
+                    accept="application/json,.json"
+                    disabled={isImporting}
+                    onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+                    className="block w-full text-xs"
+                  />
+                  <p className="text-[0.7rem] text-muted-foreground">
+                    {translator.t('settings_import_file_hint')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setImportOpen(false);
+                    setImportFile(null);
+                  }}
+                  disabled={isImporting}
+                >
+                  {translator.t('settings_dialog_cancel')}
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => void handleImport()}
+                  disabled={isImporting}
+                  className="gap-1.5"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  {translator.t('settings_import_confirm_button')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Export dialog */}
+        {exportOpen ? (
+          <div
+            className="fixed inset-0 z-60 flex items-center justify-center p-4"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="absolute inset-0 bg-black/40" onClick={() => setExportOpen(false)} />
+
+            <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-4 shadow-lg">
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold">
+                  {translator.t('settings_export_dialog_title')}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {translator.t('settings_export_dialog_desc')}
+                </p>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                <div className="space-y-2">
+                  <div className="text-xs font-medium text-foreground">
+                    {translator.t('settings_dialog_sections_label')}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {(Object.keys(exportSections) as SettingsConfigSectionKey[]).map((k) => (
+                      <label key={k} className="flex items-center gap-2 text-xs select-none">
+                        <input
+                          type="checkbox"
+                          checked={exportSections[k]}
+                          onChange={(e) =>
+                            setExportSections((prev) => ({
+                              ...prev,
+                              [k]: e.target.checked,
+                            }))
+                          }
+                        />
+                        <span>{getSectionLabel(k)}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
+                  <p className="text-xs font-medium">
+                    {translator.t('settings_export_file_label')}
+                  </p>
+                  <p className="text-[0.7rem] text-muted-foreground">
+                    {translator.t('settings_export_file_hint')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setExportOpen(false)}
+                  disabled={isExporting}
+                >
+                  {translator.t('settings_dialog_cancel')}
+                </Button>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => void handleExport()}
+                  disabled={isExporting}
+                  className="gap-1.5"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  {translator.t('settings_export_confirm_button')}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <Separator />
 
         {/* Danger zone */}
         <section className="space-y-3">

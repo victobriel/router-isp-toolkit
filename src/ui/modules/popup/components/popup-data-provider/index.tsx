@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PopupStatusType } from '@/application/types';
 import { services } from '@/index';
 import {
@@ -17,7 +17,10 @@ import {
   LAST_INTERNAL_PING_TEST_STORAGE_KEY,
   LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
   PENDING_AUTH_ERROR_STORAGE_KEY,
+  ROUTER_PREFERENCES_STORAGE_KEY,
 } from '@/application/constants/index';
+import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
+import type { RouterPreferencesStore } from '@/application/types';
 import { formatTime } from '@/ui/lib/utils';
 import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
 import { translator } from '@/infra/i18n/I18nService';
@@ -30,12 +33,14 @@ interface LogEntry {
 
 interface PopupDataProviderProps {
   tabId: number;
+  routerModel: string;
   children: (props: {
     data: ExtractionResult | null;
     isCollecting: boolean;
     isPinging: boolean;
     internalPingResult: PingTestResult | null;
     externalPingResult: PingTestResult | null;
+    routerPreferencesComparison: RouterPreferencesComparison | null;
     onCollect: (username: string, password: string) => Promise<void>;
     onClear: () => void;
     onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
@@ -55,6 +60,342 @@ function isExpectedNavigationError(msg: string): boolean {
 
 const { popupUiStateService } = services;
 
+export type RouterPreferencesComparison = {
+  // WAN / overall features
+  internetEnabled?: boolean;
+  tr069Enabled?: boolean;
+  bandSteeringEnabled?: boolean;
+  upnpEnabled?: boolean;
+  requestPdEnabled?: boolean;
+  slaacEnabled?: boolean;
+  dhcpv6Enabled?: boolean;
+  pdEnabled?: boolean;
+  remoteAccessIpv4Enabled?: boolean;
+  remoteAccessIpv6Enabled?: boolean;
+  linkSpeed?: boolean;
+  routerVersion?: boolean;
+  tr069Url?: boolean;
+  pppoeUsername?: boolean;
+  ipVersion?: boolean;
+
+  // DHCP
+  dhcpEnabled?: boolean;
+  dhcpIpAddress?: boolean;
+  dhcpSubnetMask?: boolean;
+  dhcpStartIp?: boolean;
+  dhcpEndIp?: boolean;
+  dhcpIspDnsEnabled?: boolean;
+  dhcpPrimaryDns?: boolean;
+  dhcpSecondaryDns?: boolean;
+  dhcpLeaseTimeMode?: boolean;
+  dhcpLeaseTime?: boolean;
+
+  // WiFi 2.4 GHz
+  wlan24GhzRadioEnabled?: boolean;
+  wlan24GhzChannel?: boolean;
+  wlan24GhzMode?: boolean;
+  wlan24GhzBandWidth?: boolean;
+  wlan24GhzTransmittingPower?: boolean;
+
+  // WiFi 5 GHz
+  wlan5GhzRadioEnabled?: boolean;
+  wlan5GhzChannel?: boolean;
+  wlan5GhzMode?: boolean;
+  wlan5GhzBandWidth?: boolean;
+  wlan5GhzTransmittingPower?: boolean;
+
+  wlan24GhzSsids?: Array<{
+    ssidName?: boolean;
+    ssidHideMode?: boolean;
+    wpa2SecurityType?: boolean;
+    maxClients?: boolean;
+  }>;
+  wlan5GhzSsids?: Array<{
+    ssidName?: boolean;
+    ssidHideMode?: boolean;
+    wpa2SecurityType?: boolean;
+    maxClients?: boolean;
+  }>;
+};
+
+export interface SsidWlanPreferencesComparison {
+  ssidName: string;
+  ssidHideMode: boolean;
+  ssidEncryptionType: string;
+  ssidMaxClients: number;
+}
+
+function boolMatch(
+  actual: boolean | undefined,
+  expected: boolean | undefined,
+): boolean | undefined {
+  if (expected === undefined || actual === undefined) return undefined;
+  // Some older/incorrect stored values may use empty string for "unset".
+  if ((expected as unknown) === '') return undefined;
+  return actual === expected;
+}
+
+function regexMatch(actual: string | undefined, expected: string | undefined): boolean | undefined {
+  // Treat unset values as "no comparison" (stored as `undefined` or empty string).
+  if (expected === undefined || actual === undefined) return undefined;
+  if (expected.trim() === '') return undefined;
+  return new RegExp(expected).test(actual);
+}
+
+function textMatch(actual: string | undefined, expected: string | undefined): boolean | undefined {
+  // Treat unset values as "no comparison" (stored as `undefined` or empty string).
+  if (expected === undefined || actual === undefined) return undefined;
+  if (expected === '') return undefined;
+  return actual === expected;
+}
+
+// Source of truth for the "copy template" placeholders (%Key%).
+// Keep this in sync with the `values` record inside `copyText`.
+export const COPY_TEXT_VALUE_KEYS = [
+  {
+    key: 'RouterModel',
+    description: translator.t('popup_label_model'),
+  },
+  {
+    key: 'RouterVersion',
+    description: translator.t('popup_label_version'),
+  },
+  {
+    key: 'TR069Url',
+    description: translator.t('popup_label_tr069_url'),
+  },
+  {
+    key: 'InternetStatus',
+    description: translator.t('popup_label_internet_status'),
+  },
+  {
+    key: 'TR069Status',
+    description: translator.t('popup_label_tr069_status'),
+  },
+  {
+    key: 'PPPoEUsername',
+    description: translator.t('popup_label_pppoe_username'),
+  },
+  {
+    key: 'IpVersion',
+    description: translator.t('popup_label_ip_version'),
+  },
+  {
+    key: 'LinkMode',
+    description: translator.t('popup_label_link_mode'),
+  },
+  {
+    key: 'RequestPdStatus',
+    description: translator.t('popup_label_request_pd_status'),
+  },
+  {
+    key: 'SlaacStatus',
+    description: translator.t('popup_label_slaac_status_settings'),
+  },
+  {
+    key: 'Dhcpv6Status',
+    description: translator.t('popup_label_dhcpv6_status_settings'),
+  },
+  {
+    key: 'PdStatus',
+    description: translator.t('popup_label_pd_status_settings'),
+  },
+  {
+    key: 'RemoteAccessIpv4Status',
+    description: translator.t('popup_label_remote_access_ipv4_status'),
+  },
+  {
+    key: 'RemoteAccessIpv6Status',
+    description: translator.t('popup_label_remote_access_ipv6_status'),
+  },
+  {
+    key: 'BandSteeringStatus',
+    description: translator.t('popup_label_band_steering_status'),
+  },
+  {
+    key: 'CableTotalClientsConnected',
+    description: translator.t('popup_label_cable_total_clients_connected'),
+  },
+  {
+    key: 'Wlan24Status',
+    description: translator.t('popup_label_wlan24_status'),
+  },
+  {
+    key: 'Wlan24Channel',
+    description: translator.t('popup_label_wlan24_channel'),
+  },
+  {
+    key: 'Wlan24Mode',
+    description: translator.t('popup_label_wlan24_mode'),
+  },
+  {
+    key: 'Wlan24BandWidth',
+    description: translator.t('popup_label_wlan24_band_width'),
+  },
+  {
+    key: 'Wlan24TransmittingPower',
+    description: translator.t('popup_label_wlan24_transmitting_power'),
+  },
+  {
+    key: 'Wlan24TotalClientsConnected',
+    description: translator.t('popup_label_wlan24_total_clients_connected'),
+  },
+  {
+    key: 'Wlan5Status',
+    description: translator.t('popup_label_wlan5_status'),
+  },
+  {
+    key: 'Wlan5Channel',
+    description: translator.t('popup_label_wlan5_channel'),
+  },
+  {
+    key: 'Wlan5Mode',
+    description: translator.t('popup_label_wlan5_mode'),
+  },
+  {
+    key: 'Wlan5BandWidth',
+    description: translator.t('popup_label_wlan5_band_width'),
+  },
+  {
+    key: 'Wlan5TransmittingPower',
+    description: translator.t('popup_label_wlan5_transmitting_power'),
+  },
+  {
+    key: 'Wlan5TotalClientsConnected',
+    description: translator.t('popup_label_wlan5_total_clients_connected'),
+  },
+  {
+    key: 'TotalClientsConnected',
+    description: translator.t('popup_label_total_clients_connected'),
+  },
+  {
+    key: 'DhcpStatus',
+    description: translator.t('popup_label_dhcp_status'),
+  },
+  {
+    key: 'DhcpIpAddress',
+    description: translator.t('popup_label_dhcp_ip_address'),
+  },
+  {
+    key: 'DhcpSubnetMask',
+    description: translator.t('popup_label_dhcp_subnet_mask'),
+  },
+  {
+    key: 'DhcpStartIp',
+    description: translator.t('popup_label_dhcp_start_ip'),
+  },
+  {
+    key: 'DhcpEndIp',
+    description: translator.t('popup_label_dhcp_end_ip'),
+  },
+  {
+    key: 'DhcpIspDnsStatus',
+    description: translator.t('popup_label_dhcp_isp_dns_status'),
+  },
+  {
+    key: 'DhcpPrimaryDns',
+    description: translator.t('popup_label_dhcp_primary_dns'),
+  },
+  {
+    key: 'DhcpSecondaryDns',
+    description: translator.t('popup_label_dhcp_secondary_dns'),
+  },
+  {
+    key: 'DhcpLeaseTimeMode',
+    description: translator.t('popup_label_dhcp_lease_time_mode'),
+  },
+  {
+    key: 'DhcpLeaseTime',
+    description: translator.t('popup_label_dhcp_lease_time'),
+  },
+  {
+    key: 'UpnpStatus',
+    description: translator.t('popup_label_upnp_status'),
+  },
+  {
+    key: 'LastInternalPingMessage',
+    description: translator.t('popup_label_last_internal_ping_message'),
+  },
+  {
+    key: 'LastInternalPingTime',
+    description: translator.t('popup_label_last_internal_ping_time'),
+  },
+  {
+    key: 'LastInternalPingIp',
+    description: translator.t('popup_label_last_internal_ping_ip'),
+  },
+  {
+    key: 'LastInternalPingAvgTime',
+    description: translator.t('popup_label_last_internal_ping_avg_time'),
+  },
+  {
+    key: 'LastInternalPingMinTime',
+    description: translator.t('popup_label_last_internal_ping_min_time'),
+  },
+  {
+    key: 'LastInternalPingMaxTime',
+    description: translator.t('popup_label_last_internal_ping_max_time'),
+  },
+  {
+    key: 'LastInternalPingLoss',
+    description: translator.t('popup_label_last_internal_ping_loss'),
+  },
+  {
+    key: 'LastInternalPingTransmitted',
+    description: translator.t('popup_label_last_internal_ping_transmitted'),
+  },
+  {
+    key: 'LastInternalPingReceived',
+    description: translator.t('popup_label_last_internal_ping_received'),
+  },
+  {
+    key: 'LastInternalPingMinAvgMax',
+    description: translator.t('popup_label_last_internal_ping_min_avg_max'),
+  },
+  {
+    key: 'LastExternalPingMessage',
+    description: translator.t('popup_label_last_external_ping_message'),
+  },
+  {
+    key: 'LastExternalPingTime',
+    description: translator.t('popup_label_last_external_ping_time'),
+  },
+  {
+    key: 'LastExternalPingIp',
+    description: translator.t('popup_label_last_external_ping_ip'),
+  },
+  {
+    key: 'LastExternalPingAvgTime',
+    description: translator.t('popup_label_last_external_ping_avg_time'),
+  },
+  {
+    key: 'LastExternalPingMinTime',
+    description: translator.t('popup_label_last_external_ping_min_time'),
+  },
+  {
+    key: 'LastExternalPingMaxTime',
+    description: translator.t('popup_label_last_external_ping_max_time'),
+  },
+  {
+    key: 'LastExternalPingLoss',
+    description: translator.t('popup_label_last_external_ping_loss'),
+  },
+  {
+    key: 'LastExternalPingTransmitted',
+    description: translator.t('popup_label_last_external_ping_transmitted'),
+  },
+  {
+    key: 'LastExternalPingReceived',
+    description: translator.t('popup_label_last_external_ping_received'),
+  },
+  {
+    key: 'LastExternalPingMinAvgMax',
+    description: translator.t('popup_label_last_external_ping_min_avg_max'),
+  },
+];
+
+type CopyTextValueKey = (typeof COPY_TEXT_VALUE_KEYS)[number]['key'];
+
 function translateAuthError(msg: string | undefined): string {
   if (!msg) return msg ?? '';
 
@@ -72,7 +413,7 @@ function translateAuthError(msg: string | undefined): string {
   return msg;
 }
 
-export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) => {
+export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataProviderProps) => {
   const { setStatus: setStatusType, setStatusMessage } = usePopupStatus();
   const [data, setData] = useState<ExtractionResult | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -80,6 +421,9 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
   const [isPinging, setIsPinging] = useState(false);
   const [internalPingResult, setInternalPingResult] = useState<PingTestResult | null>(null);
   const [externalPingResult, setExternalPingResult] = useState<PingTestResult | null>(null);
+  const [routerPrefsForModel, setRouterPrefsForModel] = useState<RouterPreferencesStore | null>(
+    null,
+  );
 
   const statusRef = useRef<{ type: PopupStatusType; message: string }>({
     type: PopupStatusType.NONE,
@@ -110,6 +454,11 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
   // Initialize: load persisted state, pending auth errors, ping results
   useEffect(() => {
     void (async () => {
+      const rawPrefs = await services.storage.get<unknown>(ROUTER_PREFERENCES_STORAGE_KEY);
+      const normalized = normalizeRouterPreferencesStorage(rawPrefs);
+      const prefs = normalized[routerModel] ?? null;
+      setRouterPrefsForModel(prefs);
+
       const savedState = await popupUiStateService.loadUiState(tabId);
       if (savedState) {
         setStatus(savedState.status.type, savedState.status.text);
@@ -139,7 +488,150 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
       );
       if (externalPing) setExternalPingResult(externalPing);
     })();
-  }, [tabId, setStatus]);
+  }, [routerModel, tabId, setStatus]);
+
+  const routerPreferencesComparison = useMemo<RouterPreferencesComparison | null>(() => {
+    if (!data || !routerPrefsForModel) return null;
+
+    return {
+      // WAN / overall features
+      internetEnabled: boolMatch(data.internetEnabled, routerPrefsForModel.internetEnabled),
+      tr069Enabled: boolMatch(data.tr069Enabled, routerPrefsForModel.tr069Enabled),
+      bandSteeringEnabled: boolMatch(
+        data.bandSteeringEnabled,
+        routerPrefsForModel.bandSteeringEnabled,
+      ),
+      upnpEnabled: boolMatch(data.upnpEnabled, routerPrefsForModel.upnpEnabled),
+      requestPdEnabled: boolMatch(data.requestPdEnabled, routerPrefsForModel.requestPdEnabled),
+      slaacEnabled: boolMatch(data.slaacEnabled, routerPrefsForModel.slaacEnabled),
+      dhcpv6Enabled: boolMatch(data.dhcpv6Enabled, routerPrefsForModel.dhcpv6Enabled),
+      pdEnabled: boolMatch(data.pdEnabled, routerPrefsForModel.pdEnabled),
+      remoteAccessIpv4Enabled: boolMatch(
+        data.remoteAccessIpv4Enabled,
+        routerPrefsForModel.remoteAccessIpv4Enabled,
+      ),
+      remoteAccessIpv6Enabled: boolMatch(
+        data.remoteAccessIpv6Enabled,
+        routerPrefsForModel.remoteAccessIpv6Enabled,
+      ),
+      linkSpeed: textMatch(data.linkSpeed, routerPrefsForModel.linkSpeed),
+      routerVersion: textMatch(data.routerVersion, routerPrefsForModel.routerVersion),
+      tr069Url: regexMatch(data.tr069Url, routerPrefsForModel.tr069Url),
+      pppoeUsername: regexMatch(data.pppoeUsername, routerPrefsForModel.pppoeUsername),
+      ipVersion: regexMatch(data.ipVersion, routerPrefsForModel.ipVersion),
+
+      // DHCP
+      dhcpEnabled: boolMatch(data.dhcpEnabled, routerPrefsForModel.dhcpEnabled),
+      dhcpIpAddress: regexMatch(data.dhcpIpAddress, routerPrefsForModel.dhcpIpAddress),
+      dhcpSubnetMask: regexMatch(data.dhcpSubnetMask, routerPrefsForModel.dhcpSubnetMask),
+      dhcpStartIp: regexMatch(data.dhcpStartIp, routerPrefsForModel.dhcpStartIp),
+      dhcpEndIp: regexMatch(data.dhcpEndIp, routerPrefsForModel.dhcpEndIp),
+      dhcpIspDnsEnabled: boolMatch(data.dhcpIspDnsEnabled, routerPrefsForModel.dhcpIspDnsEnabled),
+      dhcpPrimaryDns: regexMatch(data.dhcpPrimaryDns, routerPrefsForModel.dhcpPrimaryDns),
+      dhcpSecondaryDns: regexMatch(data.dhcpSecondaryDns, routerPrefsForModel.dhcpSecondaryDns),
+      dhcpLeaseTimeMode: textMatch(data.dhcpLeaseTimeMode, routerPrefsForModel.dhcpLeaseTimeMode),
+      dhcpLeaseTime: textMatch(data.dhcpLeaseTime, routerPrefsForModel.dhcpLeaseTime),
+
+      // WiFi 2.4 GHz
+      wlan24GhzRadioEnabled: boolMatch(
+        data.wlan24GhzConfig?.enabled,
+        routerPrefsForModel.wlan24GhzConfig?.enabled,
+      ),
+      wlan24GhzChannel: textMatch(
+        data.wlan24GhzConfig?.channel,
+        routerPrefsForModel.wlan24GhzConfig?.channel,
+      ),
+      wlan24GhzMode: textMatch(
+        data.wlan24GhzConfig?.mode,
+        routerPrefsForModel.wlan24GhzConfig?.mode,
+      ),
+      wlan24GhzBandWidth: textMatch(
+        data.wlan24GhzConfig?.bandWidth,
+        routerPrefsForModel.wlan24GhzConfig?.bandWidth,
+      ),
+      wlan24GhzTransmittingPower: textMatch(
+        data.wlan24GhzConfig?.transmittingPower,
+        routerPrefsForModel.wlan24GhzConfig?.transmittingPower,
+      ),
+
+      // WiFi 5 GHz
+      wlan5GhzRadioEnabled: boolMatch(
+        data.wlan5GhzConfig?.enabled,
+        routerPrefsForModel.wlan5GhzConfig?.enabled,
+      ),
+      wlan5GhzChannel: textMatch(
+        data.wlan5GhzConfig?.channel,
+        routerPrefsForModel.wlan5GhzConfig?.channel,
+      ),
+      wlan5GhzMode: textMatch(data.wlan5GhzConfig?.mode, routerPrefsForModel.wlan5GhzConfig?.mode),
+      wlan5GhzBandWidth: textMatch(
+        data.wlan5GhzConfig?.bandWidth,
+        routerPrefsForModel.wlan5GhzConfig?.bandWidth,
+      ),
+      wlan5GhzTransmittingPower: textMatch(
+        data.wlan5GhzConfig?.transmittingPower,
+        routerPrefsForModel.wlan5GhzConfig?.transmittingPower,
+      ),
+
+      // WiFi SSIDs
+      wlan24GhzSsids: data.wlan24GhzSsids
+        ? data.wlan24GhzSsids.map((ssid) => ({
+            ssidName: regexMatch(
+              ssid.ssidName,
+              typeof routerPrefsForModel.wlan24GhzSsids?.ssidName === 'string'
+                ? routerPrefsForModel.wlan24GhzSsids?.ssidName
+                : undefined,
+            ),
+            ssidHideMode: boolMatch(
+              ssid.ssidHideMode,
+              typeof routerPrefsForModel.wlan24GhzSsids?.ssidHideMode === 'boolean'
+                ? routerPrefsForModel.wlan24GhzSsids?.ssidHideMode
+                : undefined,
+            ),
+            wpa2SecurityType: textMatch(
+              ssid.wpa2SecurityType,
+              typeof routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType === 'string'
+                ? routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType
+                : undefined,
+            ),
+            maxClients: regexMatch(
+              String(ssid.maxClients),
+              typeof routerPrefsForModel.wlan24GhzSsids?.maxClients === 'string'
+                ? routerPrefsForModel.wlan24GhzSsids?.maxClients
+                : undefined,
+            ),
+          }))
+        : [],
+      wlan5GhzSsids: data.wlan5GhzSsids
+        ? data.wlan5GhzSsids.map((ssid) => ({
+            ssidName: regexMatch(
+              ssid.ssidName,
+              typeof routerPrefsForModel.wlan5GhzSsids?.ssidName === 'string'
+                ? routerPrefsForModel.wlan5GhzSsids?.ssidName
+                : undefined,
+            ),
+            ssidHideMode: boolMatch(
+              ssid.ssidHideMode,
+              typeof routerPrefsForModel.wlan5GhzSsids?.ssidHideMode === 'boolean'
+                ? routerPrefsForModel.wlan5GhzSsids?.ssidHideMode
+                : undefined,
+            ),
+            wpa2SecurityType: textMatch(
+              ssid.wpa2SecurityType,
+              typeof routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType === 'string'
+                ? routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType
+                : undefined,
+            ),
+            maxClients: regexMatch(
+              String(ssid.maxClients),
+              typeof routerPrefsForModel.wlan5GhzSsids?.maxClients === 'string'
+                ? routerPrefsForModel.wlan5GhzSsids?.maxClients
+                : undefined,
+            ),
+          }))
+        : [],
+    };
+  }, [data, routerPrefsForModel]);
 
   // Persist UI state when logs change
   useEffect(() => {
@@ -322,7 +814,8 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
     const wlan24 = data.wlan24GhzConfig;
     const wlan5 = data.wlan5GhzConfig;
 
-    const values: Record<string, string> = {
+    const values: Record<CopyTextValueKey, string> = {
+      RouterModel: asText(data.routerModel),
       RouterVersion: asText(data.routerVersion),
       TR069Url: asText(data.tr069Url),
       InternetStatus: boolText(data.internetEnabled),
@@ -368,15 +861,36 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
       DhcpLeaseTime: asText(data.dhcpLeaseTime),
       UpnpStatus: boolText(data.upnpEnabled),
       LastInternalPingMessage: asText(internalPingResult?.message),
+      LastInternalPingTime: asText(internalPingResult?.time),
       LastInternalPingIp: asText(internalPingResult?.ip),
+      LastInternalPingAvgTime: asText(internalPingResult?.packets.avg),
+      LastInternalPingMinTime: asText(internalPingResult?.packets.min),
+      LastInternalPingMaxTime: asText(internalPingResult?.packets.max),
+      LastInternalPingLoss: asText(internalPingResult?.packets.loss),
+      LastInternalPingTransmitted: asText(internalPingResult?.packets.transmitted),
+      LastInternalPingReceived: asText(internalPingResult?.packets.received),
+      LastInternalPingMinAvgMax: asText(
+        `min/avg/max = ${[internalPingResult?.packets.min, internalPingResult?.packets.avg, internalPingResult?.packets.max].join('/')} ms`,
+      ),
       LastExternalPingMessage: asText(externalPingResult?.message),
+      LastExternalPingTime: asText(externalPingResult?.time),
       LastExternalPingIp: asText(externalPingResult?.ip),
+      LastExternalPingAvgTime: asText(externalPingResult?.packets.avg),
+      LastExternalPingMinTime: asText(externalPingResult?.packets.min),
+      LastExternalPingMaxTime: asText(externalPingResult?.packets.max),
+      LastExternalPingLoss: asText(externalPingResult?.packets.loss),
+      LastExternalPingTransmitted: asText(externalPingResult?.packets.transmitted),
+      LastExternalPingReceived: asText(externalPingResult?.packets.received),
+      LastExternalPingMinAvgMax: asText(
+        `min/avg/max = ${[externalPingResult?.packets.min, externalPingResult?.packets.avg, externalPingResult?.packets.max].join('/')} ms`,
+      ),
     };
 
     return {
-      data: template.replace(
-        /%([A-Za-z0-9_]+)%/g,
-        (_match, key: string) => values[key] ?? `%${key}%`,
+      data: template.replace(/%([A-Za-z0-9_]+)%/g, (_match, key: string) =>
+        Object.prototype.hasOwnProperty.call(values, key)
+          ? values[key as CopyTextValueKey]
+          : `%${key}%`,
       ),
     };
   }, [data, internalPingResult, externalPingResult]);
@@ -387,6 +901,7 @@ export const PopupDataProvider = ({ tabId, children }: PopupDataProviderProps) =
     isPinging,
     internalPingResult,
     externalPingResult,
+    routerPreferencesComparison,
     onCollect,
     onClear,
     onPing,

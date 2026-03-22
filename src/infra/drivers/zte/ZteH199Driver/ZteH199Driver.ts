@@ -93,7 +93,7 @@ export class ZteH199Driver extends BaseRouter {
     const slaacEnabled = DomService.getInputElement(this.s.slaac).checked;
     const dhcpv6Enabled = DomService.getInputElement(this.s.dhcpv6).checked;
     const pdEnabled = DomService.getInputElement(this.s.pdAddress).checked;
-    const ipVersion = DomService.getSelectedOptionText(this.s.ipMode);
+    const ipVersion = DomService.getSelectedOptionText(this.s.ipMode) ?? '';
 
     return {
       internetEnabled,
@@ -264,8 +264,8 @@ export class ZteH199Driver extends BaseRouter {
 
     await this.clickElementAndWait(this.s.wlan5GhzShowPasswordButton);
 
-    const wlan24GhzSsids = this.extractMultiSsidConfigs(0, 4);
-    const wlan5GhzSsids = this.extractMultiSsidConfigs(4, 4);
+    const wlan24GhzSsids = await this.extractMultiSsidConfigs(0, 4);
+    const wlan5GhzSsids = await this.extractMultiSsidConfigs(4, 4);
 
     return {
       wlan24GhzConfig: {
@@ -296,10 +296,10 @@ export class ZteH199Driver extends BaseRouter {
    * or have an empty SSID name so that we only surface SSIDs that are actually
    * configured.
    */
-  private extractMultiSsidConfigs(
+  private async extractMultiSsidConfigs(
     startIndex: number,
     count: number,
-  ): ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids'] {
+  ): Promise<ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids']> {
     const results: ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids'] = [];
 
     for (let offset = 0; offset < count; offset++) {
@@ -314,13 +314,16 @@ export class ZteH199Driver extends BaseRouter {
       const enabledSelector = `#Enable1\\:${index}`;
       const enabled = DomService.getInputElement(enabledSelector).checked;
 
+      await this.clickElementAndWait(`#Switch_KeyPassType\\:${index}`);
+
       const passwordSelector = `#KeyPassphrase\\:${index}`;
+
+      await this.waitForInputPopulated(passwordSelector).catch(() => {});
+
       const ssidPassword = DomService.getOptionalValue(passwordSelector) ?? '';
 
-      const hideModeInput = document.querySelector<HTMLInputElement>(
-        `#ESSIDHideEnable0\\:${index}`,
-      );
-      const ssidHideMode = hideModeInput && hideModeInput.checked;
+      const hideModeInputSelector = `#ESSIDHideEnable0\\:${index}`;
+      const ssidHideMode = DomService.getInputElement(hideModeInputSelector).checked;
 
       const wpa2SecuritySelector = `#EncryptionType\\:${index}`;
       const wpa2SecurityType = DomService.getOptionalValue(wpa2SecuritySelector) ?? '';
@@ -333,7 +336,7 @@ export class ZteH199Driver extends BaseRouter {
         enabled,
         ssidName: ssidName.trim(),
         ssidPassword: ssidPassword.trim(),
-        ssidHideMode: ssidHideMode ?? false,
+        ssidHideMode,
         wpa2SecurityType,
         maxClients,
       });

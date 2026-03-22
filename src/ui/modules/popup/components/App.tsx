@@ -20,6 +20,7 @@ import { PopupCredentials } from '@/ui/modules/popup/components/popup-credential
 import { AppTabProvider } from '@/ui/modules/popup/components/app-tab-provider';
 import { PopupStatusProvider } from '@/ui/modules/popup/components/popup-status-provider';
 import { PopupDataProvider } from '@/ui/modules/popup/components/popup-data-provider';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
 import { PopupStatus } from '@/ui/modules/popup/components/popup-status';
 import { WanSection } from '@/ui/modules/popup/components/popup-data-sections/wan-section';
 import { RemoteAccessSection } from '@/ui/modules/popup/components/popup-data-sections/remote-access-section';
@@ -57,6 +58,7 @@ function PopupContent({
   isPinging,
   internalPingResult,
   externalPingResult,
+  routerPreferencesComparison,
   onCollect,
   onPing,
   copyText,
@@ -69,6 +71,7 @@ function PopupContent({
   isPinging: boolean;
   internalPingResult: PingTestResult | null;
   externalPingResult: PingTestResult | null;
+  routerPreferencesComparison: RouterPreferencesComparison | null;
   onCollect: (username: string, password: string) => Promise<void>;
   onClear: () => void;
   onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
@@ -271,22 +274,27 @@ function PopupContent({
             </Empty>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <WanSection data={data} />
-              <RemoteAccessSection data={data} />
+              <WanSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
+              <RemoteAccessSection
+                data={data}
+                routerPreferencesComparison={routerPreferencesComparison}
+              />
               <WlanBandSection
                 band={Band.GHz24}
                 config={data.wlan24GhzConfig}
                 ssids={data.wlan24GhzSsids}
                 totalClients={data.topology?.['24ghz']?.totalClients ?? 0}
+                routerPreferencesComparison={routerPreferencesComparison}
               />
               <WlanBandSection
                 band={Band.GHz5}
                 config={data.wlan5GhzConfig}
                 ssids={data.wlan5GhzSsids}
                 totalClients={data.topology?.['5ghz']?.totalClients ?? 0}
+                routerPreferencesComparison={routerPreferencesComparison}
               />
-              <DhcpSection data={data} />
-              <MiscSection data={data} />
+              <DhcpSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
+              <MiscSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
               {data.timestamp && (
                 <p className="text-[10px] text-center text-muted-foreground pt-1">
                   {translator.t('popup_collected_at_prefix')}{' '}
@@ -329,13 +337,14 @@ export const Popup = () => (
   <AppTabProvider>
     {({ tabId, routerModel }) => (
       <PopupStatusProvider>
-        <PopupDataProvider tabId={tabId}>
+        <PopupDataProvider tabId={tabId} routerModel={routerModel}>
           {({
             data,
             isCollecting,
             isPinging,
             internalPingResult,
             externalPingResult,
+            routerPreferencesComparison,
             onCollect,
             onClear,
             onPing,
@@ -349,6 +358,7 @@ export const Popup = () => (
               isPinging={isPinging}
               internalPingResult={internalPingResult}
               externalPingResult={externalPingResult}
+              routerPreferencesComparison={routerPreferencesComparison}
               onCollect={onCollect}
               onClear={onClear}
               onPing={onPing}

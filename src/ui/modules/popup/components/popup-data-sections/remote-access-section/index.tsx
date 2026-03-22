@@ -1,23 +1,32 @@
 import { Collapsible } from '@/ui/components/ui/collapsible';
 import { Server } from 'lucide-react';
-import { PopupDataRow } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
-import { PopupBoolBadge } from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
+import {
+  PopupDataRow,
+  PopupDataRowProps,
+} from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
 import { ExtractionResult } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
 
 interface RemoteAccessSectionProps {
   data: ExtractionResult;
+  routerPreferencesComparison: RouterPreferencesComparison | null;
 }
 
-export const RemoteAccessSection = ({ data }: RemoteAccessSectionProps) => {
-  const rows: { label: string; value: string | React.ReactNode }[] = [
+export const RemoteAccessSection = ({
+  data,
+  routerPreferencesComparison,
+}: RemoteAccessSectionProps) => {
+  const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_remote_access_ipv4'),
-      value: <PopupBoolBadge value={data.remoteAccessIpv4Enabled} />,
+      compareMatch: routerPreferencesComparison?.remoteAccessIpv4Enabled,
+      value: data.remoteAccessIpv4Enabled,
     },
     {
       label: translator.t('popup_label_remote_access_ipv6'),
-      value: <PopupBoolBadge value={data.remoteAccessIpv6Enabled} />,
+      compareMatch: routerPreferencesComparison?.remoteAccessIpv6Enabled,
+      value: data.remoteAccessIpv6Enabled,
     },
   ];
 
@@ -33,7 +42,15 @@ export const RemoteAccessSection = ({ data }: RemoteAccessSectionProps) => {
     >
       <div className="space-y-0.5">
         {rows.map((row) => {
-          return <PopupDataRow key={row.label} label={row.label} value={row.value} />;
+          return (
+            <PopupDataRow
+              key={row.label}
+              label={row.label}
+              value={row.value}
+              compareMatch={row.compareMatch}
+              ableToCopy={row.ableToCopy}
+            />
+          );
         })}
       </div>
     </Collapsible>
