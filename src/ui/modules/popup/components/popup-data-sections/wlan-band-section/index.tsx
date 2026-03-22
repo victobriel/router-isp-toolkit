@@ -13,8 +13,11 @@ import { Band } from '@/ui/types';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
 
+/** SSID list from extraction; same element shape for 2.4 GHz and 5 GHz. */
+type WlanExtractedSsidList = NonNullable<ExtractionResult['wlan24GhzSsids']>;
+
 interface WlanSsidSliderProps {
-  ssids: NonNullable<ExtractionResult['wlan24GhzSsids']>;
+  ssids: WlanExtractedSsidList;
   ssidMatches?: Array<{
     ssidName: boolean | undefined;
     ssidHideMode: boolean | undefined;
@@ -105,13 +108,21 @@ export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
   );
 };
 
-interface WlanBandSectionProps {
-  band: Band;
-  config: ExtractionResult['wlan24GhzConfig'];
-  ssids: ExtractionResult['wlan24GhzSsids'];
-  totalClients: number;
-  routerPreferencesComparison: RouterPreferencesComparison | null;
-}
+type WlanBandSectionProps =
+  | {
+      band: Band.GHz24;
+      config: ExtractionResult['wlan24GhzConfig'];
+      ssids: ExtractionResult['wlan24GhzSsids'];
+      totalClients: number;
+      routerPreferencesComparison: RouterPreferencesComparison | null;
+    }
+  | {
+      band: Band.GHz5;
+      config: ExtractionResult['wlan5GhzConfig'];
+      ssids: ExtractionResult['wlan5GhzSsids'];
+      totalClients: number;
+      routerPreferencesComparison: RouterPreferencesComparison | null;
+    };
 
 export const WlanBandSection = ({
   band,
@@ -140,6 +151,23 @@ export const WlanBandSection = ({
           maxClients: s.maxClients,
         }));
 
+  const channelMatch =
+    band === Band.GHz24
+      ? routerPreferencesComparison?.wlan24GhzChannel
+      : routerPreferencesComparison?.wlan5GhzChannel;
+  const modeMatch =
+    band === Band.GHz24
+      ? routerPreferencesComparison?.wlan24GhzMode
+      : routerPreferencesComparison?.wlan5GhzMode;
+  const bandWidthMatch =
+    band === Band.GHz24
+      ? routerPreferencesComparison?.wlan24GhzBandWidth
+      : routerPreferencesComparison?.wlan5GhzBandWidth;
+  const transmittingPowerMatch =
+    band === Band.GHz24
+      ? routerPreferencesComparison?.wlan24GhzTransmittingPower
+      : routerPreferencesComparison?.wlan5GhzTransmittingPower;
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_radio'),
@@ -148,22 +176,22 @@ export const WlanBandSection = ({
     },
     {
       label: translator.t('popup_label_channel'),
-      compareMatch: routerPreferencesComparison?.wlan24GhzChannel,
+      compareMatch: channelMatch,
       value: val(config?.channel),
     },
     {
       label: translator.t('popup_label_mode'),
-      compareMatch: routerPreferencesComparison?.wlan24GhzMode,
+      compareMatch: modeMatch,
       value: val(config?.mode),
     },
     {
       label: translator.t('popup_label_bandwidth'),
-      compareMatch: routerPreferencesComparison?.wlan24GhzBandWidth,
+      compareMatch: bandWidthMatch,
       value: val(config?.bandWidth),
     },
     {
       label: translator.t('popup_label_transmitting_power'),
-      compareMatch: routerPreferencesComparison?.wlan24GhzTransmittingPower,
+      compareMatch: transmittingPowerMatch,
       value: val(config?.transmittingPower),
     },
   ];
