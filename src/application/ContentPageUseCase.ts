@@ -9,8 +9,9 @@ import {
 
 import type { BookmarkStore } from '@/application/types/index';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
-import { CollectMessageAction, type ButtonConfig } from '@/domain/schemas/validation';
+import { CollectMessageAction } from '@/domain/schemas/validation';
 import { CollectionService } from '@/application/CollectionService';
+import { ButtonConfig } from '@/domain/ports/IRouter.types';
 
 /**
  * Application use case: bootstrap content script on router page.
@@ -21,7 +22,7 @@ export class ContentPageUseCase {
     private readonly routerFactory: IRouterFactory,
     private readonly storage: IStorage,
     private readonly sessionStorage: IStorage,
-    private readonly dom: IDomGateway,
+    private readonly domService: IDomGateway,
     private readonly collectionService: CollectionService,
   ) {}
 
@@ -42,8 +43,8 @@ export class ContentPageUseCase {
       console.error('Failed to save detected router model', result?.message);
     }
 
-    const loginPendingRaw = await this.sessionStorage.get<unknown>('router_login_pending');
-    const loginTimeRaw = await this.sessionStorage.get<unknown>('router_login_time');
+    const loginPendingRaw = await this.sessionStorage.get<boolean | string>('router_login_pending');
+    const loginTimeRaw = await this.sessionStorage.get<number>('router_login_time');
 
     const loginPendingIsTrue = loginPendingRaw === 'true' || loginPendingRaw === true;
     const loginTime =
@@ -100,7 +101,10 @@ export class ContentPageUseCase {
       return;
     }
 
-    const dataBtnParentElement = this.dom.getElement(btnElementConfig.targetSelector, HTMLElement);
+    const dataBtnParentElement = this.domService.getElement<HTMLElement>(
+      btnElementConfig.targetSelector,
+      HTMLElement,
+    );
     dataBtnParentElement.style.position = 'relative';
 
     try {

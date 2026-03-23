@@ -31,7 +31,15 @@ export class CollectionService {
           };
         }
 
-        const { username, password } = CredentialsSchema.parse(credentials);
+        const parsed = CredentialsSchema.safeParse(credentials);
+        if (!parsed.success) {
+          return {
+            success: false,
+            message: parsed.error.issues.map((issue) => issue.message).join('; '),
+          };
+        }
+
+        const { username, password } = parsed.data;
 
         const loginTime = Date.now();
         await this.sessionStorage.save('router_login_pending', 'true');

@@ -6,11 +6,6 @@ import {
   wlanSsidExtractionEntrySchema,
 } from '@/domain/schemas/router-state-schema';
 
-export enum DiagnosticsMode {
-  INTERNAL = 'internal',
-  EXTERNAL = 'external',
-}
-
 export type ValidationIssue = z.ZodIssue;
 
 export type ValidationResult<T> = { ok: true; value: T } | { ok: false; issues: ValidationIssue[] };
@@ -20,13 +15,27 @@ export const CredentialsSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const wlanExtractionConfigSchema = z.object({
+  enabled: z.boolean(),
+  channel: z.string(),
+  mode: z.string(),
+  bandWidth: z.string(),
+  transmittingPower: z.string(),
+});
+
 const extractionRouterFields = routerStateShape({
   pppoeUsername: z.string(),
   ipVersion: z.string(),
-  ipOrPattern: z.string(),
   tr069Url: z.string(),
   wlan24GhzSsids: z.array(wlanSsidExtractionEntrySchema),
   wlan5GhzSsids: z.array(wlanSsidExtractionEntrySchema),
+  dhcpIpAddress: z.string(),
+  dhcpSubnetMask: z.string(),
+  dhcpStartIp: z.string(),
+  dhcpEndIp: z.string(),
+  dhcpPrimaryDns: z.string(),
+  dhcpSecondaryDns: z.string(),
+  wlanConfig: wlanExtractionConfigSchema.partial(),
 });
 
 export const ExtractionResultSchema = z
@@ -109,10 +118,4 @@ export function createExtractionResult(
     return { ok: true, value: result.data };
   }
   return { ok: false, issues: result.error.issues };
-}
-
-export interface ButtonConfig {
-  targetSelector: string;
-  text: string;
-  style: string;
 }

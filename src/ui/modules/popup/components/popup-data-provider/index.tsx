@@ -4,7 +4,6 @@ import { services } from '@/index';
 import {
   CollectMessageAction,
   ExtractionResultSchema,
-  DiagnosticsMode,
   type ExtractionResult,
   type PingTestResult,
   type CollectMessage,
@@ -24,6 +23,7 @@ import type { RouterPreferencesStore } from '@/application/types';
 import { formatTime } from '@/ui/lib/utils';
 import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
 import { translator } from '@/infra/i18n/I18nService';
+import { DiagnosticsMode } from '@/ui/types';
 
 interface LogEntry {
   msg: string;
@@ -147,6 +147,15 @@ function textMatch(actual: string | undefined, expected: string | undefined): bo
   if (expected === undefined || actual === undefined) return undefined;
   if (expected === '') return undefined;
   return actual === expected;
+}
+
+function arrayMatch(
+  actual: string | undefined,
+  expected: string[] | undefined,
+): boolean | undefined {
+  if (expected === undefined || actual === undefined) return undefined;
+  if (expected.length === 0) return undefined;
+  return expected.some((e) => e === actual);
 }
 
 // Source of truth for the "copy template" placeholders (%Key%).
@@ -537,7 +546,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.wlan24GhzConfig?.enabled,
         routerPrefsForModel.wlan24GhzConfig?.enabled,
       ),
-      wlan24GhzChannel: textMatch(
+      wlan24GhzChannel: arrayMatch(
         data.wlan24GhzConfig?.channel,
         routerPrefsForModel.wlan24GhzConfig?.channel,
       ),
@@ -545,7 +554,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.wlan24GhzConfig?.mode,
         routerPrefsForModel.wlan24GhzConfig?.mode,
       ),
-      wlan24GhzBandWidth: textMatch(
+      wlan24GhzBandWidth: arrayMatch(
         data.wlan24GhzConfig?.bandWidth,
         routerPrefsForModel.wlan24GhzConfig?.bandWidth,
       ),
@@ -559,12 +568,12 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.wlan5GhzConfig?.enabled,
         routerPrefsForModel.wlan5GhzConfig?.enabled,
       ),
-      wlan5GhzChannel: textMatch(
+      wlan5GhzChannel: arrayMatch(
         data.wlan5GhzConfig?.channel,
         routerPrefsForModel.wlan5GhzConfig?.channel,
       ),
       wlan5GhzMode: textMatch(data.wlan5GhzConfig?.mode, routerPrefsForModel.wlan5GhzConfig?.mode),
-      wlan5GhzBandWidth: textMatch(
+      wlan5GhzBandWidth: arrayMatch(
         data.wlan5GhzConfig?.bandWidth,
         routerPrefsForModel.wlan5GhzConfig?.bandWidth,
       ),

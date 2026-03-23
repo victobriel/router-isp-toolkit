@@ -1,11 +1,9 @@
 import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '@/application/constants';
 import { ExtractionResultSchema, type ExtractionResult } from '@/domain/schemas/validation';
 import type { CollectResponse } from '@/application/types';
-import { defaultTabMessenger } from '@/infra/tabs/ChromeTabMessenger';
-import { defaultSessionStorageService } from '@/infra/storage/SessionStorageService';
+import { services } from '@/index';
 
-const tabMessenger = defaultTabMessenger;
-const sessionStorage = defaultSessionStorageService;
+const { tabMessenger, sessionStorage } = services;
 
 class ExtensionManager {
   public static async saveLastExtractionData(
@@ -72,7 +70,7 @@ class ExtensionManager {
 
 chrome.action.onClicked.addListener((tab) => {
   if (tab.id === undefined) return;
-  void chrome.tabs.sendMessage(tab.id, { action: 'toggleOverlay' }).catch(() => {});
+  void tabMessenger.sendToTab(tab.id, { action: 'toggleOverlay' }).catch(() => {});
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

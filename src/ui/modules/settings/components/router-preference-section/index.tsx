@@ -15,41 +15,40 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/ui/components/ui/accordion';
-import { Save } from 'lucide-react';
+import { Badge } from '@/ui/components/ui/badge';
+import { Plus, Save, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const UNSELECTED_MODEL_VALUE = '_unselected';
-const AUTO_VALUE = 'auto';
 const DISABLED_VALUE = '_disabled';
 
 /** Common 20 MHz center channels for 5 GHz (UNII / DFS / extended). */
-const WLAN5_20MHZ_CHANNELS: readonly number[] = [
-  36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112, 116, 120, 124, 128, 149, 153, 157, 161,
-];
-const WLAN5_CHANNEL_VALUE_SET = new Set(WLAN5_20MHZ_CHANNELS.map(String));
+const WLAN5_80MHZ_CHANNELS: string[] = [
+  'Auto',
+  '36',
+  '40',
+  '44',
+  '48',
+  '52',
+  '56',
+  '60',
+  '64',
+  '100',
+  '104',
+  '108',
+  '112',
+  '116',
+  '120',
+  '124',
+  '128',
+  '149',
+  '153',
+  '157',
+  '161',
+] as const;
+
 const WLAN_TRANSMITTING_POWER_OPTIONS = ['100%', '80%', '60%', '40%', '20%'] as const;
 const WLAN_TRANSMITTING_POWER_VALUE_SET = new Set(WLAN_TRANSMITTING_POWER_OPTIONS);
-
-function wlanChannelSelectToStored(v: string): string {
-  if (v === DISABLED_VALUE) return '';
-  return v === AUTO_VALUE ? AUTO_VALUE : v;
-}
-
-function wlan24StoredChannelToSelectValue(channel: string | undefined): string {
-  const c = channel?.trim() ?? '';
-  if (c === '' || c === DISABLED_VALUE) return DISABLED_VALUE;
-  if (c.toLowerCase() === AUTO_VALUE) return AUTO_VALUE;
-  if (/^([1-9]|1[0-3])$/.test(c)) return c;
-  return DISABLED_VALUE;
-}
-
-function wlan5StoredChannelToSelectValue(channel: string | undefined): string {
-  const c = channel?.trim() ?? '';
-  if (c === '' || c === DISABLED_VALUE) return DISABLED_VALUE;
-  if (c.toLowerCase() === AUTO_VALUE) return AUTO_VALUE;
-  if (WLAN5_CHANNEL_VALUE_SET.has(c)) return c;
-  return DISABLED_VALUE;
-}
 
 function wlanTransmittingPowerToSelectValue(transmittingPower: string | undefined): string {
   const v = transmittingPower?.trim() ?? '';
@@ -60,23 +59,6 @@ function wlanTransmittingPowerToSelectValue(transmittingPower: string | undefine
     return v;
   }
   return WLAN_TRANSMITTING_POWER_OPTIONS[0];
-}
-
-function wlanBandWidthStoredToSelectValue(bandWidth: string | undefined): string {
-  const bw = bandWidth?.trim() ?? '';
-  if (bw === '' || bw === DISABLED_VALUE) return DISABLED_VALUE;
-  const normalized = bw.toLowerCase().replace(/\s/g, '');
-  if (normalized === AUTO_VALUE) return AUTO_VALUE;
-  if (normalized === '20mhz' || normalized === '20') return '20MHz';
-  if (normalized === '40mhz' || normalized === '40') return '40MHz';
-  if (normalized === '80mhz' || normalized === '80') return '80MHz';
-  if (normalized === '160mhz' || normalized === '160') return '160MHz';
-  return DISABLED_VALUE;
-}
-
-function wlanBandWidthSelectToStored(v: string): string {
-  if (v === DISABLED_VALUE) return '';
-  return v === AUTO_VALUE ? AUTO_VALUE : v;
 }
 
 function wlanTransmittingPowerSelectToStored(v: string): string {
@@ -172,6 +154,106 @@ function SelectPref({
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+function normalizeToArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === 'string' && v.trim() !== '') return [v];
+  return [];
+}
+
+/** Returns the canonical string from `acceptableValues` if `raw` matches (case-insensitive trim). */
+function resolveAcceptableValue(
+  raw: string,
+  acceptableValues: readonly string[],
+): string | undefined {
+  const t = raw.trim();
+  if (!t) return undefined;
+  const lower = t.toLowerCase();
+  for (const a of acceptableValues) {
+    if (a.toLowerCase() === lower) return a;
+  }
+  return undefined;
+}
+
+function TagListPref({
+  label,
+  value: rawValue,
+  onChange,
+  dataField,
+  acceptableValues,
+  placeholder,
+}: {
+  label: string;
+  value: string | string[];
+  onChange: (v: string[]) => void;
+  dataField: string;
+  acceptableValues: readonly string[];
+  placeholder?: string;
+}) {
+  const value = normalizeToArray(rawValue);
+  const [draft, setDraft] = useState('');
+
+  const pendingCanonical = resolveAcceptableValue(draft, acceptableValues);
+  const canAdd = Boolean(pendingCanonical && !value.includes(pendingCanonical));
+
+  const addChannel = () => {
+    const canonical = resolveAcceptableValue(draft, acceptableValues);
+    if (!canonical || value.includes(canonical)) return;
+    onChange([...value, canonical]);
+    setDraft('');
+  };
+
+  const removeChannel = (ch: string) => {
+    onChange(value.filter((v) => v !== ch));
+  };
+
+  return (
+    <div className="space-y-1">
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <div className="flex gap-1.5" data-pref-field={dataField}>
+        <Input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addChannel();
+            }
+          }}
+          placeholder={placeholder}
+          className="text-xs flex-1"
+        />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="shrink-0 h-8! px-2"
+          onClick={addChannel}
+          disabled={!canAdd}
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      {value.length > 0 && (
+        <div className="flex flex-wrap gap-1 pt-1">
+          {value.map((ch) => (
+            <Badge key={ch} variant="secondary" className="gap-0.5 pr-1 text-[0.65rem]">
+              {ch}
+              <button
+                type="button"
+                className="ml-0.5 rounded-full hover:bg-muted-foreground/20 p-0.5"
+                onClick={() => removeChannel(ch)}
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -351,20 +433,15 @@ export const RouterPreferenceSection = ({
                     { value: 'disabled', label: translator.t('popup_status_disabled') },
                   ]}
                 />
-                <SelectPref
+                <TagListPref
                   label={translator.t('settings_pref_wlan_24_channel')}
-                  value={wlan24StoredChannelToSelectValue(localPrefs.wlan24GhzConfig?.channel)}
-                  onChange={(v) =>
-                    patchWlan('wlan24GhzConfig', { channel: wlanChannelSelectToStored(v) })
-                  }
+                  value={localPrefs.wlan24GhzConfig?.channel ?? []}
+                  onChange={(v) => patchWlan('wlan24GhzConfig', { channel: v })}
                   dataField="wlan24GhzConfig.channel"
-                  items={[
-                    { value: AUTO_VALUE, label: 'Auto' },
-                    ...Array.from({ length: 13 }, (_, i) => {
-                      const n = String(i + 1);
-                      return { value: n, label: n };
-                    }),
-                  ]}
+                  acceptableValues={Array.from({ length: 13 }, (_, i) => String(i + 1)).concat([
+                    'Auto',
+                  ])}
+                  placeholder="Auto, 1-13"
                 />
                 <TextPref
                   label={translator.t('settings_pref_wlan_24_mode')}
@@ -372,20 +449,13 @@ export const RouterPreferenceSection = ({
                   onChange={(v) => patchWlan('wlan24GhzConfig', { mode: v })}
                   dataField="wlan24GhzConfig.mode"
                 />
-                <SelectPref
+                <TagListPref
                   label={translator.t('settings_pref_wlan_24_band_width')}
-                  value={wlanBandWidthStoredToSelectValue(localPrefs.wlan24GhzConfig?.bandWidth)}
-                  onChange={(v) =>
-                    patchWlan('wlan24GhzConfig', {
-                      bandWidth: wlanBandWidthSelectToStored(v),
-                    })
-                  }
+                  value={localPrefs.wlan24GhzConfig?.bandWidth ?? []}
+                  onChange={(v) => patchWlan('wlan24GhzConfig', { bandWidth: v })}
                   dataField="wlan24GhzConfig.bandWidth"
-                  items={[
-                    { value: AUTO_VALUE, label: 'Auto' },
-                    { value: '20MHz', label: '20MHz' },
-                    { value: '40MHz', label: '40MHz' },
-                  ]}
+                  acceptableValues={['Auto', '20MHz', '40MHz']}
+                  placeholder="Auto, 20MHz, 40MHz"
                 />
                 <SelectPref
                   label={translator.t('settings_pref_wlan_24_transmitting_power')}
@@ -454,20 +524,13 @@ export const RouterPreferenceSection = ({
                     { value: BOOL_DISABLED_VALUE, label: translator.t('popup_status_disabled') },
                   ]}
                 />
-                <SelectPref
+                <TagListPref
                   label={translator.t('settings_pref_wlan_5_channel')}
-                  value={wlan5StoredChannelToSelectValue(localPrefs.wlan5GhzConfig?.channel)}
-                  onChange={(v) =>
-                    patchWlan('wlan5GhzConfig', { channel: wlanChannelSelectToStored(v) })
-                  }
+                  value={localPrefs.wlan5GhzConfig?.channel ?? []}
+                  onChange={(v) => patchWlan('wlan5GhzConfig', { channel: v })}
                   dataField="wlan5GhzConfig.channel"
-                  items={[
-                    { value: AUTO_VALUE, label: 'Auto' },
-                    ...WLAN5_20MHZ_CHANNELS.map((n) => {
-                      const s = String(n);
-                      return { value: s, label: s };
-                    }),
-                  ]}
+                  acceptableValues={WLAN5_80MHZ_CHANNELS}
+                  placeholder="Auto, 36, 40, 44, 48, 149..."
                 />
                 <TextPref
                   label={translator.t('settings_pref_wlan_5_mode')}
@@ -475,22 +538,13 @@ export const RouterPreferenceSection = ({
                   onChange={(v) => patchWlan('wlan5GhzConfig', { mode: v })}
                   dataField="wlan5GhzConfig.mode"
                 />
-                <SelectPref
+                <TagListPref
                   label={translator.t('settings_pref_wlan_5_band_width')}
-                  value={wlanBandWidthStoredToSelectValue(localPrefs.wlan5GhzConfig?.bandWidth)}
-                  onChange={(v) =>
-                    patchWlan('wlan5GhzConfig', {
-                      bandWidth: wlanBandWidthSelectToStored(v),
-                    })
-                  }
+                  value={localPrefs.wlan5GhzConfig?.bandWidth ?? []}
+                  onChange={(v) => patchWlan('wlan5GhzConfig', { bandWidth: v })}
                   dataField="wlan5GhzConfig.bandWidth"
-                  items={[
-                    { value: AUTO_VALUE, label: 'Auto' },
-                    { value: '20MHz', label: '20MHz' },
-                    { value: '40MHz', label: '40MHz' },
-                    { value: '80MHz', label: '80MHz' },
-                    { value: '160MHz', label: '160MHz' },
-                  ]}
+                  acceptableValues={['Auto', '20MHz', '40MHz', '80MHz', '160MHz']}
+                  placeholder="Auto, 20MHz, 40MHz, 80MHz, 160MHz"
                 />
                 <SelectPref
                   label={translator.t('settings_pref_wlan_5_transmitting_power')}

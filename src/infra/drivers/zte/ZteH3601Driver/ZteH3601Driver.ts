@@ -1,13 +1,12 @@
 import { BaseRouter } from '@/infra/router/BaseRouter';
 import {
   ExtractionResultSchema,
-  type ButtonConfig,
   type Credentials,
   type ExtractionResult,
   type PingTestResult,
 } from '@/domain/schemas/validation';
-import { DomService } from '@/infra/dom/DomService';
 import type { TopologyBand, TopologyClient } from '@/infra/drivers/shared/types';
+import { IDomGateway } from '@/application/ports/IDomGateway';
 import {
   DHCP_LAN_ALLOCATED_ADDRESS_MAX_WAIT_MS,
   TOPOLOGY_CLIENTS_LOAD_MAX_WAIT_MS,
@@ -18,28 +17,29 @@ import {
   ZteH3601Selectors as Selectors,
 } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Selectors';
 import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import { ButtonConfig } from '@/domain/ports/IRouter.types';
 
 export class ZteH3601Driver extends BaseRouter {
   private readonly s = Selectors;
   private readonly topologyParser: ITopologySectionParser;
   protected readonly loginSelectors = ZteH3601LoginSelectors;
 
-  constructor(topologyParser: ITopologySectionParser) {
-    super('ZTE ZXHN H3601');
+  constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
+    super('ZTE ZXHN H3601', domService);
     this.topologyParser = topologyParser;
   }
 
   public authenticate(credentials: Credentials): void {
     const { username, password } = credentials;
 
-    const usernameField = DomService.getValueElement(this.s.username);
-    const passwordField = DomService.getValueElement(this.s.password);
-    const submitButton = DomService.getElement(this.s.submit, HTMLElement);
+    const usernameField = this.domService.getValueElement(this.s.username);
+    const passwordField = this.domService.getValueElement(this.s.password);
+    const submitButton = this.domService.getElement(this.s.submit, HTMLElement);
 
-    DomService.updateField(usernameField, username);
-    DomService.updateField(passwordField, password);
+    this.domService.updateField(usernameField, username);
+    this.domService.updateField(passwordField, password);
 
-    setTimeout(() => DomService.safeClick(submitButton), 100);
+    setTimeout(() => this.domService.safeClick(submitButton), 100);
   }
 
   public async extract(): Promise<ExtractionResult> {
@@ -64,7 +64,7 @@ export class ZteH3601Driver extends BaseRouter {
   private async extractLinkSpeedData(): Promise<Pick<ExtractionResult, 'linkSpeed'>> {
     await this.clickElementAndWait(this.s.internetTab, this.s.linkSpeed);
 
-    const linkSpeed = (DomService.getOptionalValue(this.s.linkSpeed) ?? '').trim();
+    const linkSpeed = (this.domService.getOptionalValue(this.s.linkSpeed) ?? '').trim();
 
     return { linkSpeed };
   }
@@ -86,14 +86,14 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.wanContainer, this.s.pppoeEntry);
     await this.clickElementAndWait(this.s.pppoeEntry, this.s.pppoeUsername);
 
-    const pppoeUsername = (DomService.getOptionalValue(this.s.pppoeUsername) ?? '').trim();
-    const internetEnabled = DomService.getInputElement(this.s.serviceListInternet).checked;
-    const tr069Enabled = DomService.getInputElement(this.s.serviceListTr069).checked;
-    const requestPdEnabled = DomService.getInputElement(this.s.requestPd).checked;
-    const slaacEnabled = DomService.getInputElement(this.s.slaac).checked;
-    const dhcpv6Enabled = DomService.getInputElement(this.s.dhcpv6).checked;
-    const pdEnabled = DomService.getInputElement(this.s.pdAddress).checked;
-    const ipVersion = DomService.getSelectedOptionText(this.s.ipMode) ?? '';
+    const pppoeUsername = (this.domService.getOptionalValue(this.s.pppoeUsername) ?? '').trim();
+    const internetEnabled = this.domService.getInputElement(this.s.serviceListInternet).checked;
+    const tr069Enabled = this.domService.getInputElement(this.s.serviceListTr069).checked;
+    const requestPdEnabled = this.domService.getInputElement(this.s.requestPd).checked;
+    const slaacEnabled = this.domService.getInputElement(this.s.slaac).checked;
+    const dhcpv6Enabled = this.domService.getInputElement(this.s.dhcpv6).checked;
+    const pdEnabled = this.domService.getInputElement(this.s.pdAddress).checked;
+    const ipVersion = this.domService.getSelectedOptionText(this.s.ipMode) ?? '';
 
     return {
       internetEnabled,
@@ -114,13 +114,13 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.securityContainer, this.s.localServiceControl);
     await this.clickElementAndWait(this.s.localServiceControl, this.s.serviceControlBar);
 
-    const remoteAccessIpv4Enabled = DomService.getInputElement(
+    const remoteAccessIpv4Enabled = this.domService.getInputElement(
       this.s.ipv4RemoteAccessToggle,
     ).checked;
 
     await this.clickElementAndWait(this.s.ipv6ServiceControlBar, this.s.ipv6RemoteAccessToggle);
 
-    const remoteAccessIpv6Enabled = DomService.getInputElement(
+    const remoteAccessIpv6Enabled = this.domService.getInputElement(
       this.s.ipv6RemoteAccessToggle,
     ).checked;
 
@@ -218,7 +218,7 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.wlanContainer, this.s.bandSteeringContainer);
     await this.clickElementAndWait(this.s.bandSteeringContainer, this.s.bandSteeringEnabled);
 
-    const bandSteeringEnabled = DomService.getInputElement(this.s.bandSteeringEnabled).checked;
+    const bandSteeringEnabled = this.domService.getInputElement(this.s.bandSteeringEnabled).checked;
 
     return { bandSteeringEnabled };
   }
@@ -234,27 +234,29 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.wlanBasicContainer, this.s.wlan24GhzRadioStatus);
 
     const wlan24GhzConfig = {
-      enabled: DomService.getInputElement(this.s.wlan24GhzRadioStatus).checked,
+      enabled: this.domService.getInputElement(this.s.wlan24GhzRadioStatus).checked,
     };
     const wlan5GhzConfig = {
-      enabled: DomService.getInputElement(this.s.wlan5GhzRadioStatus).checked,
+      enabled: this.domService.getInputElement(this.s.wlan5GhzRadioStatus).checked,
     };
 
     await this.clickElementAndWait(this.s.wlanGlobalConfigContainer, this.s.wlan24GhzChannel);
 
-    const wlan24GhzChannel = DomService.getOptionalValue(this.s.wlan24GhzChannel);
-    const wlan24GhzMode = DomService.getSelectedOptionText(this.s.wlan24GhzMode);
-    const wlan24GhzBandWidth = DomService.getOptionalValue(this.s.wlan24GhzBandWidth);
-    const wlan24GhzTransmittingPower = DomService.getOptionalValue(
+    const wlan24GhzChannel = this.domService.getOptionalValue(this.s.wlan24GhzChannel);
+    const wlan24GhzMode = this.domService.getSelectedOptionText(this.s.wlan24GhzMode);
+    const wlan24GhzBandWidth = this.domService.getOptionalValue(this.s.wlan24GhzBandWidth);
+    const wlan24GhzTransmittingPower = this.domService.getOptionalValue(
       this.s.wlan24GhzTransmittingPower,
     );
 
     await this.clickElementAndWait(this.s.wlan5GhzGlobalConfigContainer, this.s.wlan5GhzChannel);
 
-    const wlan5GhzChannel = DomService.getOptionalValue(this.s.wlan5GhzChannel);
-    const wlan5GhzMode = DomService.getSelectedOptionText(this.s.wlan5GhzMode);
-    const wlan5GhzBandWidth = DomService.getOptionalValue(this.s.wlan5GhzBandWidth);
-    const wlan5GhzTransmittingPower = DomService.getOptionalValue(this.s.wlan5GhzTransmittingPower);
+    const wlan5GhzChannel = this.domService.getOptionalValue(this.s.wlan5GhzChannel);
+    const wlan5GhzMode = this.domService.getSelectedOptionText(this.s.wlan5GhzMode);
+    const wlan5GhzBandWidth = this.domService.getOptionalValue(this.s.wlan5GhzBandWidth);
+    const wlan5GhzTransmittingPower = this.domService.getOptionalValue(
+      this.s.wlan5GhzTransmittingPower,
+    );
 
     await this.clickElementAndWait(this.s.wlanSsidConfigContainer, this.s.wlan24GhzSsidName);
 
@@ -306,13 +308,13 @@ export class ZteH3601Driver extends BaseRouter {
       const index = startIndex + offset;
 
       const ssidNameSelector = `#ESSID\\:${index}`;
-      const ssidName = DomService.getOptionalValue(ssidNameSelector) ?? '';
+      const ssidName = this.domService.getOptionalValue(ssidNameSelector) ?? '';
       if (!ssidName.trim()) {
         continue;
       }
 
       const enabledSelector = `#Enable1\\:${index}`;
-      const enabled = DomService.getInputElement(enabledSelector).checked;
+      const enabled = this.domService.getInputElement(enabledSelector).checked;
 
       await this.clickElementAndWait(`#Switch_KeyPassType\\:${index}`);
 
@@ -320,16 +322,16 @@ export class ZteH3601Driver extends BaseRouter {
 
       await this.waitForInputPopulated(passwordSelector).catch(() => {});
 
-      const ssidPassword = DomService.getOptionalValue(passwordSelector) ?? '';
+      const ssidPassword = this.domService.getOptionalValue(passwordSelector) ?? '';
 
       const hideModeInputSelector = `#ESSIDHideEnable0\\:${index}`;
-      const ssidHideMode = DomService.getInputElement(hideModeInputSelector).checked;
+      const ssidHideMode = this.domService.getInputElement(hideModeInputSelector).checked;
 
       const wpa2SecuritySelector = `#EncryptionType\\:${index}`;
-      const wpa2SecurityType = DomService.getOptionalValue(wpa2SecuritySelector) ?? '';
+      const wpa2SecurityType = this.domService.getOptionalValue(wpa2SecuritySelector) ?? '';
 
       const maxClientsSelector = `#MaxUserNum\\:${index}`;
-      const maxClientsRaw = DomService.getOptionalValue(maxClientsSelector) ?? '';
+      const maxClientsRaw = this.domService.getOptionalValue(maxClientsSelector) ?? '';
       const maxClients = Number(maxClientsRaw) || 0;
 
       results.push({
@@ -371,14 +373,14 @@ export class ZteH3601Driver extends BaseRouter {
 
     await this.delay(500);
 
-    const dhcpEnabled = DomService.getInputElement(this.s.dhcpEnabled).checked;
+    const dhcpEnabled = this.domService.getInputElement(this.s.dhcpEnabled).checked;
 
     const dhcpIpAddress = this.readDhcpOctetFields('dhcpIpAddressField');
     const dhcpSubnetMask = this.readDhcpOctetFields('dhcpSubnetMaskField');
     const dhcpStartIp = this.readDhcpOctetFields('dhcpStartIpField');
     const dhcpEndIp = this.readDhcpOctetFields('dhcpEndIpField');
 
-    const dhcpIspDnsEnabled = DomService.getInputElement(this.s.dhcpIspDnsEnabled).checked;
+    const dhcpIspDnsEnabled = this.domService.getInputElement(this.s.dhcpIspDnsEnabled).checked;
 
     let dhcpPrimaryDns: (string | null)[] = [];
     let dhcpSecondaryDns: (string | null)[] = [];
@@ -390,12 +392,12 @@ export class ZteH3601Driver extends BaseRouter {
       dhcpSecondaryDns = ['-'];
     }
 
-    const dhcpLeaseTimeModeValue = DomService.getOptionalValue(this.s.dhcpLeaseTimeMode);
+    const dhcpLeaseTimeModeValue = this.domService.getOptionalValue(this.s.dhcpLeaseTimeMode);
     const dhcpLeaseTime =
       dhcpLeaseTimeModeValue !== 'Infinity'
-        ? (DomService.getOptionalValue(this.s.dhcpLeaseTime) ?? '')
+        ? (this.domService.getOptionalValue(this.s.dhcpLeaseTime) ?? '')
         : 'Infinity';
-    const dhcpLeaseTimeMode = DomService.getSelectedOptionText(this.s.dhcpLeaseTimeMode);
+    const dhcpLeaseTimeMode = this.domService.getSelectedOptionText(this.s.dhcpLeaseTimeMode);
 
     return {
       dhcpEnabled,
@@ -425,7 +427,7 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.localNetworkTab, this.s.upnpContainer);
     await this.clickElementAndWait(this.s.upnpContainer, this.s.upnpEnabled);
 
-    const upnpEnabled = DomService.getInputElement(this.s.upnpEnabled).checked;
+    const upnpEnabled = this.domService.getInputElement(this.s.upnpEnabled).checked;
 
     return {
       upnpEnabled,
@@ -438,8 +440,8 @@ export class ZteH3601Driver extends BaseRouter {
     await this.clickElementAndWait(this.s.managementTab, this.s.routerVersionContainer);
     await this.clickElementAndWait(this.s.routerVersionContainer, this.s.routerVersion);
 
-    const routerVersion = (DomService.getOptionalValue(this.s.routerVersion) ?? '').trim();
-    const routerModel = (DomService.getOptionalValue(this.s.routerModel) ?? '').trim();
+    const routerVersion = (this.domService.getOptionalValue(this.s.routerVersion) ?? '').trim();
+    const routerModel = (this.domService.getOptionalValue(this.s.routerModel) ?? '').trim();
 
     return { routerModel, routerVersion };
   }
@@ -451,7 +453,7 @@ export class ZteH3601Driver extends BaseRouter {
 
     await this.delay(500);
 
-    const tr069Url = (DomService.getOptionalValue(this.s.tr069Url) ?? '').trim();
+    const tr069Url = (this.domService.getOptionalValue(this.s.tr069Url) ?? '').trim();
 
     return { tr069Url };
   }
@@ -459,7 +461,7 @@ export class ZteH3601Driver extends BaseRouter {
   private goToHomePage(): boolean {
     const homePage = document.querySelector<HTMLElement>(this.s.homeTab);
     if (!homePage) return false;
-    DomService.safeClick(homePage);
+    this.domService.safeClick(homePage);
     return true;
   }
 
@@ -473,7 +475,7 @@ export class ZteH3601Driver extends BaseRouter {
       | 'dhcpSecondaryDnsField',
   ): (string | null)[] {
     const keys = [1, 2, 3, 4].map((i) => `${prefix}${i}` as keyof typeof Selectors);
-    return keys.map((key) => DomService.getOptionalValue(this.s[key] as string) ?? null);
+    return keys.map((key) => this.domService.getOptionalValue(this.s[key] as string) ?? null);
   }
 
   public isAuthenticated(): boolean {
@@ -490,13 +492,16 @@ export class ZteH3601Driver extends BaseRouter {
       this.s.diagnosticsPingIpAddress,
     );
 
-    DomService.updateField(DomService.getValueElement(this.s.diagnosticsPingIpAddress), ip);
+    this.domService.updateField(
+      this.domService.getValueElement(this.s.diagnosticsPingIpAddress),
+      ip,
+    );
 
     await this.clickElementAndWait(this.s.pingSendButton);
 
     await this.waitForDisappearance(this.s.pingWaiting, 30000);
 
-    const result = DomService.getOptionalValue(this.s.pingResult);
+    const result = this.domService.getOptionalValue(this.s.pingResult);
 
     if (!result) return null;
 

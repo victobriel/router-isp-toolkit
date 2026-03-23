@@ -1,7 +1,5 @@
-import { DomService } from '@/infra/dom/DomService';
 import {
   PingTestResultSchema,
-  type ButtonConfig,
   type Credentials,
   type ExtractionResult,
   type PingTestResult,
@@ -11,6 +9,8 @@ import {
   DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
 } from '@/infra/drivers/shared/constants';
+import { IDomGateway } from '@/application/ports/IDomGateway';
+import { ButtonConfig } from '@/domain/ports/IRouter.types';
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.
@@ -19,6 +19,7 @@ import {
 export abstract class BaseRouter implements IRouter {
   private static readonly CLICK_SETTLE_MS = 200;
 
+  protected readonly domService: IDomGateway;
   private readonly name: string;
 
   protected abstract readonly loginSelectors: {
@@ -26,11 +27,12 @@ export abstract class BaseRouter implements IRouter {
     password: string;
   };
 
-  protected constructor(name: string) {
+  protected constructor(name: string, domService: IDomGateway) {
     if (new.target === BaseRouter) {
       throw new Error('BaseRouter is abstract and cannot be instantiated directly');
     }
     this.name = name;
+    this.domService = domService;
   }
 
   public get model(): string {
@@ -49,8 +51,8 @@ export abstract class BaseRouter implements IRouter {
 
   public readLoginCredentials(): Credentials | null {
     try {
-      const usernameEl = DomService.getValueElement(this.loginSelectors.username);
-      const passwordEl = DomService.getValueElement(this.loginSelectors.password);
+      const usernameEl = this.domService.getValueElement(this.loginSelectors.username);
+      const passwordEl = this.domService.getValueElement(this.loginSelectors.password);
 
       return {
         username: usernameEl.value.trim(),
@@ -64,11 +66,11 @@ export abstract class BaseRouter implements IRouter {
   public fillLoginCredentials(credentials: Credentials): void {
     const { username, password } = credentials;
 
-    const usernameEl = DomService.getValueElement(this.loginSelectors.username);
-    const passwordEl = DomService.getValueElement(this.loginSelectors.password);
+    const usernameEl = this.domService.getValueElement(this.loginSelectors.username);
+    const passwordEl = this.domService.getValueElement(this.loginSelectors.password);
 
-    DomService.updateField(usernameEl, username);
-    DomService.updateField(passwordEl, password);
+    this.domService.updateField(usernameEl, username);
+    this.domService.updateField(passwordEl, password);
   }
 
   public abstract extract(): Promise<ExtractionResult>;
@@ -137,8 +139,8 @@ export abstract class BaseRouter implements IRouter {
     waitForSelector?: string,
     maxWaitMs: number = DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   ): Promise<void> {
-    const section = DomService.getElement(sectionSelector, HTMLElement);
-    DomService.safeClick(section);
+    const section = this.domService.getElement(sectionSelector, HTMLElement);
+    this.domService.safeClick(section);
 
     const targetSelector = waitForSelector ?? sectionSelector;
 

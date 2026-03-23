@@ -8,19 +8,19 @@ import { CollectionService } from '@/application/CollectionService';
 import { ContentPageUseCase } from '@/application/ContentPageUseCase';
 import { PopupUiStateService } from '@/application/PopupUiStateService';
 
-import { DomGateway } from '@/infra/dom/DomGateway';
+import { DomService } from '@/infra/dom/DomService';
 import { RouterFactoryAdapter } from '@/infra/router/RouterFactoryAdapter';
-import { defaultTabMessenger } from '@/infra/tabs/ChromeTabMessenger';
 
-import { defaultStorage } from '@/infra/storage/StorageService';
-import { defaultSessionStorageService } from '@/infra/storage/SessionStorageService';
+import { SessionStorageService } from '@/infra/storage/SessionStorageService';
+import { StorageService } from './infra/storage/StorageService';
+import { ChromeTabMessenger } from './infra/tabs/ChromeTabMessenger';
 
 export type CompositionServices = {
   storage: IStorage;
   sessionStorage: IStorage;
 
   routerFactory: IRouterFactory;
-  domGateway: IDomGateway;
+  domService: IDomGateway;
   tabMessenger: ITabMessenger;
 
   bookmarksService: BookmarksService;
@@ -36,15 +36,15 @@ export type CompositionServices = {
  * - `createServices()` exists to support swapping dependencies in tests.
  */
 export function createServices({
-  storage = defaultStorage,
-  sessionStorage = defaultSessionStorageService,
-  routerFactory = new RouterFactoryAdapter(),
-  domGateway = new DomGateway(),
-  tabMessenger = defaultTabMessenger,
+  storage = new StorageService(),
+  sessionStorage = new SessionStorageService(),
+  domService = new DomService(),
+  routerFactory = new RouterFactoryAdapter(domService),
+  tabMessenger = new ChromeTabMessenger(),
 }: Partial<
   Pick<
     CompositionServices,
-    'storage' | 'sessionStorage' | 'routerFactory' | 'domGateway' | 'tabMessenger'
+    'storage' | 'sessionStorage' | 'routerFactory' | 'domService' | 'tabMessenger'
   >
 > = {}): CompositionServices {
   const collectionService = new CollectionService(routerFactory, sessionStorage);
@@ -52,7 +52,7 @@ export function createServices({
     routerFactory,
     storage,
     sessionStorage,
-    domGateway,
+    domService,
     collectionService,
   );
 
@@ -63,7 +63,7 @@ export function createServices({
     storage,
     sessionStorage,
     routerFactory,
-    domGateway,
+    domService,
     tabMessenger,
     bookmarksService,
     popupUiStateService,

@@ -10,6 +10,9 @@ const LAST_INTERNAL_PING_TEST_STORAGE_KEY = 'last_internal_ping_ip';
 const LAST_EXTERNAL_PING_TEST_STORAGE_KEY = 'last_external_ping_ip';
 const MAX_BOOKMARK_CREDENTIALS = 6;
 
+/** Bump when the settings export JSON shape under `data` changes incompatibly. */
+const SETTINGS_EXPORT_SCHEMA_VERSION = 1;
+
 export {
   LAST_DATA_STORAGE_KEY,
   UI_STATE_STORAGE_KEY,
@@ -22,4 +25,5 @@ export {
   LAST_INTERNAL_PING_TEST_STORAGE_KEY,
   LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
   MAX_BOOKMARK_CREDENTIALS,
+  SETTINGS_EXPORT_SCHEMA_VERSION,
 };

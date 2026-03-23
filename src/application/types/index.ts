@@ -21,11 +21,6 @@ export enum PopupStatusType {
   ERR = 'err',
 }
 
-export type PopupStatus = {
-  type: PopupStatusType;
-  message: string;
-};
-
 export type CredentialBookmark = { id: string; username: string; password: string };
 export type ModelBookmarks = {
   model: string;
@@ -50,14 +45,28 @@ const regExpSchema = z.union([z.string(), z.instanceof(RegExp)]).transform((valu
 const ssidPreferenceEntry = wlanSsidPreferenceEntrySchema(regExpSchema);
 const ssidPreferenceEntryStrings = wlanSsidPreferenceEntrySchema(z.string());
 
+const wlanPreferencesConfigSchema = z.object({
+  enabled: z.boolean(),
+  channel: z.array(z.string()),
+  mode: z.string(),
+  bandWidth: z.array(z.string()),
+  transmittingPower: z.string(),
+});
+
 /** Persisted in extension storage (JSON); pattern fields are plain strings. */
 const preferencesStorageFields = routerStateShape({
   pppoeUsername: z.string(),
   ipVersion: z.string(),
-  ipOrPattern: z.string(),
   tr069Url: z.string(),
   wlan24GhzSsids: ssidPreferenceEntryStrings,
   wlan5GhzSsids: ssidPreferenceEntryStrings,
+  dhcpIpAddress: z.string(),
+  dhcpSubnetMask: z.string(),
+  dhcpStartIp: z.string(),
+  dhcpEndIp: z.string(),
+  dhcpPrimaryDns: z.string(),
+  dhcpSecondaryDns: z.string(),
+  wlanConfig: wlanPreferencesConfigSchema.partial(),
 });
 
 export const RouterPreferencesSchema = z.object(preferencesStorageFields).partial();
@@ -72,10 +81,16 @@ export type RouterPreferencesByModel = z.infer<typeof RouterPreferencesByModelSc
 const preferencesMatchFields = routerStateShape({
   pppoeUsername: regExpSchema,
   ipVersion: regExpSchema,
-  ipOrPattern: regExpSchema,
   tr069Url: regExpSchema,
   wlan24GhzSsids: ssidPreferenceEntry,
   wlan5GhzSsids: ssidPreferenceEntry,
+  dhcpIpAddress: regExpSchema,
+  dhcpSubnetMask: regExpSchema,
+  dhcpStartIp: regExpSchema,
+  dhcpEndIp: regExpSchema,
+  dhcpPrimaryDns: regExpSchema,
+  dhcpSecondaryDns: regExpSchema,
+  wlanConfig: wlanPreferencesConfigSchema,
 });
 
 export const RouterPreferencesMatchSchema = z.object(preferencesMatchFields).partial();

@@ -155,8 +155,3 @@ export class StorageService implements IStorage {
     inMemoryLocalStore.clear();
   }
 }
-
-const storageInstance = new StorageService();
-
-/** Default storage instance (composition root can replace for tests). */
-export const defaultStorage: IStorage = storageInstance;

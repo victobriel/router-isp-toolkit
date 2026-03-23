@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DiagnosticsMode } from '@/domain/schemas/validation';
+import { DiagnosticsMode } from '@/ui/types';
 import { Button } from '@/ui/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/components/ui/tabs';
 import {

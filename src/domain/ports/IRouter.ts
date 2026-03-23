@@ -1,14 +1,11 @@
-import type {
-  ButtonConfig,
-  Credentials,
-  ExtractionResult,
-  PingTestResult,
-} from '@/domain/schemas/validation';
+import type { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
+import type { ButtonConfig } from './IRouter.types';
 
 /**
  * Port for router adapter: domain contract for authentication and data extraction.
  * Implementations live in infrastructure (driver-specific). Keeps domain independent of infra (DIP).
  */
+
 export interface IRouter {
   readonly model: string;
 

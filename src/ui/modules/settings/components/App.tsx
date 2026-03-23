@@ -4,6 +4,7 @@ import {
   BOOKMARKS_STORAGE_KEY,
   COPY_TEXT_TEMPLATE_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
+  SETTINGS_EXPORT_SCHEMA_VERSION,
 } from '@/application/constants';
 import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
 import type {
@@ -241,7 +242,7 @@ export const Settings = () => {
       }
 
       const exportFile = {
-        schemaVersion: 1,
+        schemaVersion: SETTINGS_EXPORT_SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
         data,
       };
@@ -286,6 +287,28 @@ export const Settings = () => {
       }
 
       const root = parsed as Record<string, unknown>;
+
+      const rawSchemaVersion = root.schemaVersion;
+      let fileSchemaVersion: number;
+      if (rawSchemaVersion === undefined || rawSchemaVersion === null) {
+        // Legacy files without a version (or hand-crafted JSON before `schemaVersion` existed).
+        fileSchemaVersion = 1;
+      } else if (typeof rawSchemaVersion !== 'number' || !Number.isInteger(rawSchemaVersion)) {
+        showToast(translator.t('settings_import_error_invalid_schema_version'), 'err');
+        return;
+      } else {
+        fileSchemaVersion = rawSchemaVersion;
+      }
+
+      if (fileSchemaVersion < 1 || fileSchemaVersion > SETTINGS_EXPORT_SCHEMA_VERSION) {
+        if (fileSchemaVersion > SETTINGS_EXPORT_SCHEMA_VERSION) {
+          showToast(translator.t('settings_import_error_newer_schema_version'), 'err');
+        } else {
+          showToast(translator.t('settings_import_error_unsupported_schema_version'), 'err');
+        }
+        return;
+      }
+
       const exportData = root.data;
       if (exportData == null || typeof exportData !== 'object' || Array.isArray(exportData)) {
         showToast(translator.t('settings_import_error_invalid_json'), 'err');

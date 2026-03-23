@@ -2,7 +2,6 @@ import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from '@/application/const
 import type { IStorage } from '@/application/ports/IStorage';
 import type { PopupStatusType } from '@/application/types/index';
 import type { ExtractionResult } from '@/domain/schemas/validation';
-import { defaultSessionStorageService } from '@/infra/storage/SessionStorageService';
 
 export interface PopupStatusState {
   type: PopupStatusType;
@@ -97,5 +96,3 @@ export class PopupUiStateService {
     await this.storage.save(key, data, 24 * 60 * 1000);
   }
 }
-
-export const defaultPopupUiStateService = new PopupUiStateService(defaultSessionStorageService);

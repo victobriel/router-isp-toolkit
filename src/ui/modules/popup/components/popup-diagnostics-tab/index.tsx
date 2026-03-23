@@ -1,5 +1,5 @@
 import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/constants';
-import { DiagnosticsMode, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
+import { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
@@ -17,6 +17,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
 import { PopupStatusType } from '@/application/types';
 import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { DiagnosticsMode } from '@/ui/types';
 
 interface PopupDiagnosticsTabProps {
   data: ExtractionResult | null;

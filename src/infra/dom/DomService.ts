@@ -1,7 +1,8 @@
+import { IDomGateway } from '@/application/ports/IDomGateway';
 import type { ValueElement } from '@/infra/dom/types';
 
-export class DomService {
-  private static isValueElement(element: Element): element is ValueElement {
+export class DomService implements IDomGateway {
+  public isValueElement(element: Element): element is ValueElement {
     return (
       element instanceof HTMLInputElement ||
       element instanceof HTMLSelectElement ||
@@ -10,38 +11,38 @@ export class DomService {
     );
   }
 
-  private static dispatchValueEvents(element: HTMLElement): void {
+  public dispatchValueEvents(element: HTMLElement): void {
     element.dispatchEvent(new Event('input', { bubbles: true }));
     element.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  public static getInputElement(selector: string): HTMLInputElement {
+  public getInputElement(selector: string): HTMLInputElement {
     const element = document.querySelector(selector);
     if (element instanceof HTMLInputElement) return element;
     throw new Error(`Element "${selector}" is not a valid InputElement.`);
   }
 
-  public static getValueElement(selector: string): ValueElement {
+  public getValueElement(selector: string): ValueElement {
     const element = document.querySelector(selector);
-    if (element && DomService.isValueElement(element)) return element;
+    if (element && this.isValueElement(element)) return element;
     throw new Error(`Element "${selector}" is not a valid input or select element.`);
   }
 
-  public static getValue(selector: string): string {
+  public getValue(selector: string): string {
     const element = document.querySelector(selector);
     if (!element) throw new Error(`Element "${selector}" not found.`);
-    if (DomService.isValueElement(element)) return element.value;
+    if (this.isValueElement(element)) return element.value;
     return element.getAttribute('value') ?? (element.textContent ?? '').trim();
   }
 
-  public static getOptionalValue(selector: string): string | null {
+  public getOptionalValue(selector: string): string | null {
     const element = document.querySelector(selector);
     if (!element) return null;
-    if (DomService.isValueElement(element)) return element.value;
+    if (this.isValueElement(element)) return element.value;
     return element.getAttribute('value') ?? (element.textContent ?? '').trim();
   }
 
-  public static getSelectedOptionText(selector: string): string | null {
+  public getSelectedOptionText(selector: string): string | null {
     const element = document.querySelector(selector);
     if (!(element instanceof HTMLSelectElement)) return null;
     const option =
@@ -51,26 +52,26 @@ export class DomService {
     return (option.textContent ?? '').trim();
   }
 
-  public static getElement<T extends HTMLElement>(selector: string, type: new () => T): T {
+  public getElement<T extends HTMLElement>(selector: string, type: new () => T): T {
     const element = document.querySelector(selector);
     if (element instanceof type) return element;
     throw new Error(`Element "${selector}" not found or wrong type.`);
   }
 
-  public static getElements<T extends HTMLElement>(selector: string, type: new () => T): T[] {
+  public getElements<T extends HTMLElement>(selector: string, type: new () => T): T[] {
     const elements = document.querySelectorAll(selector);
     if (elements.length === 0) throw new Error(`Elements "${selector}" not found.`);
     return Array.from(elements).filter((element) => element instanceof type) as T[];
   }
 
-  public static updateField(element: ValueElement, value: string): void {
+  public updateField(element: ValueElement, value: string): void {
     if (element instanceof HTMLInputElement) element.focus();
     element.value = value;
-    DomService.dispatchValueEvents(element);
+    this.dispatchValueEvents(element);
     if (element instanceof HTMLInputElement) element.blur();
   }
 
-  public static safeClick(element: HTMLElement): void {
+  public safeClick(element: HTMLElement): void {
     const isJavascriptHref =
       element instanceof HTMLAnchorElement &&
       element.getAttribute('href')?.trimStart().toLowerCase().startsWith('javascript:');

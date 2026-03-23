@@ -718,6 +718,15 @@
   },
   "settings_import_error_no_file": { "message": "Select a file to import." },
   "settings_import_error_invalid_json": { "message": "Invalid import file." },
+  "settings_import_error_invalid_schema_version": {
+    "message": "Invalid export file: the schema version field is missing or not a whole number."
+  },
+  "settings_import_error_newer_schema_version": {
+    "message": "This file was exported from a newer version of the extension. Update the extension and try again."
+  },
+  "settings_import_error_unsupported_schema_version": {
+    "message": "This export file uses an unsupported format version."
+  },
   "settings_import_error_missing_section": {
     "message": "The import file doesn't contain: $section$",
     "placeholders": {

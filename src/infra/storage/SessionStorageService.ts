@@ -153,8 +153,3 @@ export class SessionStorageService implements IStorage {
     inMemorySessionStore.delete(key);
   }
 }
-
-const sessionStorageInstance = new SessionStorageService();
-
-/** Default session storage instance (composition root can replace for tests). */
-export const defaultSessionStorageService: IStorage = sessionStorageInstance;

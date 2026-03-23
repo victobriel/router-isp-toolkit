@@ -27,14 +27,6 @@ export const wlanSsidExtractionEntrySchema = z.object({
   maxClients: z.number(),
 });
 
-const wlanConfigSchema = z.object({
-  enabled: z.boolean(),
-  channel: z.string(),
-  mode: z.string(),
-  bandWidth: z.string(),
-  transmittingPower: z.string(),
-});
-
 export function wlanSsidPreferenceEntrySchema<T extends z.ZodType>(fieldSchema: T) {
   return z
     .object({
@@ -49,17 +41,29 @@ export function wlanSsidPreferenceEntrySchema<T extends z.ZodType>(fieldSchema: 
 export function routerStateShape<
   TPppoe extends z.ZodType,
   TIpVersion extends z.ZodType,
-  TIpOrPattern extends z.ZodType,
   TTr069 extends z.ZodType,
   TWlan24Ssids extends z.ZodType,
   TWlan5Ssids extends z.ZodType,
+  TDhcpIpAddress extends z.ZodType,
+  TDhcpSubnetMask extends z.ZodType,
+  TDhcpStartIp extends z.ZodType,
+  TDhcpEndIp extends z.ZodType,
+  TDhcpPrimaryDns extends z.ZodType,
+  TDhcpSecondaryDns extends z.ZodType,
+  TWlanConfig extends z.ZodType,
 >(params: {
   pppoeUsername: TPppoe;
   ipVersion: TIpVersion;
-  ipOrPattern: TIpOrPattern;
   tr069Url: TTr069;
   wlan24GhzSsids: TWlan24Ssids;
   wlan5GhzSsids: TWlan5Ssids;
+  dhcpIpAddress: TDhcpIpAddress;
+  dhcpSubnetMask: TDhcpSubnetMask;
+  dhcpStartIp: TDhcpStartIp;
+  dhcpEndIp: TDhcpEndIp;
+  dhcpPrimaryDns: TDhcpPrimaryDns;
+  dhcpSecondaryDns: TDhcpSecondaryDns;
+  wlanConfig: TWlanConfig;
 }) {
   return {
     timestamp: z.string(),
@@ -80,23 +84,22 @@ export function routerStateShape<
 
     linkSpeed: z.string(),
     routerVersion: z.string(),
-    dhcpIpAddress: z.string(),
-    dhcpSubnetMask: z.string(),
-    dhcpStartIp: z.string(),
-    dhcpEndIp: z.string(),
-    dhcpPrimaryDns: z.string(),
-    dhcpSecondaryDns: z.string(),
     dhcpLeaseTimeMode: z.string(),
     dhcpLeaseTime: z.string(),
 
-    wlan24GhzConfig: wlanConfigSchema.partial(),
-    wlan5GhzConfig: wlanConfigSchema.partial(),
+    wlan24GhzConfig: params.wlanConfig,
+    wlan5GhzConfig: params.wlanConfig,
 
     pppoeUsername: params.pppoeUsername,
     ipVersion: params.ipVersion,
-    ipOrPattern: params.ipOrPattern,
     tr069Url: params.tr069Url,
     wlan24GhzSsids: params.wlan24GhzSsids,
     wlan5GhzSsids: params.wlan5GhzSsids,
+    dhcpIpAddress: params.dhcpIpAddress,
+    dhcpSubnetMask: params.dhcpSubnetMask,
+    dhcpStartIp: params.dhcpStartIp,
+    dhcpEndIp: params.dhcpEndIp,
+    dhcpPrimaryDns: params.dhcpPrimaryDns,
+    dhcpSecondaryDns: params.dhcpSecondaryDns,
   };
 }

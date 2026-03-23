@@ -621,6 +621,15 @@
   },
   "settings_import_error_no_file": { "message": "Selecione um arquivo para importar." },
   "settings_import_error_invalid_json": { "message": "Arquivo de importação inválido." },
+  "settings_import_error_invalid_schema_version": {
+    "message": "Arquivo de exportação inválido: o campo de versão do esquema está ausente ou não é um número inteiro."
+  },
+  "settings_import_error_newer_schema_version": {
+    "message": "Este arquivo foi exportado por uma versão mais nova da extensão. Atualize a extensão e tente novamente."
+  },
+  "settings_import_error_unsupported_schema_version": {
+    "message": "Este arquivo de exportação usa uma versão de formato não suportada."
+  },
   "settings_import_error_missing_section": {
     "message": "O arquivo de importação não contém: $section$",
     "placeholders": {
