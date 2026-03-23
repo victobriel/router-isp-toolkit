@@ -523,7 +523,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.remoteAccessIpv6Enabled,
         routerPrefsForModel.remoteAccessIpv6Enabled,
       ),
-      linkSpeed: textMatch(data.linkSpeed, routerPrefsForModel.linkSpeed),
+      linkSpeed: regexMatch(data.linkSpeed, routerPrefsForModel.linkSpeed),
       routerVersion: textMatch(data.routerVersion, routerPrefsForModel.routerVersion),
       tr069Url: regexMatch(data.tr069Url, routerPrefsForModel.tr069Url),
       pppoeUsername: regexMatch(data.pppoeUsername, routerPrefsForModel.pppoeUsername),
@@ -538,7 +538,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       dhcpIspDnsEnabled: boolMatch(data.dhcpIspDnsEnabled, routerPrefsForModel.dhcpIspDnsEnabled),
       dhcpPrimaryDns: regexMatch(data.dhcpPrimaryDns, routerPrefsForModel.dhcpPrimaryDns),
       dhcpSecondaryDns: regexMatch(data.dhcpSecondaryDns, routerPrefsForModel.dhcpSecondaryDns),
-      dhcpLeaseTimeMode: textMatch(data.dhcpLeaseTimeMode, routerPrefsForModel.dhcpLeaseTimeMode),
+      dhcpLeaseTimeMode: regexMatch(data.dhcpLeaseTimeMode, routerPrefsForModel.dhcpLeaseTimeMode),
       dhcpLeaseTime: textMatch(data.dhcpLeaseTime, routerPrefsForModel.dhcpLeaseTime),
 
       // WiFi 2.4 GHz
@@ -550,7 +550,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.wlan24GhzConfig?.channel,
         routerPrefsForModel.wlan24GhzConfig?.channel,
       ),
-      wlan24GhzMode: textMatch(
+      wlan24GhzMode: regexMatch(
         data.wlan24GhzConfig?.mode,
         routerPrefsForModel.wlan24GhzConfig?.mode,
       ),
@@ -572,7 +572,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         data.wlan5GhzConfig?.channel,
         routerPrefsForModel.wlan5GhzConfig?.channel,
       ),
-      wlan5GhzMode: textMatch(data.wlan5GhzConfig?.mode, routerPrefsForModel.wlan5GhzConfig?.mode),
+      wlan5GhzMode: regexMatch(data.wlan5GhzConfig?.mode, routerPrefsForModel.wlan5GhzConfig?.mode),
       wlan5GhzBandWidth: arrayMatch(
         data.wlan5GhzConfig?.bandWidth,
         routerPrefsForModel.wlan5GhzConfig?.bandWidth,

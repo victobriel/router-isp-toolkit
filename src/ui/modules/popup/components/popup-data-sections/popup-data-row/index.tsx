@@ -5,16 +5,23 @@ import {
   PopupCompareBadge,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
 import { copyTextToClipboard } from '@/ui/utils/clipboard';
-import { Copy, SquareArrowOutUpRight } from 'lucide-react';
+import { ArrowUpRight, Copy, EllipsisVertical, LucideIcon } from 'lucide-react';
 import { usePopupStatus } from '../../../contexts/popup-status-context';
 import { PopupStatusType } from '@/application/types';
 import { Separator } from '@/ui/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/components/ui/dropdown-menu';
 
 export interface PopupDataRowProps {
   label: string;
   value: string | boolean | undefined;
   compareMatch?: boolean;
   ableToCopy?: boolean;
+  handleGoToSection?: () => void;
 }
 
 export const PopupDataRow = ({
@@ -22,6 +29,7 @@ export const PopupDataRow = ({
   value,
   compareMatch,
   ableToCopy = false,
+  handleGoToSection,
 }: PopupDataRowProps) => {
   const { setStatus, setStatusMessage } = usePopupStatus();
 
@@ -33,9 +41,36 @@ export const PopupDataRow = ({
     }
   };
 
-  const handleGoToSection = () => {
-    return;
-  };
+  const menu: {
+    label: string;
+    value: string;
+    icon: LucideIcon;
+    onClick: () => void;
+  }[] = [
+    ...(ableToCopy
+      ? [
+          {
+            label: translator.t('popup_copy_text'),
+            value: 'copy_text',
+            icon: Copy,
+            onClick: handleCopy,
+          },
+        ]
+      : []),
+    ...(handleGoToSection
+      ? [
+          {
+            label: translator.t('popup_go_to_section'),
+            value: 'go_to_section',
+            icon: ArrowUpRight,
+            onClick: handleGoToSection,
+          },
+        ]
+      : []),
+  ];
+
+  const singleMenuItem = menu.length === 1 ? menu[0] : undefined;
+  const SingleMenuIcon = singleMenuItem?.icon;
 
   return (
     <div className="grid grid-cols-[3fr_5fr] items-center justify-between gap-2 py-0.5 h-9">
@@ -58,27 +93,32 @@ export const PopupDataRow = ({
               {value ?? '-'}
             </span>
           )}
-          {ableToCopy && (
+          {menu.length > 1 ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="opacity-50 size-5">
+                  <EllipsisVertical className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {menu.map(({ label, value, icon: Icon, onClick }) => (
+                  <DropdownMenuItem key={value} onClick={onClick}>
+                    {Icon && <Icon className="size-3.5" />}
+                    <span>{label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : singleMenuItem ? (
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleCopy}
-              aria-label={translator.t('popup_copy_text')}
-              disabled={value === undefined}
               className="opacity-50 size-5"
+              onClick={singleMenuItem.onClick}
             >
-              <Copy className="size-4" />
+              {SingleMenuIcon ? <SingleMenuIcon className="size-4" /> : null}
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleGoToSection}
-            aria-label={translator.t('popup_go_to_section')}
-            className="opacity-50 size-5"
-          >
-            <SquareArrowOutUpRight className="size-4" />
-          </Button>
+          ) : null}
         </div>
       </div>
     </div>

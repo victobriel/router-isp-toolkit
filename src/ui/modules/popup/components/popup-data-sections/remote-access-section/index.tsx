@@ -17,16 +17,26 @@ export const RemoteAccessSection = ({
   data,
   routerPreferencesComparison,
 }: RemoteAccessSectionProps) => {
+  const handleGoToRemoteAccessIpv4Config = () => {
+    console.log('go to remote access ipv4 config');
+  };
+
+  const handleGoToRemoteAccessIpv6Config = () => {
+    console.log('go to remote access ipv6 config');
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_remote_access_ipv4'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv4Enabled,
       value: data.remoteAccessIpv4Enabled,
+      handleGoToSection: () => handleGoToRemoteAccessIpv4Config(),
     },
     {
       label: translator.t('popup_label_remote_access_ipv6'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv6Enabled,
       value: data.remoteAccessIpv6Enabled,
+      handleGoToSection: () => handleGoToRemoteAccessIpv6Config(),
     },
   ];
 
@@ -49,6 +59,7 @@ export const RemoteAccessSection = ({
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
+              handleGoToSection={row.handleGoToSection}
             />
           );
         })}

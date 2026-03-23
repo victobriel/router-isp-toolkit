@@ -24,6 +24,7 @@ const wlanExtractionConfigSchema = z.object({
 });
 
 const extractionRouterFields = routerStateShape({
+  linkSpeed: z.string(),
   pppoeUsername: z.string(),
   ipVersion: z.string(),
   tr069Url: z.string(),
@@ -35,6 +36,7 @@ const extractionRouterFields = routerStateShape({
   dhcpEndIp: z.string(),
   dhcpPrimaryDns: z.string(),
   dhcpSecondaryDns: z.string(),
+  dhcpLeaseTimeMode: z.string(),
   wlanConfig: wlanExtractionConfigSchema.partial(),
 });
 

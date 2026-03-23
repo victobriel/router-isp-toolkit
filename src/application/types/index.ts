@@ -45,7 +45,7 @@ const regExpSchema = z.union([z.string(), z.instanceof(RegExp)]).transform((valu
 const ssidPreferenceEntry = wlanSsidPreferenceEntrySchema(regExpSchema);
 const ssidPreferenceEntryStrings = wlanSsidPreferenceEntrySchema(z.string());
 
-const wlanPreferencesConfigSchema = z.object({
+const wlanPreferencesStorageConfigSchema = z.object({
   enabled: z.boolean(),
   channel: z.array(z.string()),
   mode: z.string(),
@@ -55,6 +55,7 @@ const wlanPreferencesConfigSchema = z.object({
 
 /** Persisted in extension storage (JSON); pattern fields are plain strings. */
 const preferencesStorageFields = routerStateShape({
+  linkSpeed: z.string(),
   pppoeUsername: z.string(),
   ipVersion: z.string(),
   tr069Url: z.string(),
@@ -66,7 +67,8 @@ const preferencesStorageFields = routerStateShape({
   dhcpEndIp: z.string(),
   dhcpPrimaryDns: z.string(),
   dhcpSecondaryDns: z.string(),
-  wlanConfig: wlanPreferencesConfigSchema.partial(),
+  dhcpLeaseTimeMode: z.string(),
+  wlanConfig: wlanPreferencesStorageConfigSchema.partial(),
 });
 
 export const RouterPreferencesSchema = z.object(preferencesStorageFields).partial();
@@ -77,8 +79,17 @@ export const RouterPreferencesByModelSchema = z.record(z.string(), RouterPrefere
 
 export type RouterPreferencesByModel = z.infer<typeof RouterPreferencesByModelSchema>;
 
+const wlanPreferencesConfigSchema = z.object({
+  enabled: z.boolean(),
+  channel: z.array(z.string()),
+  mode: regExpSchema,
+  bandWidth: z.array(z.string()),
+  transmittingPower: z.string(),
+});
+
 /** Same shape as stored prefs, with regex parsing for matching against extraction. */
 const preferencesMatchFields = routerStateShape({
+  linkSpeed: regExpSchema,
   pppoeUsername: regExpSchema,
   ipVersion: regExpSchema,
   tr069Url: regExpSchema,
@@ -90,6 +101,7 @@ const preferencesMatchFields = routerStateShape({
   dhcpEndIp: regExpSchema,
   dhcpPrimaryDns: regExpSchema,
   dhcpSecondaryDns: regExpSchema,
+  dhcpLeaseTimeMode: regExpSchema,
   wlanConfig: wlanPreferencesConfigSchema,
 });
 

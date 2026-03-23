@@ -15,6 +15,22 @@ interface MiscSectionProps {
 }
 
 export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionProps) => {
+  const handleGoToRouterVersionUpdate = () => {
+    console.log('go to router version update');
+  };
+
+  const handleGoToTr069Config = () => {
+    console.log('go to tr069 config');
+  };
+
+  const handleGoToUpnpConfig = () => {
+    console.log('go to upnp config');
+  };
+
+  const handleGoToBandSteeringConfig = () => {
+    console.log('go to band steering config');
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_model'),
@@ -26,22 +42,26 @@ export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionPr
       compareMatch: routerPreferencesComparison?.routerVersion,
       value: val(data.routerVersion),
       ableToCopy: true,
+      handleGoToSection: () => handleGoToRouterVersionUpdate(),
     },
     {
       label: `${translator.t('popup_label_tr069')} ${translator.t('popup_label_url')}`,
       compareMatch: routerPreferencesComparison?.tr069Url,
       value: val(data.tr069Url),
       ableToCopy: true,
+      handleGoToSection: () => handleGoToTr069Config(),
     },
     {
       label: translator.t('popup_section_upnp'),
       compareMatch: routerPreferencesComparison?.upnpEnabled,
       value: data.upnpEnabled,
+      handleGoToSection: () => handleGoToUpnpConfig(),
     },
     {
       label: translator.t('popup_section_band_steering'),
       compareMatch: routerPreferencesComparison?.bandSteeringEnabled,
       value: data.bandSteeringEnabled,
+      handleGoToSection: () => handleGoToBandSteeringConfig(),
     },
   ];
 
@@ -63,6 +83,7 @@ export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionPr
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
+            handleGoToSection={row.handleGoToSection}
           />
         ))}
       </div>

@@ -167,34 +167,43 @@ function PopupContent({
       />
 
       {data && (
-        <div className="bg-background border-t border-border">
+        <div className="bg-background">
           <div className="grid grid-cols-3 gap-2 py-2 pl-4 pr-2">
             <Button
               variant="outline"
               size="sm"
-              className="text-xs! h-9!"
+              className="text-xs! h-9! rounded-full!"
               onClick={() => void onCollect(username, password)}
               disabled={isCollecting}
+              title={translator.t('popup_collect_refresh_button')}
             >
-              <RefreshCw className="size-4" />
-              {isCollecting
-                ? translator.t('popup_collect_collecting')
-                : translator.t('popup_collect_refresh_button')}
+              <RefreshCw className="size-5" />
             </Button>
-            <Button variant="outline" size="sm" className="text-xs! h-9!" onClick={handleClearData}>
-              <Trash className="size-4" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs! h-9! rounded-full!"
+              onClick={handleClearData}
+              title={translator.t('popup_clear_aria_label')}
+            >
+              <Trash className="size-5" />
               {translator.t('popup_clear_aria_label')}
             </Button>
-            <Button variant="outline" size="sm" className="text-xs! h-9!" onClick={handleCopyText}>
-              <Copy className="size-4" />
-              {translator.t('popup_copy_text')}
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs! h-9! rounded-full!"
+              onClick={handleCopyText}
+              title={translator.t('popup_copy_text')}
+            >
+              <Copy className="size-5" />
             </Button>
           </div>
         </div>
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-        <TabsList className="shrink-0 gap-1.5 pl-4 pr-2 rounded-none! py-1">
+        <TabsList className="shrink-0 gap-1.5 pl-4 pr-2 rounded-none! py-1 border-b border-muted-foreground/60">
           {menu.map(({ label, value, type, icon: Icon, onClick }, idx) =>
             idx >= 3 ? null : type === 'tab' ? (
               <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 h-9">

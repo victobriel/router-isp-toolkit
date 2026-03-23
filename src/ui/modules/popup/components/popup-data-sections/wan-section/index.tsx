@@ -16,32 +16,41 @@ interface WanSectionProps {
 }
 
 export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProps) => {
+  const handleGoToWanSection = (key: string) => {
+    console.log('go to wan section', key);
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_pppoe'),
       compareMatch: routerPreferencesComparison?.pppoeUsername,
       value: val(data.pppoeUsername),
       ableToCopy: true,
+      handleGoToSection: () => handleGoToWanSection('pppoe'),
     },
     {
       label: translator.t('popup_label_internet'),
       compareMatch: routerPreferencesComparison?.internetEnabled,
       value: data.internetEnabled,
+      handleGoToSection: () => handleGoToWanSection('internet'),
     },
     {
       label: translator.t('popup_label_tr069'),
       compareMatch: routerPreferencesComparison?.tr069Enabled,
       value: data.tr069Enabled,
+      handleGoToSection: () => handleGoToWanSection('tr069'),
     },
     {
       label: translator.t('popup_label_link_speed'),
       compareMatch: routerPreferencesComparison?.linkSpeed,
       value: val(data.linkSpeed),
+      handleGoToSection: () => handleGoToWanSection('linkSpeed'),
     },
     {
       label: translator.t('popup_label_ip_version'),
       compareMatch: routerPreferencesComparison?.ipVersion,
       value: val(data.ipVersion ?? undefined),
+      handleGoToSection: () => handleGoToWanSection('ipVersion'),
     },
   ];
   if (data.ipVersion?.includes('6')) {
@@ -50,21 +59,25 @@ export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProp
         label: translator.t('popup_label_request_pd'),
         compareMatch: routerPreferencesComparison?.requestPdEnabled,
         value: data.requestPdEnabled,
+        handleGoToSection: () => handleGoToWanSection('requestPd'),
       },
       {
         label: translator.t('popup_label_slaac_status'),
         compareMatch: routerPreferencesComparison?.slaacEnabled,
         value: data.slaacEnabled,
+        handleGoToSection: () => handleGoToWanSection('slaac'),
       },
       {
         label: translator.t('popup_label_dhcpv6_status'),
         compareMatch: routerPreferencesComparison?.dhcpv6Enabled,
         value: data.dhcpv6Enabled,
+        handleGoToSection: () => handleGoToWanSection('dhcpv6'),
       },
       {
         label: translator.t('popup_label_pd_status'),
         compareMatch: routerPreferencesComparison?.pdEnabled,
         value: data.pdEnabled,
+        handleGoToSection: () => handleGoToWanSection('pd'),
       },
     );
   }
@@ -89,6 +102,7 @@ export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProp
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
+              handleGoToSection={row.handleGoToSection}
             />
           </div>
         ))}

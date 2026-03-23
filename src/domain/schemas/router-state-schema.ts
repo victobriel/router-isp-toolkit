@@ -40,6 +40,7 @@ export function wlanSsidPreferenceEntrySchema<T extends z.ZodType>(fieldSchema: 
 
 export function routerStateShape<
   TPppoe extends z.ZodType,
+  TLinkSpeed extends z.ZodType,
   TIpVersion extends z.ZodType,
   TTr069 extends z.ZodType,
   TWlan24Ssids extends z.ZodType,
@@ -50,9 +51,11 @@ export function routerStateShape<
   TDhcpEndIp extends z.ZodType,
   TDhcpPrimaryDns extends z.ZodType,
   TDhcpSecondaryDns extends z.ZodType,
+  TDhcpLeaseTimeMode extends z.ZodType,
   TWlanConfig extends z.ZodType,
 >(params: {
   pppoeUsername: TPppoe;
+  linkSpeed: TLinkSpeed;
   ipVersion: TIpVersion;
   tr069Url: TTr069;
   wlan24GhzSsids: TWlan24Ssids;
@@ -63,6 +66,7 @@ export function routerStateShape<
   dhcpEndIp: TDhcpEndIp;
   dhcpPrimaryDns: TDhcpPrimaryDns;
   dhcpSecondaryDns: TDhcpSecondaryDns;
+  dhcpLeaseTimeMode: TDhcpLeaseTimeMode;
   wlanConfig: TWlanConfig;
 }) {
   return {
@@ -81,25 +85,25 @@ export function routerStateShape<
     remoteAccessIpv6Enabled: z.boolean(),
     dhcpEnabled: z.boolean(),
     dhcpIspDnsEnabled: z.boolean(),
-
-    linkSpeed: z.string(),
     routerVersion: z.string(),
-    dhcpLeaseTimeMode: z.string(),
     dhcpLeaseTime: z.string(),
 
-    wlan24GhzConfig: params.wlanConfig,
-    wlan5GhzConfig: params.wlanConfig,
-
+    linkSpeed: params.linkSpeed,
     pppoeUsername: params.pppoeUsername,
     ipVersion: params.ipVersion,
     tr069Url: params.tr069Url,
+
+    wlan24GhzConfig: params.wlanConfig,
+    wlan5GhzConfig: params.wlanConfig,
     wlan24GhzSsids: params.wlan24GhzSsids,
     wlan5GhzSsids: params.wlan5GhzSsids,
+
     dhcpIpAddress: params.dhcpIpAddress,
     dhcpSubnetMask: params.dhcpSubnetMask,
     dhcpStartIp: params.dhcpStartIp,
     dhcpEndIp: params.dhcpEndIp,
     dhcpPrimaryDns: params.dhcpPrimaryDns,
     dhcpSecondaryDns: params.dhcpSecondaryDns,
+    dhcpLeaseTimeMode: params.dhcpLeaseTimeMode,
   };
 }

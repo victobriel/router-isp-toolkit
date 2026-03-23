@@ -8,8 +8,6 @@ import {
 } from '@/application/constants';
 import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
 import type {
-  BookmarkStore,
-  CredentialBookmark,
   ModelBookmarks,
   RouterPreferencesByModel,
   RouterPreferencesStore,
@@ -20,19 +18,7 @@ import { Button } from '@/ui/components/ui/button';
 import { Badge } from '@/ui/components/ui/badge';
 import { Separator } from '@/ui/components/ui/separator';
 import { Collapsible } from '@/ui/components/ui/collapsible';
-import { cn } from '@/ui/lib/utils';
-import {
-  Trash2,
-  Save,
-  Sun,
-  Moon,
-  Monitor,
-  CheckCircle,
-  XCircle,
-  Copy,
-  Upload,
-  Download,
-} from 'lucide-react';
+import { Trash2, Save, Sun, Moon, Monitor, Copy, Upload, Download } from 'lucide-react';
 import { useAppTheme, type AppThemePreference } from '@/ui/hooks/use-app-theme';
 import {
   Accordion,
@@ -43,75 +29,20 @@ import {
 import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider';
 import { copyTextToClipboard } from '@/ui/utils/clipboard';
 import { RouterPreferenceSection } from './router-preference-section';
-import { Input } from '@/ui/components/ui/input';
-
-interface Toast {
-  id: number;
-  msg: string;
-  variant: 'ok' | 'err';
-}
-
-let toastCounter = 0;
-
-function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([]);
-
-  const show = (msg: string, variant: 'ok' | 'err' = 'ok') => {
-    const id = ++toastCounter;
-    setToasts((prev) => [...prev, { id, msg, variant }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
-  };
-
-  return { toasts, show };
-}
-
-function normalizeImportBookmarkStore(raw: unknown): BookmarkStore | null {
-  if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const obj = raw as Record<string, unknown>;
-
-  const next: BookmarkStore = {};
-  for (const [modelKey, v] of Object.entries(obj)) {
-    if (v == null || typeof v !== 'object' || Array.isArray(v)) return null;
-
-    const candidate = v as Record<string, unknown>;
-    if (typeof candidate.model !== 'string') return null;
-
-    const credsRaw = candidate.credentials;
-    if (!Array.isArray(credsRaw)) return null;
-
-    const credentials: CredentialBookmark[] = [];
-    for (const c of credsRaw) {
-      if (c == null || typeof c !== 'object' || Array.isArray(c)) return null;
-      const cc = c as Record<string, unknown>;
-      if (typeof cc.id !== 'string') return null;
-      if (typeof cc.username !== 'string') return null;
-      if (typeof cc.password !== 'string') return null;
-      credentials.push({ id: cc.id, username: cc.username, password: cc.password });
-    }
-
-    // Keep the stored shape, but normalize based on the outer key.
-    next[modelKey] = { model: candidate.model, credentials };
-  }
-
-  return next;
-}
-
-function downloadJsonFile(filename: string, value: unknown) {
-  const json = JSON.stringify(value, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+import { cn } from '@/ui/lib/utils';
+import {
+  downloadJsonFile,
+  normalizeImportBookmarkStore,
+  type SettingsConfigSectionKey,
+} from '../utils/settings-import-export';
+import { SettingsImportExportModal } from './settings-import-export-modal';
+import { SettingsToastStack, useSettingsToast } from './settings-toast-stack';
 
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;
 
 export const Settings = () => {
-  const { toasts, show: showToast } = useToast();
+  const { toasts, show: showToast } = useSettingsToast();
 
   const { themePreference: theme, setThemePreference: setTheme } = useAppTheme();
 
@@ -122,7 +53,6 @@ export const Settings = () => {
   const [selectedModelKey, setSelectedModelKey] = useState('');
   const [version, setVersion] = useState('');
 
-  type SettingsConfigSectionKey = 'bookmarks' | 'copyTextTemplate' | 'routerPreferences';
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importSections, setImportSections] = useState<Record<SettingsConfigSectionKey, boolean>>({
@@ -291,7 +221,6 @@ export const Settings = () => {
       const rawSchemaVersion = root.schemaVersion;
       let fileSchemaVersion: number;
       if (rawSchemaVersion === undefined || rawSchemaVersion === null) {
-        // Legacy files without a version (or hand-crafted JSON before `schemaVersion` existed).
         fileSchemaVersion = 1;
       } else if (typeof rawSchemaVersion !== 'number' || !Number.isInteger(rawSchemaVersion)) {
         showToast(translator.t('settings_import_error_invalid_schema_version'), 'err');
@@ -315,7 +244,6 @@ export const Settings = () => {
         return;
       }
 
-      // Validate all selected sections exist before writing anything.
       const next = exportData as Record<string, unknown>;
       for (const k of selectedImportSectionKeys) {
         if (k === 'bookmarks' && next.bookmarks == null) {
@@ -393,32 +321,29 @@ export const Settings = () => {
     showToast(translator.t('settings_copy_template_toast_copied'), 'ok');
   };
 
+  const themeOptions = [
+    {
+      id: 'light' as AppThemePreference,
+      label: translator.t('popup_theme_light'),
+      icon: <Sun className="h-4 w-4" />,
+    },
+    {
+      id: 'dark' as AppThemePreference,
+      label: translator.t('popup_theme_dark'),
+      icon: <Moon className="h-4 w-4" />,
+    },
+    {
+      id: 'system' as AppThemePreference,
+      label: translator.t('popup_theme_system'),
+      icon: <Monitor className="h-4 w-4" />,
+    },
+  ] as const;
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Toast stack */}
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={cn(
-              'flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm shadow-lg pointer-events-auto transition-all',
-              t.variant === 'ok'
-                ? 'bg-success/15 text-success border border-success/20'
-                : 'bg-destructive/15 text-destructive border border-destructive/20',
-            )}
-          >
-            {t.variant === 'ok' ? (
-              <CheckCircle className="h-4 w-4 shrink-0" />
-            ) : (
-              <XCircle className="h-4 w-4 shrink-0" />
-            )}
-            {t.msg}
-          </div>
-        ))}
-      </div>
+      <SettingsToastStack toasts={toasts} />
 
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             {translator.t('settings_header_subtitle')}
@@ -430,29 +355,10 @@ export const Settings = () => {
 
         <Separator />
 
-        {/* Theme */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold">{translator.t('settings_section_appearance')}</h2>
           <div className="flex gap-2">
-            {(
-              [
-                {
-                  id: 'light' as AppThemePreference,
-                  label: translator.t('popup_theme_light'),
-                  icon: <Sun className="h-4 w-4" />,
-                },
-                {
-                  id: 'dark' as AppThemePreference,
-                  label: translator.t('popup_theme_dark'),
-                  icon: <Moon className="h-4 w-4" />,
-                },
-                {
-                  id: 'system' as AppThemePreference,
-                  label: translator.t('popup_theme_system'),
-                  icon: <Monitor className="h-4 w-4" />,
-                },
-              ] as const
-            ).map(({ id, label, icon }) => (
+            {themeOptions.map(({ id, label, icon }) => (
               <button
                 key={id}
                 type="button"
@@ -473,7 +379,6 @@ export const Settings = () => {
 
         <Separator />
 
-        {/* Saved credentials */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold">
@@ -520,7 +425,6 @@ export const Settings = () => {
 
         <Separator />
 
-        {/* Copy text template */}
         <section className="space-y-3">
           <div>
             <h2 className="text-sm font-semibold">
@@ -572,7 +476,6 @@ export const Settings = () => {
 
         <Separator />
 
-        {/* Router preferences */}
         <RouterPreferenceSection
           bookmarkEntries={bookmarkEntries}
           existingPreferenceModelKeys={Object.keys(prefsByModel)}
@@ -584,7 +487,6 @@ export const Settings = () => {
 
         <Separator />
 
-        {/* Import / Export */}
         <section className="space-y-3">
           <div className="space-y-1">
             <h2 className="text-sm font-semibold">
@@ -619,179 +521,35 @@ export const Settings = () => {
           </div>
         </section>
 
-        {/* Import dialog */}
-        {importOpen ? (
-          <div
-            className="fixed inset-0 z-60 flex items-center justify-center p-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => {
-                setImportOpen(false);
-                setImportFile(null);
-              }}
-            />
+        <SettingsImportExportModal
+          variant="import"
+          open={importOpen}
+          onRequestClose={() => {
+            setImportOpen(false);
+            setImportFile(null);
+          }}
+          sections={importSections}
+          setSections={setImportSections}
+          isBusy={isImporting}
+          onConfirm={handleImport}
+          getSectionLabel={getSectionLabel}
+          importFile={importFile}
+          onImportFileChange={setImportFile}
+        />
 
-            <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-4 shadow-lg">
-              <div className="space-y-1">
-                <h3 className="text-sm font-semibold">
-                  {translator.t('settings_import_dialog_title')}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {translator.t('settings_import_dialog_desc')}
-                </p>
-              </div>
-
-              <div className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-foreground">
-                    {translator.t('settings_dialog_sections_label')}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {(Object.keys(importSections) as SettingsConfigSectionKey[]).map((k) => (
-                      <label key={k} className="flex items-center gap-2 text-xs select-none">
-                        <input
-                          type="checkbox"
-                          checked={importSections[k]}
-                          onChange={(e) =>
-                            setImportSections((prev) => ({
-                              ...prev,
-                              [k]: e.target.checked,
-                            }))
-                          }
-                        />
-                        <span>{getSectionLabel(k)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-foreground">
-                    {translator.t('settings_import_file_label')}
-                  </div>
-                  <Input
-                    type="file"
-                    accept="application/json,.json"
-                    disabled={isImporting}
-                    onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
-                    className="block w-full text-xs"
-                  />
-                  <p className="text-[0.7rem] text-muted-foreground">
-                    {translator.t('settings_import_file_hint')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setImportOpen(false);
-                    setImportFile(null);
-                  }}
-                  disabled={isImporting}
-                >
-                  {translator.t('settings_dialog_cancel')}
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => void handleImport()}
-                  disabled={isImporting}
-                  className="gap-1.5"
-                >
-                  <Upload className="h-3.5 w-3.5" />
-                  {translator.t('settings_import_confirm_button')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Export dialog */}
-        {exportOpen ? (
-          <div
-            className="fixed inset-0 z-60 flex items-center justify-center p-4"
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="absolute inset-0 bg-black/40" onClick={() => setExportOpen(false)} />
-
-            <div className="relative w-full max-w-lg rounded-lg border border-border bg-background p-4 shadow-lg">
-              <div className="space-y-1">
-                <h3 className="text-sm font-semibold">
-                  {translator.t('settings_export_dialog_title')}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {translator.t('settings_export_dialog_desc')}
-                </p>
-              </div>
-
-              <div className="mt-4 space-y-4">
-                <div className="space-y-2">
-                  <div className="text-xs font-medium text-foreground">
-                    {translator.t('settings_dialog_sections_label')}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {(Object.keys(exportSections) as SettingsConfigSectionKey[]).map((k) => (
-                      <label key={k} className="flex items-center gap-2 text-xs select-none">
-                        <input
-                          type="checkbox"
-                          checked={exportSections[k]}
-                          onChange={(e) =>
-                            setExportSections((prev) => ({
-                              ...prev,
-                              [k]: e.target.checked,
-                            }))
-                          }
-                        />
-                        <span>{getSectionLabel(k)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-border/70 bg-muted/10 p-3 space-y-1">
-                  <p className="text-xs font-medium">
-                    {translator.t('settings_export_file_label')}
-                  </p>
-                  <p className="text-[0.7rem] text-muted-foreground">
-                    {translator.t('settings_export_file_hint')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setExportOpen(false)}
-                  disabled={isExporting}
-                >
-                  {translator.t('settings_dialog_cancel')}
-                </Button>
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => void handleExport()}
-                  disabled={isExporting}
-                  className="gap-1.5"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  {translator.t('settings_export_confirm_button')}
-                </Button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+        <SettingsImportExportModal
+          variant="export"
+          open={exportOpen}
+          onRequestClose={() => setExportOpen(false)}
+          sections={exportSections}
+          setSections={setExportSections}
+          isBusy={isExporting}
+          onConfirm={handleExport}
+          getSectionLabel={getSectionLabel}
+        />
 
         <Separator />
 
-        {/* Danger zone */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-destructive">
             {translator.t('settings_danger_zone_title')}

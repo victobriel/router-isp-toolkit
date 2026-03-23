@@ -32,37 +32,47 @@ export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
 
   if (!ssid) return null;
 
+  const handleGoToWlanSsidSlider = (key: string, idx: number) => {
+    console.log('go to wlan ssid', key, idx);
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_enabled'),
       compareMatch: ssid.enabled,
       value: ssid.enabled,
+      handleGoToSection: () => handleGoToWlanSsidSlider('enabled', idx),
     },
     {
       label: translator.t('popup_label_ssid_name'),
       compareMatch: ssidMatches?.[idx]?.ssidName,
       value: val(ssid.ssidName),
       ableToCopy: true,
+      handleGoToSection: () => handleGoToWlanSsidSlider('ssidName', idx),
     },
     {
       label: translator.t('popup_label_ssid_password'),
       value: val(ssid.ssidPassword),
       ableToCopy: true,
+      handleGoToSection: () => handleGoToWlanSsidSlider('ssidPassword', idx),
     },
     {
       label: translator.t('popup_label_ssid_hide_mode'),
       compareMatch: ssidMatches?.[idx]?.ssidHideMode,
       value: ssid.ssidHideMode,
+      handleGoToSection: () => handleGoToWlanSsidSlider('ssidHideMode', idx),
     },
     {
       label: translator.t('popup_label_wpa2_security'),
       compareMatch: ssidMatches?.[idx]?.wpa2SecurityType,
       value: val(ssid.wpa2SecurityType),
+      handleGoToSection: () => handleGoToWlanSsidSlider('wpa2SecurityType', idx),
     },
     {
       label: translator.t('popup_label_max_clients'),
       compareMatch: ssidMatches?.[idx]?.maxClients,
       value: val(String(ssid.maxClients)),
+      handleGoToSection: () => handleGoToWlanSsidSlider('maxClients', idx),
     },
   ];
 
@@ -101,6 +111,7 @@ export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
+            handleGoToSection={row.handleGoToSection}
           />
         );
       })}
@@ -168,31 +179,40 @@ export const WlanBandSection = ({
       ? routerPreferencesComparison?.wlan24GhzTransmittingPower
       : routerPreferencesComparison?.wlan5GhzTransmittingPower;
 
+  const handleGoToWlanBandSection = (key: string, band: Band) => {
+    console.log('go to wlan band section', key, band);
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_radio'),
       compareMatch: radioEnabledMatch,
       value: config?.enabled,
+      handleGoToSection: () => handleGoToWlanBandSection('radio', band),
     },
     {
       label: translator.t('popup_label_channel'),
       compareMatch: channelMatch,
       value: val(config?.channel),
+      handleGoToSection: () => handleGoToWlanBandSection('channel', band),
     },
     {
       label: translator.t('popup_label_mode'),
       compareMatch: modeMatch,
       value: val(config?.mode),
+      handleGoToSection: () => handleGoToWlanBandSection('mode', band),
     },
     {
       label: translator.t('popup_label_bandwidth'),
       compareMatch: bandWidthMatch,
       value: val(config?.bandWidth),
+      handleGoToSection: () => handleGoToWlanBandSection('bandWidth', band),
     },
     {
       label: translator.t('popup_label_transmitting_power'),
       compareMatch: transmittingPowerMatch,
       value: val(config?.transmittingPower),
+      handleGoToSection: () => handleGoToWlanBandSection('transmittingPower', band),
     },
   ];
 
@@ -222,6 +242,7 @@ export const WlanBandSection = ({
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
+              handleGoToSection={row.handleGoToSection}
             />
           );
         })}

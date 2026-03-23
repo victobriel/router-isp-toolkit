@@ -15,56 +15,70 @@ interface DhcpSectionProps {
 }
 
 export const DhcpSection = ({ data, routerPreferencesComparison }: DhcpSectionProps) => {
+  const handleGoToDhcpSection = (key: string) => {
+    console.log('go to dhcp section', key);
+  };
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpEnabled,
       value: data.dhcpEnabled,
+      handleGoToSection: () => handleGoToDhcpSection('dhcpEnabled'),
     },
     {
       label: translator.t('popup_label_ip_address'),
       compareMatch: routerPreferencesComparison?.dhcpIpAddress,
       value: val(data.dhcpIpAddress),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpIpAddress'),
     },
     {
       label: translator.t('popup_label_subnet_mask'),
       compareMatch: routerPreferencesComparison?.dhcpSubnetMask,
       value: val(data.dhcpSubnetMask),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpSubnetMask'),
     },
     {
       label: translator.t('popup_label_start_ip'),
       compareMatch: routerPreferencesComparison?.dhcpStartIp,
       value: val(data.dhcpStartIp),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpStartIp'),
     },
     {
       label: translator.t('popup_label_end_ip'),
       compareMatch: routerPreferencesComparison?.dhcpEndIp,
       value: val(data.dhcpEndIp),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpEndIp'),
     },
     {
       label: translator.t('popup_label_isp_dns_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpIspDnsEnabled,
       value: data.dhcpIspDnsEnabled,
+      handleGoToSection: () => handleGoToDhcpSection('dhcpIspDnsEnabled'),
     },
     {
       label: translator.t('popup_label_primary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpPrimaryDns,
       value: val(data.dhcpPrimaryDns),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpPrimaryDns'),
     },
     {
       label: translator.t('popup_label_secondary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpSecondaryDns,
       value: val(data.dhcpSecondaryDns),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpSecondaryDns'),
     },
     {
       label: translator.t('popup_label_lease_time_mode'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTimeMode,
       value: val(data.dhcpLeaseTimeMode),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpLeaseTimeMode'),
     },
     {
       label: translator.t('popup_label_lease_time'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTime,
       value: val(data.dhcpLeaseTime),
+      handleGoToSection: () => handleGoToDhcpSection('dhcpLeaseTime'),
     },
   ];
 
@@ -86,6 +100,7 @@ export const DhcpSection = ({ data, routerPreferencesComparison }: DhcpSectionPr
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
+            handleGoToSection={row.handleGoToSection}
           />
         ))}
       </div>
