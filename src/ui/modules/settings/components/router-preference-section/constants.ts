@@ -32,9 +32,6 @@ export const DISABLED_VALUE = '_disabled';
 export const BOOL_ENABLED_VALUE = 'enabled';
 export const BOOL_DISABLED_VALUE = 'disabled';
 
-export const DHCP_LEASE_TIME_MODE_CUSTOM_VALUE = 'Custom';
-export const DHCP_LEASE_TIME_MODE_INFINITY_VALUE = 'Infinity';
-
 export const WLAN24_CHANNEL_ACCEPTABLE = Array.from({ length: 13 }, (_, i) => String(i + 1)).concat(
   ['Auto'],
 );

@@ -537,8 +537,8 @@
   "popup_copy_text_copied_aria": {
     "message": "Router info text copied"
   },
-  "popup_go_to_section": {
-    "message": "Go to section"
+  "popup_go_to_page": {
+    "message": "Go to page"
   },
   "popup_status_copy_success": {
     "message": "Router info copied to clipboard"
@@ -652,6 +652,7 @@
   "popup_collect_collecting": { "message": "Collecting..." },
   "popup_collect_refresh_button": { "message": "Refresh data" },
   "popup_collect_button": { "message": "Collect data" },
+  "popup_reboot_router": { "message": "Reboot router" },
   "popup_empty_no_data_title": { "message": "No data collected yet." },
   "popup_empty_no_data_desc": {
     "message": "Click $collect_button$ to see router information.",

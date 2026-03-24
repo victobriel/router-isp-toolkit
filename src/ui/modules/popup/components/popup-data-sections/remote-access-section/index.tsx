@@ -7,22 +7,21 @@ import {
 import { ExtractionResult } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface RemoteAccessSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
 export const RemoteAccessSection = ({
   data,
   routerPreferencesComparison,
+  goToPage,
 }: RemoteAccessSectionProps) => {
-  const handleGoToRemoteAccessIpv4Config = () => {
-    console.log('go to remote access ipv4 config');
-  };
-
-  const handleGoToRemoteAccessIpv6Config = () => {
-    console.log('go to remote access ipv6 config');
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
+    void goToPage(page, key);
   };
 
   const rows: PopupDataRowProps[] = [
@@ -30,13 +29,15 @@ export const RemoteAccessSection = ({
       label: translator.t('popup_label_remote_access_ipv4'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv4Enabled,
       value: data.remoteAccessIpv4Enabled,
-      handleGoToSection: () => handleGoToRemoteAccessIpv4Config(),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV4_STATUS),
     },
     {
       label: translator.t('popup_label_remote_access_ipv6'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv6Enabled,
       value: data.remoteAccessIpv6Enabled,
-      handleGoToSection: () => handleGoToRemoteAccessIpv6Config(),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV6_STATUS),
     },
   ];
 
@@ -59,7 +60,7 @@ export const RemoteAccessSection = ({
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
-              handleGoToSection={row.handleGoToSection}
+              handleGoToPage={row.handleGoToPage}
             />
           );
         })}

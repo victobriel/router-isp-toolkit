@@ -8,27 +8,17 @@ import {
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface MiscSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionProps) => {
-  const handleGoToRouterVersionUpdate = () => {
-    console.log('go to router version update');
-  };
-
-  const handleGoToTr069Config = () => {
-    console.log('go to tr069 config');
-  };
-
-  const handleGoToUpnpConfig = () => {
-    console.log('go to upnp config');
-  };
-
-  const handleGoToBandSteeringConfig = () => {
-    console.log('go to band steering config');
+export const MiscSection = ({ data, routerPreferencesComparison, goToPage }: MiscSectionProps) => {
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
+    void goToPage(page, key);
   };
 
   const rows: PopupDataRowProps[] = [
@@ -42,26 +32,27 @@ export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionPr
       compareMatch: routerPreferencesComparison?.routerVersion,
       value: val(data.routerVersion),
       ableToCopy: true,
-      handleGoToSection: () => handleGoToRouterVersionUpdate(),
+      handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.UPDATE),
     },
     {
       label: `${translator.t('popup_label_tr069')} ${translator.t('popup_label_url')}`,
       compareMatch: routerPreferencesComparison?.tr069Url,
       value: val(data.tr069Url),
       ableToCopy: true,
-      handleGoToSection: () => handleGoToTr069Config(),
+      handleGoToPage: () => handleGoToPage(RouterPage.TR_069, RouterPageKey.TR_069_URL),
     },
     {
       label: translator.t('popup_section_upnp'),
       compareMatch: routerPreferencesComparison?.upnpEnabled,
       value: data.upnpEnabled,
-      handleGoToSection: () => handleGoToUpnpConfig(),
+      handleGoToPage: () => handleGoToPage(RouterPage.UPnP, RouterPageKey.UPNP_STATUS),
     },
     {
       label: translator.t('popup_section_band_steering'),
       compareMatch: routerPreferencesComparison?.bandSteeringEnabled,
       value: data.bandSteeringEnabled,
-      handleGoToSection: () => handleGoToBandSteeringConfig(),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.BAND_STEERING, RouterPageKey.BAND_STEERING_STATUS),
     },
   ];
 
@@ -83,7 +74,7 @@ export const MiscSection = ({ data, routerPreferencesComparison }: MiscSectionPr
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
-            handleGoToSection={row.handleGoToSection}
+            handleGoToPage={row.handleGoToPage}
           />
         ))}
       </div>

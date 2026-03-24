@@ -8,15 +8,17 @@ import {
 import { Network } from 'lucide-react';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface DhcpSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const DhcpSection = ({ data, routerPreferencesComparison }: DhcpSectionProps) => {
-  const handleGoToDhcpSection = (key: string) => {
-    console.log('go to dhcp section', key);
+export const DhcpSection = ({ data, routerPreferencesComparison, goToPage }: DhcpSectionProps) => {
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
+    void goToPage(page, key);
   };
 
   const rows: PopupDataRowProps[] = [
@@ -24,61 +26,61 @@ export const DhcpSection = ({ data, routerPreferencesComparison }: DhcpSectionPr
       label: translator.t('popup_label_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpEnabled,
       value: data.dhcpEnabled,
-      handleGoToSection: () => handleGoToDhcpSection('dhcpEnabled'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_STATUS),
     },
     {
       label: translator.t('popup_label_ip_address'),
       compareMatch: routerPreferencesComparison?.dhcpIpAddress,
       value: val(data.dhcpIpAddress),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpIpAddress'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_IP_ADDRESS),
     },
     {
       label: translator.t('popup_label_subnet_mask'),
       compareMatch: routerPreferencesComparison?.dhcpSubnetMask,
       value: val(data.dhcpSubnetMask),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpSubnetMask'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SUBNET_MASK),
     },
     {
       label: translator.t('popup_label_start_ip'),
       compareMatch: routerPreferencesComparison?.dhcpStartIp,
       value: val(data.dhcpStartIp),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpStartIp'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_START_IP),
     },
     {
       label: translator.t('popup_label_end_ip'),
       compareMatch: routerPreferencesComparison?.dhcpEndIp,
       value: val(data.dhcpEndIp),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpEndIp'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_END_IP),
     },
     {
       label: translator.t('popup_label_isp_dns_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpIspDnsEnabled,
       value: data.dhcpIspDnsEnabled,
-      handleGoToSection: () => handleGoToDhcpSection('dhcpIspDnsEnabled'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_ISP_DNS_STATUS),
     },
     {
       label: translator.t('popup_label_primary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpPrimaryDns,
       value: val(data.dhcpPrimaryDns),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpPrimaryDns'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_PRIMARY_DNS),
     },
     {
       label: translator.t('popup_label_secondary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpSecondaryDns,
       value: val(data.dhcpSecondaryDns),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpSecondaryDns'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SECONDARY_DNS),
     },
     {
       label: translator.t('popup_label_lease_time_mode'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTimeMode,
       value: val(data.dhcpLeaseTimeMode),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpLeaseTimeMode'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME_MODE),
     },
     {
       label: translator.t('popup_label_lease_time'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTime,
       value: val(data.dhcpLeaseTime),
-      handleGoToSection: () => handleGoToDhcpSection('dhcpLeaseTime'),
+      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME),
     },
   ];
 
@@ -100,7 +102,7 @@ export const DhcpSection = ({ data, routerPreferencesComparison }: DhcpSectionPr
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
-            handleGoToSection={row.handleGoToSection}
+            handleGoToPage={row.handleGoToPage}
           />
         ))}
       </div>

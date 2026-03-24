@@ -18,6 +18,7 @@ import {
 import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 export class ZteH199Driver extends BaseRouter {
   private readonly s = Selectors;
@@ -508,6 +509,303 @@ export class ZteH199Driver extends BaseRouter {
     const parsedResult = this.parsePingTestResult(result, ip);
 
     return parsedResult;
+  }
+
+  public async reboot(): Promise<void> {
+    await this.clickElementAndWait(this.s.managementTab, this.s.managementContainer);
+    await this.clickElementAndWait(this.s.managementContainer, this.s.rebootButton);
+    await this.clickElementAndWait(this.s.rebootButton, this.s.rebootConfirmationButton);
+    const rebootConfirmationButton = this.domService.getElement(
+      this.s.rebootConfirmationButton,
+      HTMLElement,
+    );
+    this.domService.safeClick(rebootConfirmationButton);
+  }
+
+  public goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void {
+    void this.navigateToPageKey(page, key, options);
+  }
+
+  private async navigateToPageKey(
+    page: RouterPage,
+    key: RouterPageKey,
+    options?: GoToPageOptions,
+  ): Promise<void> {
+    const plan = this.getGoToPagePlan(page, key, options);
+    if (!plan) return;
+
+    try {
+      for (const step of plan.steps) {
+        if (!step) continue;
+        await this.clickElementAndWait(step);
+      }
+
+      if (plan.expandToggleSelector && plan.expandedAreaSelector) {
+        const expandedArea = document.querySelector<HTMLElement>(plan.expandedAreaSelector);
+        const isExpanded =
+          expandedArea instanceof HTMLElement &&
+          window.getComputedStyle(expandedArea).display !== 'none';
+
+        if (!isExpanded) {
+          const expander = document.querySelector<HTMLElement>(plan.expandToggleSelector);
+          if (expander) {
+            this.domService.safeClick(expander);
+            await this.waitForElement(plan.targetSelector).catch(() => {});
+          }
+        }
+      }
+
+      const target = document.querySelector<HTMLElement>(plan.targetSelector);
+      if (!target) return;
+
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.dispatchEvent(new MouseEvent('focus', { bubbles: true, cancelable: true }));
+
+      if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
+        target.focus();
+      }
+    } catch {
+      // Best-effort navigation; ignore transient UI failures.
+    }
+  }
+
+  private getGoToPagePlan(
+    page: RouterPage,
+    key: RouterPageKey,
+    options?: GoToPageOptions,
+  ): {
+    steps: (string | null)[];
+    targetSelector: string;
+    expandToggleSelector?: string;
+    expandedAreaSelector?: string;
+  } | null {
+    const ssidIndex =
+      typeof options?.ssidIndex === 'number'
+        ? options.ssidIndex
+        : this.isFiveGhzBand(options?.band)
+          ? 4
+          : 0;
+
+    switch (key) {
+      case RouterPageKey.PPPOE_USERNAME:
+      case RouterPageKey.INTERNET_STATUS:
+      case RouterPageKey.TR_069_STATUS:
+      case RouterPageKey.IP_VERSION:
+      case RouterPageKey.REQUEST_PD_STATUS:
+      case RouterPageKey.SLAAC_STATUS:
+      case RouterPageKey.DHCPV6_STATUS:
+      case RouterPageKey.PD_STATUS:
+        return {
+          steps: [this.s.internetTab, this.s.wanContainer, this.s.pppoeEntry],
+          targetSelector:
+            key === RouterPageKey.PPPOE_USERNAME
+              ? this.s.pppoeUsername
+              : key === RouterPageKey.INTERNET_STATUS
+                ? this.s.serviceListInternet
+                : key === RouterPageKey.TR_069_STATUS
+                  ? this.s.serviceListTr069
+                  : key === RouterPageKey.IP_VERSION
+                    ? this.s.ipMode
+                    : key === RouterPageKey.REQUEST_PD_STATUS
+                      ? this.s.requestPd
+                      : key === RouterPageKey.SLAAC_STATUS
+                        ? this.s.slaac
+                        : key === RouterPageKey.DHCPV6_STATUS
+                          ? this.s.dhcpv6
+                          : this.s.pdAddress,
+        };
+      case RouterPageKey.LINK_SPEED:
+        return {
+          steps: [this.s.internetTab],
+          targetSelector: this.s.linkSpeed,
+        };
+      case RouterPageKey.REMOTE_ACCESS_IPV4_STATUS:
+        return {
+          steps: [this.s.internetTab, this.s.securityContainer, this.s.localServiceControl],
+          targetSelector: this.s.ipv4RemoteAccessToggle,
+        };
+      case RouterPageKey.REMOTE_ACCESS_IPV6_STATUS:
+        return {
+          steps: [
+            this.s.internetTab,
+            this.s.securityContainer,
+            this.s.localServiceControl,
+            this.s.ipv6ServiceControlBar,
+          ],
+          targetSelector: this.s.ipv6RemoteAccessToggle,
+        };
+      case RouterPageKey.DHCP_STATUS:
+      case RouterPageKey.DHCP_IP_ADDRESS:
+      case RouterPageKey.DHCP_SUBNET_MASK:
+      case RouterPageKey.DHCP_START_IP:
+      case RouterPageKey.DHCP_END_IP:
+      case RouterPageKey.DHCP_ISP_DNS_STATUS:
+      case RouterPageKey.DHCP_PRIMARY_DNS:
+      case RouterPageKey.DHCP_SECONDARY_DNS:
+      case RouterPageKey.DHCP_LEASE_TIME_MODE:
+      case RouterPageKey.DHCP_LEASE_TIME:
+        return {
+          steps: [this.s.localNetworkTab, this.s.lanContainer, this.s.dhcpServerContainer],
+          targetSelector:
+            key === RouterPageKey.DHCP_STATUS
+              ? this.s.dhcpEnabled
+              : key === RouterPageKey.DHCP_IP_ADDRESS
+                ? this.s.dhcpIpAddressField1
+                : key === RouterPageKey.DHCP_SUBNET_MASK
+                  ? this.s.dhcpSubnetMaskField1
+                  : key === RouterPageKey.DHCP_START_IP
+                    ? this.s.dhcpStartIpField1
+                    : key === RouterPageKey.DHCP_END_IP
+                      ? this.s.dhcpEndIpField1
+                      : key === RouterPageKey.DHCP_ISP_DNS_STATUS
+                        ? this.s.dhcpIspDnsEnabled
+                        : key === RouterPageKey.DHCP_PRIMARY_DNS
+                          ? this.s.dhcpPrimaryDnsField1
+                          : key === RouterPageKey.DHCP_SECONDARY_DNS
+                            ? this.s.dhcpSecondaryDnsField1
+                            : key === RouterPageKey.DHCP_LEASE_TIME_MODE
+                              ? this.s.dhcpLeaseTimeMode
+                              : this.s.dhcpLeaseTime,
+        };
+      case RouterPageKey.UPDATE:
+        return {
+          steps: [this.s.managementTab, this.s.managementContainer, this.s.firmwareUpdateContainer],
+          targetSelector: this.s.firmwareUpdateFile,
+        };
+      case RouterPageKey.TR_069_URL:
+        return {
+          steps: [this.s.managementTab, this.s.tr069UrlContainer],
+          targetSelector: this.s.tr069Url,
+        };
+      case RouterPageKey.UPNP_STATUS:
+        return {
+          steps: [this.s.localNetworkTab, this.s.upnpContainer],
+          targetSelector: this.s.upnpEnabled,
+        };
+      case RouterPageKey.BAND_STEERING_STATUS:
+        return {
+          steps: [this.s.localNetworkTab, this.s.wlanContainer, this.s.bandSteeringContainer],
+          targetSelector: this.s.bandSteeringEnabled,
+        };
+      case RouterPageKey.WLAN_STATUS:
+      case RouterPageKey.WLAN_CHANNEL:
+      case RouterPageKey.WLAN_MODE:
+      case RouterPageKey.WLAN_BANDWIDTH:
+      case RouterPageKey.WLAN_TRANSMITTING_POWER:
+        return {
+          steps: [
+            this.s.localNetworkTab,
+            this.s.wlanContainer,
+            this.s.wlanBasicContainer,
+            this.s.wlanGlobalConfigContainer,
+            this.isFiveGhzBand(options?.band) ? this.s.wlan24GhzGlobalConfigContainer : null,
+            this.isFiveGhzBand(options?.band) ? this.s.wlan5GhzGlobalConfigContainer : null,
+          ],
+          targetSelector:
+            key === RouterPageKey.WLAN_STATUS
+              ? this.isFiveGhzBand(options?.band)
+                ? this.s.wlan5GhzRadioStatus
+                : this.s.wlan24GhzRadioStatus
+              : key === RouterPageKey.WLAN_CHANNEL
+                ? this.isFiveGhzBand(options?.band)
+                  ? this.s.wlan5GhzChannel
+                  : this.s.wlan24GhzChannel
+                : key === RouterPageKey.WLAN_MODE
+                  ? this.isFiveGhzBand(options?.band)
+                    ? this.s.wlan5GhzMode
+                    : this.s.wlan24GhzMode
+                  : key === RouterPageKey.WLAN_BANDWIDTH
+                    ? this.isFiveGhzBand(options?.band)
+                      ? this.s.wlan5GhzBandWidth
+                      : this.s.wlan24GhzBandWidth
+                    : this.isFiveGhzBand(options?.band)
+                      ? this.s.wlan5GhzTransmittingPower
+                      : this.s.wlan24GhzTransmittingPower,
+        };
+      case RouterPageKey.WLAN_SSID_STATUS:
+      case RouterPageKey.WLAN_SSID_NAME:
+      case RouterPageKey.WLAN_SSID_PASSWORD:
+      case RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS:
+      case RouterPageKey.WLAN_WPA2_SECURITY_TYPE:
+      case RouterPageKey.WLAN_MAX_CLIENTS:
+        return {
+          steps: [
+            this.s.localNetworkTab,
+            this.s.wlanContainer,
+            this.s.wlanBasicContainer,
+            this.s.wlanSsidConfigContainer,
+          ],
+          expandToggleSelector: `#instName_WLANSSIDConf\\:${ssidIndex}`,
+          expandedAreaSelector: `#changeArea_WLANSSIDConf\\:${ssidIndex}`,
+          targetSelector:
+            key === RouterPageKey.WLAN_SSID_STATUS
+              ? `#Enable1\\:${ssidIndex}`
+              : key === RouterPageKey.WLAN_SSID_NAME
+                ? `#ESSID\\:${ssidIndex}`
+                : key === RouterPageKey.WLAN_SSID_PASSWORD
+                  ? `#KeyPassphrase\\:${ssidIndex}`
+                  : key === RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS
+                    ? `#ESSIDHideEnable0\\:${ssidIndex}`
+                    : key === RouterPageKey.WLAN_WPA2_SECURITY_TYPE
+                      ? `#EncryptionType\\:${ssidIndex}`
+                      : `#MaxUserNum\\:${ssidIndex}`,
+        };
+      default:
+        return this.getFallbackPlanByPage(page);
+    }
+  }
+
+  private getFallbackPlanByPage(
+    page: RouterPage,
+  ): { steps: string[]; targetSelector: string } | null {
+    switch (page) {
+      case RouterPage.WAN:
+        return {
+          steps: [this.s.internetTab, this.s.wanContainer],
+          targetSelector: this.s.pppoeUsername,
+        };
+      case RouterPage.REMOTE_ACCESS:
+        return {
+          steps: [this.s.internetTab, this.s.securityContainer, this.s.localServiceControl],
+          targetSelector: this.s.ipv4RemoteAccessToggle,
+        };
+      case RouterPage.WLAN:
+        return {
+          steps: [this.s.localNetworkTab, this.s.wlanContainer, this.s.wlanBasicContainer],
+          targetSelector: this.s.wlan24GhzRadioStatus,
+        };
+      case RouterPage.DHCP:
+        return {
+          steps: [this.s.localNetworkTab, this.s.lanContainer, this.s.dhcpServerContainer],
+          targetSelector: this.s.dhcpEnabled,
+        };
+      case RouterPage.MANAGEMENT:
+        return {
+          steps: [this.s.managementTab, this.s.routerVersionContainer],
+          targetSelector: this.s.routerVersion,
+        };
+      case RouterPage.TR_069:
+        return {
+          steps: [this.s.managementTab, this.s.tr069UrlContainer],
+          targetSelector: this.s.tr069Url,
+        };
+      case RouterPage.UPnP:
+        return {
+          steps: [this.s.localNetworkTab, this.s.upnpContainer],
+          targetSelector: this.s.upnpEnabled,
+        };
+      case RouterPage.BAND_STEERING:
+        return {
+          steps: [this.s.localNetworkTab, this.s.wlanContainer, this.s.bandSteeringContainer],
+          targetSelector: this.s.bandSteeringEnabled,
+        };
+      default:
+        return null;
+    }
+  }
+
+  private isFiveGhzBand(band?: string): boolean {
+    return typeof band === 'string' && band.includes('5');
   }
 
   public buttonElementConfig(): ButtonConfig | null {

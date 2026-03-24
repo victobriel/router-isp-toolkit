@@ -1,4 +1,8 @@
-import type { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
+import type {
+  ExtractionResult,
+  GoToPageOptionSchema,
+  PingTestResult,
+} from '@/domain/schemas/validation';
 import {
   routerStateShape,
   wlanSsidPreferenceEntrySchema,
@@ -107,3 +111,66 @@ const preferencesMatchFields = routerStateShape({
 
 export const RouterPreferencesMatchSchema = z.object(preferencesMatchFields).partial();
 export type RouterPreferencesMatch = z.infer<typeof RouterPreferencesMatchSchema>;
+
+export enum RouterPage {
+  WAN = 'wan',
+  REMOTE_ACCESS = 'remote_access',
+  WLAN = 'wlan',
+  DHCP = 'dhcp',
+  MANAGEMENT = 'management',
+  TR_069 = 'tr_069',
+  UPnP = 'upnp',
+  BAND_STEERING = 'band_steering',
+}
+
+export enum RouterPageKey {
+  // WAN
+  PPPOE_USERNAME = 'pppoe_username',
+  INTERNET_STATUS = 'internet_status',
+  TR_069_STATUS = 'tr_069_status',
+  LINK_SPEED = 'link_speed',
+  IP_VERSION = 'ip_version',
+  REQUEST_PD_STATUS = 'request_pd_status',
+  SLAAC_STATUS = 'slaac_status',
+  DHCPV6_STATUS = 'dhcpv6_status',
+  PD_STATUS = 'pd_status',
+
+  // DHCP
+  DHCP_STATUS = 'dhcp_status',
+  DHCP_IP_ADDRESS = 'dhcp_ip_address',
+  DHCP_SUBNET_MASK = 'dhcp_subnet_mask',
+  DHCP_START_IP = 'dhcp_start_ip',
+  DHCP_END_IP = 'dhcp_end_ip',
+  DHCP_ISP_DNS_STATUS = 'dhcp_isp_dns_status',
+  DHCP_PRIMARY_DNS = 'dhcp_primary_dns',
+  DHCP_SECONDARY_DNS = 'dhcp_secondary_dns',
+  DHCP_LEASE_TIME_MODE = 'dhcp_lease_time_mode',
+  DHCP_LEASE_TIME = 'dhcp_lease_time',
+
+  // REMOTE ACCESS
+  REMOTE_ACCESS_IPV4_STATUS = 'remote_access_ipv4_status',
+  REMOTE_ACCESS_IPV6_STATUS = 'remote_access_ipv6_status',
+
+  // MISC
+  UPDATE = 'update',
+  TR_069_URL = 'tr_069_url',
+  UPNP_STATUS = 'upnp_status',
+  BAND_STEERING_STATUS = 'band_steering_status',
+
+  // WLAN
+  WLAN_STATUS = 'wlan_status',
+  WLAN_CHANNEL = 'wlan_channel',
+  WLAN_MODE = 'wlan_mode',
+  WLAN_BANDWIDTH = 'wlan_bandwidth',
+  WLAN_TRANSMITTING_POWER = 'wlan_transmitting_power',
+
+  // WLAN SSID
+  WLAN_SSID_STATUS = 'ssid_status',
+  WLAN_SSID_NAME = 'ssid_name',
+  WLAN_SSID_PASSWORD = 'ssid_password',
+  WLAN_SSID_HIDE_MODE_STATUS = 'ssid_hide_mode_status',
+  WLAN_WPA2_SECURITY_TYPE = 'wpa2_security_type',
+  WLAN_MAX_CLIENTS = 'max_clients',
+}
+
+export type GoToPageOptions = z.infer<typeof GoToPageOptionSchema>;

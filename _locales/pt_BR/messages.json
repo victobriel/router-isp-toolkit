@@ -440,8 +440,8 @@
   "popup_copy_text_copied_aria": {
     "message": "Texto com informações do roteador copiado"
   },
-  "popup_go_to_section": {
-    "message": "Ir para seção"
+  "popup_go_to_page": {
+    "message": "Ir para página"
   },
   "popup_status_copy_success": {
     "message": "Informações do roteador copiadas para a área de transferência"
@@ -555,6 +555,7 @@
   "popup_collect_collecting": { "message": "Coletando..." },
   "popup_collect_refresh_button": { "message": "Recarregar dados" },
   "popup_collect_button": { "message": "Coletar dados" },
+  "popup_reboot_router": { "message": "Reiniciar roteador" },
   "popup_empty_no_data_title": { "message": "Nenhum dado coletado ainda." },
   "popup_empty_no_data_desc": {
     "message": "Clique em $collect_button$ para ver as informações do roteador.",

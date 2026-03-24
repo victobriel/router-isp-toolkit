@@ -26,17 +26,20 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/ui/components/ui/accordion';
-import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider';
 import { copyTextToClipboard } from '@/ui/utils/clipboard';
-import { RouterPreferenceSection } from './router-preference-section';
+import { RouterPreferenceSection } from '@/ui/modules/settings/components/router-preference-section';
 import { cn } from '@/ui/lib/utils';
 import {
   downloadJsonFile,
   normalizeImportBookmarkStore,
   type SettingsConfigSectionKey,
-} from '../utils/settings-import-export';
-import { SettingsImportExportModal } from './settings-import-export-modal';
-import { SettingsToastStack, useSettingsToast } from './settings-toast-stack';
+} from '@/ui/modules/settings/utils/settings-import-export';
+import { SettingsImportExportModal } from '@/ui/modules/settings/components/settings-import-export-modal';
+import {
+  SettingsToastStack,
+  useSettingsToast,
+} from '@/ui/modules/settings/components/settings-toast-stack';
+import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
 
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;

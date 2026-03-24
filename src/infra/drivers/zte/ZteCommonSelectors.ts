@@ -87,6 +87,7 @@ export const ZteCommonSelectors = {
   wlanGlobalConfigContainer: '#WlanBasicAdConfBar',
 
   // Local Network -> WLAN -> Basic -> Global Config -> 2.4GHz
+  wlan24GhzGlobalConfigContainer: '#instName_WlanBasicAdConf\\:0',
   wlan24GhzChannel: '#UI_Channel\\:0',
   wlan24GhzMode: '#UI_Standard\\:0',
   wlan24GhzBandWidth: '#UI_BandWidth\\:0',
@@ -165,6 +166,11 @@ export const ZteCommonSelectors = {
   // Management -> Router Model
   routerModel: '#ModelName',
 
+  // Management -> Update
+  managementContainer: '#devMgr',
+  firmwareUpdateContainer: '#firmwareUpgr',
+  firmwareUpdateFile: '#VersionUpload',
+
   // Management -> TR069 URL
   tr069UrlContainer: '#remoteMgr',
   tr069Url: '#URL',
@@ -176,4 +182,8 @@ export const ZteCommonSelectors = {
   pingSendButton: '#Btn_PingDiagnosis',
   pingResult: '#PingAck',
   pingWaiting: '#confirmLayer',
+
+  // Management -> Reboot
+  rebootButton: '#Btn_restart',
+  rebootConfirmationButton: '#confirmOK',
 } as const;

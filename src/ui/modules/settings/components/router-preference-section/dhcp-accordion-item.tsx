@@ -2,17 +2,7 @@ import type { RouterPreferencesStore } from '@/application/types';
 import { translator } from '@/infra/i18n/I18nService';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/ui/components/ui/accordion';
 import type { Dispatch, SetStateAction } from 'react';
-import {
-  DHCP_LEASE_TIME_MODE_CUSTOM_VALUE,
-  DHCP_LEASE_TIME_MODE_INFINITY_VALUE,
-  DISABLED_VALUE,
-} from './constants';
-import {
-  BoolSelectPref,
-  SelectPref,
-  TextPref,
-  dhcpLeaseTimeModeStoredToSelectValue,
-} from './pref-fields';
+import { BoolSelectPref, TextPref } from './pref-fields';
 
 type Props = {
   localPrefs: RouterPreferencesStore;
@@ -80,25 +70,11 @@ export function DhcpAccordionItem({ localPrefs, setLocalPrefs }: Props) {
             onChange={(v) => setLocalPrefs((p) => ({ ...p, dhcpSecondaryDns: v }))}
             dataField="dhcpSecondaryDns"
           />
-          <SelectPref
+          <TextPref
             label={translator.t('popup_label_dhcp_lease_time_mode')}
-            value={dhcpLeaseTimeModeStoredToSelectValue(localPrefs.dhcpLeaseTimeMode)}
-            onChange={(v) =>
-              setLocalPrefs((p) => ({
-                ...p,
-                dhcpLeaseTimeMode:
-                  v === '' || v === DISABLED_VALUE
-                    ? DISABLED_VALUE
-                    : v === DHCP_LEASE_TIME_MODE_INFINITY_VALUE
-                      ? DHCP_LEASE_TIME_MODE_INFINITY_VALUE
-                      : DHCP_LEASE_TIME_MODE_CUSTOM_VALUE,
-              }))
-            }
+            value={localPrefs.dhcpLeaseTimeMode ?? ''}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, dhcpLeaseTimeMode: v }))}
             dataField="dhcpLeaseTimeMode"
-            items={[
-              { value: DHCP_LEASE_TIME_MODE_CUSTOM_VALUE, label: 'Custom' },
-              { value: DHCP_LEASE_TIME_MODE_INFINITY_VALUE, label: 'Infinity' },
-            ]}
           />
           <TextPref
             label={translator.t('settings_pref_dhcp_lease_time')}

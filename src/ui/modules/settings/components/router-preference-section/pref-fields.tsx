@@ -14,8 +14,6 @@ import { useState } from 'react';
 import {
   BOOL_DISABLED_VALUE,
   BOOL_ENABLED_VALUE,
-  DHCP_LEASE_TIME_MODE_CUSTOM_VALUE,
-  DHCP_LEASE_TIME_MODE_INFINITY_VALUE,
   DISABLED_VALUE,
   WLAN_TRANSMITTING_POWER_OPTIONS,
   WLAN_TRANSMITTING_POWER_VALUE_SET,
@@ -59,14 +57,6 @@ export function wlanTransmittingPowerToSelectValue(transmittingPower: string | u
 export function wlanTransmittingPowerSelectToStored(v: string): string {
   if (v === DISABLED_VALUE) return '';
   return v;
-}
-
-export function dhcpLeaseTimeModeStoredToSelectValue(mode: string | undefined): string {
-  const v = mode?.trim() ?? '';
-  if (v === '' || v === DISABLED_VALUE) return DISABLED_VALUE;
-  return v.toLowerCase() === DHCP_LEASE_TIME_MODE_INFINITY_VALUE.toLowerCase()
-    ? DHCP_LEASE_TIME_MODE_INFINITY_VALUE
-    : DHCP_LEASE_TIME_MODE_CUSTOM_VALUE;
 }
 
 export function boolStoredToSelectValue(v: boolean | undefined): string {

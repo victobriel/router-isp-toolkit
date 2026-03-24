@@ -5,6 +5,7 @@ import {
   topologySchema,
   wlanSsidExtractionEntrySchema,
 } from '@/domain/schemas/router-state-schema';
+import { RouterPage, RouterPageKey } from '@/application/types';
 
 export type ValidationIssue = z.ZodIssue;
 
@@ -52,11 +53,24 @@ export enum CollectMessageAction {
   AUTHENTICATE = 'authenticate',
   COLLECT = 'collect',
   PING = 'ping',
+  GO_TO_PAGE = 'go_to_page',
+  REBOOT = 'reboot',
 }
+
+export const GoToPageOptionSchema = z.object({
+  band: z.string().optional(),
+  ssidIndex: z.number().optional(),
+});
 
 export const CollectMessageSchema = z.object({
   action: z.enum(
-    [CollectMessageAction.AUTHENTICATE, CollectMessageAction.COLLECT, CollectMessageAction.PING],
+    [
+      CollectMessageAction.AUTHENTICATE,
+      CollectMessageAction.COLLECT,
+      CollectMessageAction.PING,
+      CollectMessageAction.GO_TO_PAGE,
+      CollectMessageAction.REBOOT,
+    ],
     'Invalid action type',
   ),
   credentials: z
@@ -66,6 +80,13 @@ export const CollectMessageSchema = z.object({
     })
     .optional(),
   ip: z.string().optional(),
+  goToPageConfig: z
+    .object({
+      page: z.enum(RouterPage),
+      key: z.enum(RouterPageKey),
+      options: GoToPageOptionSchema.partial().optional(),
+    })
+    .optional(),
 });
 
 export const PingTestResultSchema = z.object({

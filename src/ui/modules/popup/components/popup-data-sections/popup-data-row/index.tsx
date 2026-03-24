@@ -21,7 +21,7 @@ export interface PopupDataRowProps {
   value: string | boolean | undefined;
   compareMatch?: boolean;
   ableToCopy?: boolean;
-  handleGoToSection?: () => void;
+  handleGoToPage?: () => void;
 }
 
 export const PopupDataRow = ({
@@ -29,7 +29,7 @@ export const PopupDataRow = ({
   value,
   compareMatch,
   ableToCopy = false,
-  handleGoToSection,
+  handleGoToPage,
 }: PopupDataRowProps) => {
   const { setStatus, setStatusMessage } = usePopupStatus();
 
@@ -57,13 +57,13 @@ export const PopupDataRow = ({
           },
         ]
       : []),
-    ...(handleGoToSection
+    ...(handleGoToPage
       ? [
           {
-            label: translator.t('popup_go_to_section'),
-            value: 'go_to_section',
+            label: translator.t('popup_go_to_page'),
+            value: 'go_to_page',
             icon: ArrowUpRight,
-            onClick: handleGoToSection,
+            onClick: handleGoToPage,
           },
         ]
       : []),

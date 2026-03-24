@@ -9,15 +9,17 @@ import { val } from '@/ui/lib/utils';
 import { Separator } from '@/ui/components/ui/separator';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface WanSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProps) => {
-  const handleGoToWanSection = (key: string) => {
-    console.log('go to wan section', key);
+export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanSectionProps) => {
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
+    void goToPage(page, key);
   };
 
   const rows: PopupDataRowProps[] = [
@@ -26,31 +28,31 @@ export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProp
       compareMatch: routerPreferencesComparison?.pppoeUsername,
       value: val(data.pppoeUsername),
       ableToCopy: true,
-      handleGoToSection: () => handleGoToWanSection('pppoe'),
+      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PPPOE_USERNAME),
     },
     {
       label: translator.t('popup_label_internet'),
       compareMatch: routerPreferencesComparison?.internetEnabled,
       value: data.internetEnabled,
-      handleGoToSection: () => handleGoToWanSection('internet'),
+      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.INTERNET_STATUS),
     },
     {
       label: translator.t('popup_label_tr069'),
       compareMatch: routerPreferencesComparison?.tr069Enabled,
       value: data.tr069Enabled,
-      handleGoToSection: () => handleGoToWanSection('tr069'),
+      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.TR_069_STATUS),
     },
     {
       label: translator.t('popup_label_link_speed'),
       compareMatch: routerPreferencesComparison?.linkSpeed,
       value: val(data.linkSpeed),
-      handleGoToSection: () => handleGoToWanSection('linkSpeed'),
+      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.LINK_SPEED),
     },
     {
       label: translator.t('popup_label_ip_version'),
       compareMatch: routerPreferencesComparison?.ipVersion,
       value: val(data.ipVersion ?? undefined),
-      handleGoToSection: () => handleGoToWanSection('ipVersion'),
+      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.IP_VERSION),
     },
   ];
   if (data.ipVersion?.includes('6')) {
@@ -59,25 +61,25 @@ export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProp
         label: translator.t('popup_label_request_pd'),
         compareMatch: routerPreferencesComparison?.requestPdEnabled,
         value: data.requestPdEnabled,
-        handleGoToSection: () => handleGoToWanSection('requestPd'),
+        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.REQUEST_PD_STATUS),
       },
       {
         label: translator.t('popup_label_slaac_status'),
         compareMatch: routerPreferencesComparison?.slaacEnabled,
         value: data.slaacEnabled,
-        handleGoToSection: () => handleGoToWanSection('slaac'),
+        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.SLAAC_STATUS),
       },
       {
         label: translator.t('popup_label_dhcpv6_status'),
         compareMatch: routerPreferencesComparison?.dhcpv6Enabled,
         value: data.dhcpv6Enabled,
-        handleGoToSection: () => handleGoToWanSection('dhcpv6'),
+        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.DHCPV6_STATUS),
       },
       {
         label: translator.t('popup_label_pd_status'),
         compareMatch: routerPreferencesComparison?.pdEnabled,
         value: data.pdEnabled,
-        handleGoToSection: () => handleGoToWanSection('pd'),
+        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PD_STATUS),
       },
     );
   }
@@ -102,7 +104,7 @@ export const WanSection = ({ data, routerPreferencesComparison }: WanSectionProp
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
-              handleGoToSection={row.handleGoToSection}
+              handleGoToPage={row.handleGoToPage}
             />
           </div>
         ))}

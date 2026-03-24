@@ -14,6 +14,7 @@ import {
   Copy,
   RefreshCw,
   Trash,
+  Power,
 } from 'lucide-react';
 import { PopupHeader } from '@/ui/modules/popup/components/popup-header';
 import { PopupCredentials } from '@/ui/modules/popup/components/popup-credentials';
@@ -45,7 +46,7 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/components/ui/dropdown-menu';
 import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
-import { PopupStatusType } from '@/application/types';
+import { GoToPageOptions, PopupStatusType, RouterPage, RouterPageKey } from '@/application/types';
 import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
 import { copyTextToClipboard } from '@/ui/utils/clipboard';
 import { translator } from '@/infra/i18n/I18nService';
@@ -62,7 +63,9 @@ function PopupContent({
   onCollect,
   onPing,
   copyText,
+  goToPage,
   onClear,
+  rebootRouter,
 }: {
   tabId: number;
   routerModel: string;
@@ -76,6 +79,8 @@ function PopupContent({
   onClear: () => void;
   onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
   copyText: () => Promise<{ data: string | null; error?: string }>;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
+  rebootRouter: () => Promise<void>;
 }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -152,6 +157,46 @@ function PopupContent({
     },
   ];
 
+  const handleRebootRouter = () => {
+    setStatus(PopupStatusType.OK);
+    setStatusMessage(translator.t('popup_status_ready'));
+    void rebootRouter();
+  };
+
+  const secondaryMenu: {
+    label: string;
+    value: string;
+    icon?: LucideIcon;
+    onClick?: () => void;
+    disabled?: boolean;
+  }[] = [
+    {
+      label: translator.t('popup_collect_refresh_button'),
+      value: 'refresh',
+      icon: RefreshCw,
+      onClick: () => void onCollect(username, password),
+      disabled: isCollecting,
+    },
+    {
+      label: translator.t('popup_clear_aria_label'),
+      value: 'clear',
+      icon: Trash,
+      onClick: handleClearData,
+    },
+    {
+      label: translator.t('popup_reboot_router'),
+      value: 'reboot',
+      icon: Power,
+      onClick: handleRebootRouter,
+    },
+    {
+      label: translator.t('popup_copy_text'),
+      value: 'copy',
+      icon: Copy,
+      onClick: handleCopyText,
+    },
+  ];
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground text-sm">
       <PopupHeader routerModel={routerModel} />
@@ -168,36 +213,21 @@ function PopupContent({
 
       {data && (
         <div className="bg-background">
-          <div className="grid grid-cols-3 gap-2 py-2 pl-4 pr-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs! h-9! rounded-full!"
-              onClick={() => void onCollect(username, password)}
-              disabled={isCollecting}
-              title={translator.t('popup_collect_refresh_button')}
-            >
-              <RefreshCw className="size-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs! h-9! rounded-full!"
-              onClick={handleClearData}
-              title={translator.t('popup_clear_aria_label')}
-            >
-              <Trash className="size-5" />
-              {translator.t('popup_clear_aria_label')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs! h-9! rounded-full!"
-              onClick={handleCopyText}
-              title={translator.t('popup_copy_text')}
-            >
-              <Copy className="size-5" />
-            </Button>
+          <div className="grid grid-cols-2 gap-2 py-2 pl-4 pr-2">
+            {secondaryMenu.map(({ label, value, icon: Icon, onClick, disabled }) => (
+              <Button
+                key={value}
+                variant="outline"
+                size="sm"
+                className="text-xs! h-9! rounded-full!"
+                onClick={onClick}
+                disabled={disabled}
+                title={label}
+              >
+                {Icon && <Icon className="size-5" />}
+                <span className="text-xs truncate">{label}</span>
+              </Button>
+            ))}
           </div>
         </div>
       )}
@@ -283,10 +313,15 @@ function PopupContent({
             </Empty>
           ) : (
             <div className="flex flex-col gap-1.5">
-              <WanSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
+              <WanSection
+                data={data}
+                routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
+              />
               <RemoteAccessSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
               />
               <WlanBandSection
                 band={Band.GHz24}
@@ -294,6 +329,7 @@ function PopupContent({
                 ssids={data.wlan24GhzSsids}
                 totalClients={data.topology?.['24ghz']?.totalClients ?? 0}
                 routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
               />
               <WlanBandSection
                 band={Band.GHz5}
@@ -301,9 +337,18 @@ function PopupContent({
                 ssids={data.wlan5GhzSsids}
                 totalClients={data.topology?.['5ghz']?.totalClients ?? 0}
                 routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
               />
-              <DhcpSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
-              <MiscSection data={data} routerPreferencesComparison={routerPreferencesComparison} />
+              <DhcpSection
+                data={data}
+                routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
+              />
+              <MiscSection
+                data={data}
+                routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
+              />
               {data.timestamp && (
                 <p className="text-[10px] text-center text-muted-foreground pt-1">
                   {translator.t('popup_collected_at_prefix')}{' '}
@@ -358,6 +403,8 @@ export const Popup = () => (
             onClear,
             onPing,
             copyText,
+            goToPage,
+            rebootRouter,
           }) => (
             <PopupContent
               tabId={tabId}
@@ -372,6 +419,8 @@ export const Popup = () => (
               onClear={onClear}
               onPing={onPing}
               copyText={copyText}
+              goToPage={goToPage}
+              rebootRouter={rebootRouter}
             />
           )}
         </PopupDataProvider>

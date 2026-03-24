@@ -12,11 +12,13 @@ import { useState } from 'react';
 import { Band } from '@/ui/types';
 import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 /** SSID list from extraction; same element shape for 2.4 GHz and 5 GHz. */
 type WlanExtractedSsidList = NonNullable<ExtractionResult['wlan24GhzSsids']>;
 
 interface WlanSsidSliderProps {
+  band: Band;
   ssids: WlanExtractedSsidList;
   ssidMatches?: Array<{
     ssidName: boolean | undefined;
@@ -24,55 +26,64 @@ interface WlanSsidSliderProps {
     wpa2SecurityType: boolean | undefined;
     maxClients: boolean | undefined;
   }>;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
+export const WlanSsidSlider = ({ band, ssids, ssidMatches, goToPage }: WlanSsidSliderProps) => {
   const [idx, setIdx] = useState(0);
   const ssid = ssids[idx];
 
   if (!ssid) return null;
 
-  const handleGoToWlanSsidSlider = (key: string, idx: number) => {
-    console.log('go to wlan ssid', key, idx);
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => {
+    void goToPage(page, key, options);
   };
+  const ssidIndex = (band === Band.GHz5 ? 4 : 0) + idx;
+  const ssidOptions: GoToPageOptions = { band, ssidIndex };
 
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_enabled'),
       compareMatch: ssid.enabled,
       value: ssid.enabled,
-      handleGoToSection: () => handleGoToWlanSsidSlider('enabled', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_STATUS, ssidOptions),
     },
     {
       label: translator.t('popup_label_ssid_name'),
       compareMatch: ssidMatches?.[idx]?.ssidName,
       value: val(ssid.ssidName),
       ableToCopy: true,
-      handleGoToSection: () => handleGoToWlanSsidSlider('ssidName', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_NAME, ssidOptions),
     },
     {
       label: translator.t('popup_label_ssid_password'),
       value: val(ssid.ssidPassword),
       ableToCopy: true,
-      handleGoToSection: () => handleGoToWlanSsidSlider('ssidPassword', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_PASSWORD, ssidOptions),
     },
     {
       label: translator.t('popup_label_ssid_hide_mode'),
       compareMatch: ssidMatches?.[idx]?.ssidHideMode,
       value: ssid.ssidHideMode,
-      handleGoToSection: () => handleGoToWlanSsidSlider('ssidHideMode', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS, ssidOptions),
     },
     {
       label: translator.t('popup_label_wpa2_security'),
       compareMatch: ssidMatches?.[idx]?.wpa2SecurityType,
       value: val(ssid.wpa2SecurityType),
-      handleGoToSection: () => handleGoToWlanSsidSlider('wpa2SecurityType', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_WPA2_SECURITY_TYPE, ssidOptions),
     },
     {
       label: translator.t('popup_label_max_clients'),
       compareMatch: ssidMatches?.[idx]?.maxClients,
       value: val(String(ssid.maxClients)),
-      handleGoToSection: () => handleGoToWlanSsidSlider('maxClients', idx),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_MAX_CLIENTS, ssidOptions),
     },
   ];
 
@@ -111,7 +122,7 @@ export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
             value={row.value}
             compareMatch={row.compareMatch}
             ableToCopy={row.ableToCopy}
-            handleGoToSection={row.handleGoToSection}
+            handleGoToPage={row.handleGoToPage}
           />
         );
       })}
@@ -119,21 +130,14 @@ export const WlanSsidSlider = ({ ssids, ssidMatches }: WlanSsidSliderProps) => {
   );
 };
 
-type WlanBandSectionProps =
-  | {
-      band: Band.GHz24;
-      config: ExtractionResult['wlan24GhzConfig'];
-      ssids: ExtractionResult['wlan24GhzSsids'];
-      totalClients: number;
-      routerPreferencesComparison: RouterPreferencesComparison | null;
-    }
-  | {
-      band: Band.GHz5;
-      config: ExtractionResult['wlan5GhzConfig'];
-      ssids: ExtractionResult['wlan5GhzSsids'];
-      totalClients: number;
-      routerPreferencesComparison: RouterPreferencesComparison | null;
-    };
+interface WlanBandSectionProps {
+  band: Band;
+  config: ExtractionResult['wlan24GhzConfig'] | ExtractionResult['wlan5GhzConfig'];
+  ssids: ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids'];
+  totalClients: number;
+  routerPreferencesComparison: RouterPreferencesComparison | null;
+  goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
+}
 
 export const WlanBandSection = ({
   band,
@@ -141,6 +145,7 @@ export const WlanBandSection = ({
   ssids,
   totalClients,
   routerPreferencesComparison,
+  goToPage,
 }: WlanBandSectionProps) => {
   const radioEnabledMatch =
     band === Band.GHz24
@@ -179,8 +184,8 @@ export const WlanBandSection = ({
       ? routerPreferencesComparison?.wlan24GhzTransmittingPower
       : routerPreferencesComparison?.wlan5GhzTransmittingPower;
 
-  const handleGoToWlanBandSection = (key: string, band: Band) => {
-    console.log('go to wlan band section', key, band);
+  const handleGoToPage = (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => {
+    void goToPage(page, key, options);
   };
 
   const rows: PopupDataRowProps[] = [
@@ -188,31 +193,32 @@ export const WlanBandSection = ({
       label: translator.t('popup_label_radio'),
       compareMatch: radioEnabledMatch,
       value: config?.enabled,
-      handleGoToSection: () => handleGoToWlanBandSection('radio', band),
+      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_STATUS, { band }),
     },
     {
       label: translator.t('popup_label_channel'),
       compareMatch: channelMatch,
       value: val(config?.channel),
-      handleGoToSection: () => handleGoToWlanBandSection('channel', band),
+      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_CHANNEL, { band }),
     },
     {
       label: translator.t('popup_label_mode'),
       compareMatch: modeMatch,
       value: val(config?.mode),
-      handleGoToSection: () => handleGoToWlanBandSection('mode', band),
+      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_MODE, { band }),
     },
     {
       label: translator.t('popup_label_bandwidth'),
       compareMatch: bandWidthMatch,
       value: val(config?.bandWidth),
-      handleGoToSection: () => handleGoToWlanBandSection('bandWidth', band),
+      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_BANDWIDTH, { band }),
     },
     {
       label: translator.t('popup_label_transmitting_power'),
       compareMatch: transmittingPowerMatch,
       value: val(config?.transmittingPower),
-      handleGoToSection: () => handleGoToWlanBandSection('transmittingPower', band),
+      handleGoToPage: () =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_TRANSMITTING_POWER, { band }),
     },
   ];
 
@@ -242,14 +248,19 @@ export const WlanBandSection = ({
               value={row.value}
               compareMatch={row.compareMatch}
               ableToCopy={row.ableToCopy}
-              handleGoToSection={row.handleGoToSection}
+              handleGoToPage={row.handleGoToPage}
             />
           );
         })}
         {ssids && ssids.length > 0 && (
           <>
             <Separator className="my-1.5" />
-            <WlanSsidSlider ssids={ssids} ssidMatches={ssidMatches} />
+            <WlanSsidSlider
+              band={band}
+              ssids={ssids}
+              ssidMatches={ssidMatches}
+              goToPage={goToPage}
+            />
           </>
         )}
       </div>

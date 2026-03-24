@@ -1,5 +1,9 @@
 import type { CollectResponse } from '@/application/types/index';
-import { CredentialsSchema, type CollectMessage } from '@/domain/schemas/validation';
+import {
+  CollectMessageAction,
+  CredentialsSchema,
+  type CollectMessage,
+} from '@/domain/schemas/validation';
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IStorage } from '@/application/ports/IStorage';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
@@ -12,11 +16,11 @@ export class CollectionService {
 
   public async handleCollect(message: CollectMessage): Promise<CollectResponse> {
     const router = this.routerFactory.create();
-    const { action, credentials, ip } = message;
+    const { action, credentials, ip, goToPageConfig } = message;
 
     const actions = {
-      collect: async () => await this.executeExtraction(router),
-      authenticate: async () => {
+      [CollectMessageAction.COLLECT]: async () => await this.executeExtraction(router),
+      [CollectMessageAction.AUTHENTICATE]: async () => {
         if (router.isAuthenticated()) {
           return {
             success: true,
@@ -65,7 +69,7 @@ export class CollectionService {
           message: 'Authentication in progress',
         };
       },
-      ping: async () => {
+      [CollectMessageAction.PING]: async () => {
         if (!router.isAuthenticated()) {
           return {
             success: false,
@@ -86,6 +90,26 @@ export class CollectionService {
           success: result ? true : false,
           message: result ? 'Ping request successful' : 'Ping request failed',
           pingResult: result,
+        };
+      },
+      [CollectMessageAction.GO_TO_PAGE]: async () => {
+        if (!goToPageConfig) {
+          return {
+            success: false,
+            message: 'Go to page configuration is required',
+          };
+        }
+        router.goToPage(goToPageConfig.page, goToPageConfig.key, goToPageConfig.options);
+        return {
+          success: true,
+          message: 'Action called successfully',
+        };
+      },
+      [CollectMessageAction.REBOOT]: async () => {
+        await router.reboot();
+        return {
+          success: true,
+          message: 'Router rebooted successfully',
         };
       },
     };
