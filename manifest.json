@@ -4,7 +4,7 @@
   "version": "2.0",
   "description": "__MSG_extDescription__",
   "default_locale": "en",
-  "permissions": ["activeTab", "scripting", "storage", "downloads"],
+  "permissions": ["activeTab", "scripting", "storage", "downloads", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {

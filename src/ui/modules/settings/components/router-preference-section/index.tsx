@@ -15,8 +15,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { UNSELECTED_MODEL_VALUE } from './constants';
 import { DhcpAccordionItem } from './dhcp-accordion-item';
 import { OtherAccordionItem } from './other-accordion-item';
-import type { WlanBand, WlanSsidPrefs } from './pref-fields';
 import { WlanBandAccordionItem } from './wlan-band-accordion-item';
+import { Band } from '@/ui/types';
 
 export interface RouterPreferenceSectionProps {
   bookmarkEntries: Array<[string, ModelBookmarks]>;
@@ -67,23 +67,6 @@ export const RouterPreferenceSection = ({
     setCustomModelKeyDraft('');
   };
 
-  const patchWlan = (band: WlanBand, patch: NonNullable<RouterPreferencesStore[typeof band]>) => {
-    setLocalPrefs((prev) => ({
-      ...prev,
-      [band]: { ...prev[band], ...patch },
-    }));
-  };
-
-  const patchSsid = (
-    key: WlanSsidPrefs,
-    patch: NonNullable<RouterPreferencesStore[typeof key]>,
-  ) => {
-    setLocalPrefs((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], ...patch },
-    }));
-  };
-
   return (
     <section className="space-y-3">
       <div>
@@ -132,7 +115,7 @@ export const RouterPreferenceSection = ({
                   applyCustomModelKey();
                 }
               }}
-              placeholder="ZXHN H199"
+              placeholder="e.g. ZTE ZXHN H199"
               data-pref-model-custom
             />
           </div>
@@ -163,24 +146,16 @@ export const RouterPreferenceSection = ({
           className="w-full border border-border rounded-lg px-3 space-y-3"
         >
           <WlanBandAccordionItem
-            accordionValue="wlan24"
+            accordionValue={Band.GHz24}
             title={translator.t('settings_prefs_wlan24_title')}
-            band="wlan24GhzConfig"
-            ssids="wlan24GhzSsids"
-            variant="wlan24"
             localPrefs={localPrefs}
-            patchWlan={patchWlan}
-            patchSsid={patchSsid}
+            setLocalPrefs={setLocalPrefs}
           />
           <WlanBandAccordionItem
-            accordionValue="wlan5"
+            accordionValue={Band.GHz5}
             title={translator.t('settings_prefs_wlan5_title')}
-            band="wlan5GhzConfig"
-            ssids="wlan5GhzSsids"
-            variant="wlan5"
             localPrefs={localPrefs}
-            patchWlan={patchWlan}
-            patchSsid={patchSsid}
+            setLocalPrefs={setLocalPrefs}
           />
           <DhcpAccordionItem localPrefs={localPrefs} setLocalPrefs={setLocalPrefs} />
           <OtherAccordionItem localPrefs={localPrefs} setLocalPrefs={setLocalPrefs} />

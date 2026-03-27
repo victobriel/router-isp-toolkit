@@ -19,9 +19,8 @@ import {
 import { PopupHeader } from '@/ui/modules/popup/components/popup-header';
 import { PopupCredentials } from '@/ui/modules/popup/components/popup-credentials';
 import { AppTabProvider } from '@/ui/modules/popup/components/app-tab-provider';
-import { PopupStatusProvider } from '@/ui/modules/popup/components/popup-status-provider';
 import { PopupDataProvider } from '@/ui/modules/popup/components/popup-data-provider';
-import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 import { PopupStatus } from '@/ui/modules/popup/components/popup-status';
 import { WanSection } from '@/ui/modules/popup/components/popup-data-sections/wan-section';
 import { RemoteAccessSection } from '@/ui/modules/popup/components/popup-data-sections/remote-access-section';
@@ -47,8 +46,8 @@ import {
 } from '@/ui/components/ui/dropdown-menu';
 import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
 import { GoToPageOptions, PopupStatusType, RouterPage, RouterPageKey } from '@/application/types';
-import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
-import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { PopupStatusProvider, usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
 import { translator } from '@/infra/i18n/I18nService';
 
 function PopupContent({
@@ -115,7 +114,12 @@ function PopupContent({
       return;
     }
 
-    await copyTextToClipboard(text);
+    const wasCopied = await copyTextToClipboard(text);
+    if (!wasCopied) {
+      setStatus(PopupStatusType.ERR);
+      setStatusMessage(translator.t('popup_error_copy_to_clipboard'));
+      return;
+    }
 
     setStatus(PopupStatusType.OK);
     setStatusMessage(translator.t('popup_status_copy_success'));
@@ -158,6 +162,9 @@ function PopupContent({
   ];
 
   const handleRebootRouter = () => {
+    const shouldReboot = window.confirm(translator.t('popup_reboot_router_confirm_prompt'));
+    if (!shouldReboot) return;
+
     setStatus(PopupStatusType.OK);
     setStatusMessage(translator.t('popup_status_ready'));
     void rebootRouter();
@@ -166,7 +173,7 @@ function PopupContent({
   const secondaryMenu: {
     label: string;
     value: string;
-    icon?: LucideIcon;
+    icon: LucideIcon;
     onClick?: () => void;
     disabled?: boolean;
   }[] = [
@@ -189,12 +196,6 @@ function PopupContent({
       icon: Power,
       onClick: handleRebootRouter,
     },
-    {
-      label: translator.t('popup_copy_text'),
-      value: 'copy',
-      icon: Copy,
-      onClick: handleCopyText,
-    },
   ];
 
   return (
@@ -212,28 +213,34 @@ function PopupContent({
       />
 
       {data && (
-        <div className="bg-background">
-          <div className="grid grid-cols-2 gap-2 py-2 pl-4 pr-2">
+        <div className="flex gap-1.5 justify-between bg-background pb-2 px-2">
+          <div className="flex gap-1.5">
             {secondaryMenu.map(({ label, value, icon: Icon, onClick, disabled }) => (
               <Button
                 key={value}
                 variant="outline"
-                size="sm"
-                className="text-xs! h-9! rounded-full!"
                 onClick={onClick}
                 disabled={disabled}
                 title={label}
+                className="group min-w-0"
               >
-                {Icon && <Icon className="size-5" />}
-                <span className="text-xs truncate">{label}</span>
+                <div className="group-hover:hidden" />
+                <Icon className="size-5 group-hover:size-4" />
+                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-32 group-hover:opacity-100 group-focus-visible:max-w-32 group-focus-visible:opacity-100">
+                  {label}
+                </span>
               </Button>
             ))}
           </div>
+          <Button onClick={handleCopyText} className="min-w-0 h-full!">
+            <Copy className="size-5" />
+            <span className="truncate">{translator.t('popup_copy_text')}</span>
+          </Button>
         </div>
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-        <TabsList className="shrink-0 gap-1.5 pl-4 pr-2 rounded-none! py-1 border-b border-muted-foreground/60">
+        <TabsList className="shrink-0 gap-1.5 px-2 rounded-none! py-1 border-b border-muted-foreground/60">
           {menu.map(({ label, value, type, icon: Icon, onClick }, idx) =>
             idx >= 3 ? null : type === 'tab' ? (
               <TabsTrigger key={value} value={value} className="flex items-center gap-1.5 h-9">
@@ -285,7 +292,7 @@ function PopupContent({
           </DropdownMenu>
         </TabsList>
 
-        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2" value="data">
+        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2 px-2" value="data">
           {!data ? (
             <Empty>
               <EmptyHeader>
@@ -359,10 +366,7 @@ function PopupContent({
           )}
         </TabsContent>
 
-        <TabsContent
-          className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2"
-          value="topology"
-        >
+        <TabsContent className="flex flex-col min-h-0 overflow-y-auto py-2 px-2" value="topology">
           <TopologySection
             data={data}
             isCollecting={isCollecting}
@@ -371,7 +375,7 @@ function PopupContent({
         </TabsContent>
 
         <TabsContent
-          className="flex flex-col min-h-0 overflow-y-auto py-2 pl-4 pr-2"
+          className="flex flex-col min-h-0 overflow-y-auto py-2 px-2"
           value="diagnostics"
         >
           <PopupDiagnosticsTab

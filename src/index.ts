@@ -14,15 +14,14 @@ import { RouterFactoryAdapter } from '@/infra/router/RouterFactoryAdapter';
 import { SessionStorageService } from '@/infra/storage/SessionStorageService';
 import { StorageService } from './infra/storage/StorageService';
 import { ChromeTabMessenger } from './infra/tabs/ChromeTabMessenger';
+import { TopologySectionParser } from './infra/drivers/shared/TopologySectionParser';
 
 export type CompositionServices = {
   storage: IStorage;
   sessionStorage: IStorage;
-
   routerFactory: IRouterFactory;
   domService: IDomGateway;
   tabMessenger: ITabMessenger;
-
   bookmarksService: BookmarksService;
   popupUiStateService: PopupUiStateService;
   collectionService: CollectionService;
@@ -39,7 +38,7 @@ export function createServices({
   storage = new StorageService(),
   sessionStorage = new SessionStorageService(),
   domService = new DomService(),
-  routerFactory = new RouterFactoryAdapter(domService),
+  routerFactory = new RouterFactoryAdapter(domService, new TopologySectionParser()),
   tabMessenger = new ChromeTabMessenger(),
 }: Partial<
   Pick<
@@ -47,7 +46,7 @@ export function createServices({
     'storage' | 'sessionStorage' | 'routerFactory' | 'domService' | 'tabMessenger'
   >
 > = {}): CompositionServices {
-  const collectionService = new CollectionService(routerFactory, sessionStorage);
+  const collectionService = new CollectionService(routerFactory, sessionStorage, storage);
   const contentPageUseCase = new ContentPageUseCase(
     routerFactory,
     storage,

@@ -1,5 +1,5 @@
 import { PopupStatusType } from '@/application/types';
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
 
 export interface PopupStatusContext {
   status: PopupStatusType;
@@ -14,4 +14,15 @@ export const usePopupStatus = () => {
   const ctx = useContext(PopupStatusContext);
   if (!ctx) throw new Error('usePopupStatus must be used within a PopupStatusProvider');
   return ctx;
+};
+
+export const PopupStatusProvider = ({ children }: { children: React.ReactNode }) => {
+  const [status, setStatus] = useState<PopupStatusType>(PopupStatusType.NONE);
+  const [statusMessage, setStatusMessage] = useState<string>('Ready.');
+
+  return (
+    <PopupStatusContext.Provider value={{ status, setStatus, statusMessage, setStatusMessage }}>
+      {children}
+    </PopupStatusContext.Provider>
+  );
 };

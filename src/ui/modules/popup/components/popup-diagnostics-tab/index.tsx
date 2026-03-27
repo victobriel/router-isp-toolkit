@@ -14,9 +14,9 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/ui/components/ui/toggle-group';
 import { Copy, Globe, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { PopupStatusType } from '@/application/types';
-import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
 import { DiagnosticsMode } from '@/ui/types';
 
 interface PopupDiagnosticsTabProps {
@@ -40,6 +40,7 @@ export const PopupDiagnosticsTab = ({
   const [externalIp, setExternalIp] = useState<string | undefined>(undefined);
 
   const { setStatus, setStatusMessage } = usePopupStatus();
+
   // Avoid stale prop reads: wait for `internalPingResult`/`externalPingResult` to update,
   // then copy the *matching* result into `pingOutput`.
   const pendingPingRef = useRef<{

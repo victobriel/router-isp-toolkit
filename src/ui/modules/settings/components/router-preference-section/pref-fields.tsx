@@ -243,6 +243,3 @@ export function TagListPref({
     </div>
   );
 }
-
-export type WlanBand = 'wlan24GhzConfig' | 'wlan5GhzConfig';
-export type WlanSsidPrefs = 'wlan24GhzSsids' | 'wlan5GhzSsids';

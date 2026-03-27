@@ -1,6 +1,6 @@
 import { CredentialBookmark, PopupStatusType } from '@/application/types';
 import { useCallback, useEffect, useState } from 'react';
-import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
 
@@ -38,16 +38,10 @@ export const usePopupBookmark = ({ routerModel }: UsePopupBookmarkProps) => {
         return;
       }
 
-      const result = await bookmarksService.addCredential(routerModel, {
+      await bookmarksService.addCredential(routerModel, {
         username,
         password,
       });
-
-      if (result.kind === 'max_reached') {
-        setStatus(PopupStatusType.WARN);
-        setStatusMessage(translator.t('popup_error_max_bookmarks'));
-        return;
-      }
 
       await loadBookmarks(routerModel);
 

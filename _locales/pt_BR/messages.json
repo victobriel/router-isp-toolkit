@@ -418,9 +418,6 @@
   "popup_error_save_missing_fields": {
     "message": "Informe usuário e senha antes de salvar"
   },
-  "popup_error_max_bookmarks": {
-    "message": "Número máximo de favoritos atingido. Remova alguns favoritos para salvar novos"
-  },
   "popup_status_bookmark_saved": {
     "message": "Credenciais salvas na lista de favoritos"
   },
@@ -446,6 +443,9 @@
   "popup_status_copy_success": {
     "message": "Informações do roteador copiadas para a área de transferência"
   },
+  "popup_error_copy_to_clipboard": {
+    "message": "Nao foi possivel copiar para a area de transferencia. Tente novamente."
+  },
   "popup_error_no_data_to_copy": {
     "message": "Colete os dados do roteador antes de copiar"
   },
@@ -470,6 +470,48 @@
   },
   "settings_copy_template_error_empty": {
     "message": "Defina um formato antes de salvar"
+  },
+  "settings_extraction_filter_title": {
+    "message": "Filtros de extração"
+  },
+  "settings_extraction_filter_desc": {
+    "message": "Escolha quais seções devem ser coletadas durante a extração de dados do roteador."
+  },
+  "settings_extraction_filter_hint": {
+    "message": "Pelo menos uma seção deve permanecer selecionada."
+  },
+  "settings_extraction_filter_save": {
+    "message": "Salvar filtros"
+  },
+  "settings_extraction_filter_toast_saved": {
+    "message": "Filtros de extração salvos"
+  },
+  "settings_extraction_filter_error_empty": {
+    "message": "Selecione pelo menos uma seção de extração"
+  },
+  "settings_extraction_filter_option_topology": {
+    "message": "Topologia"
+  },
+  "settings_extraction_filter_option_wan": {
+    "message": "WAN"
+  },
+  "settings_extraction_filter_option_remote_access": {
+    "message": "Acesso remoto"
+  },
+  "settings_extraction_filter_option_wlan": {
+    "message": "WLAN"
+  },
+  "settings_extraction_filter_option_lan": {
+    "message": "LAN / DHCP"
+  },
+  "settings_extraction_filter_option_upnp": {
+    "message": "UPnP"
+  },
+  "settings_extraction_filter_option_tr069": {
+    "message": "TR-069"
+  },
+  "settings_extraction_filter_option_router_info": {
+    "message": "Informações do roteador"
   },
   "settings_section_router_preferences": {
     "message": "Preferências do roteador"
@@ -556,6 +598,9 @@
   "popup_collect_refresh_button": { "message": "Recarregar dados" },
   "popup_collect_button": { "message": "Coletar dados" },
   "popup_reboot_router": { "message": "Reiniciar roteador" },
+  "popup_reboot_router_confirm_prompt": {
+    "message": "Reiniciar o roteador agora? A conexão pode ser interrompida por alguns minutos."
+  },
   "popup_empty_no_data_title": { "message": "Nenhum dado coletado ainda." },
   "popup_empty_no_data_desc": {
     "message": "Clique em $collect_button$ para ver as informações do roteador.",

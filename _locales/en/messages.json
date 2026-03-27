@@ -515,9 +515,6 @@
   "popup_error_save_missing_fields": {
     "message": "Provide both username and password before saving"
   },
-  "popup_error_max_bookmarks": {
-    "message": "Maximum number of bookmarks reached. Remove some bookmarks to save new ones"
-  },
   "popup_status_bookmark_saved": {
     "message": "Credentials saved to bookmark list"
   },
@@ -543,6 +540,9 @@
   "popup_status_copy_success": {
     "message": "Router info copied to clipboard"
   },
+  "popup_error_copy_to_clipboard": {
+    "message": "Could not copy to clipboard. Try again."
+  },
   "popup_error_no_data_to_copy": {
     "message": "Collect router data before copying"
   },
@@ -567,6 +567,48 @@
   },
   "settings_copy_template_error_empty": {
     "message": "Provide a format before saving"
+  },
+  "settings_extraction_filter_title": {
+    "message": "Extraction filters"
+  },
+  "settings_extraction_filter_desc": {
+    "message": "Choose which sections should be collected when extracting router data."
+  },
+  "settings_extraction_filter_hint": {
+    "message": "At least one section must remain selected."
+  },
+  "settings_extraction_filter_save": {
+    "message": "Save filters"
+  },
+  "settings_extraction_filter_toast_saved": {
+    "message": "Extraction filters saved"
+  },
+  "settings_extraction_filter_error_empty": {
+    "message": "Select at least one extraction section"
+  },
+  "settings_extraction_filter_option_topology": {
+    "message": "Topology"
+  },
+  "settings_extraction_filter_option_wan": {
+    "message": "WAN"
+  },
+  "settings_extraction_filter_option_remote_access": {
+    "message": "Remote Access"
+  },
+  "settings_extraction_filter_option_wlan": {
+    "message": "WLAN"
+  },
+  "settings_extraction_filter_option_lan": {
+    "message": "LAN / DHCP"
+  },
+  "settings_extraction_filter_option_upnp": {
+    "message": "UPnP"
+  },
+  "settings_extraction_filter_option_tr069": {
+    "message": "TR-069"
+  },
+  "settings_extraction_filter_option_router_info": {
+    "message": "Router Info"
   },
   "settings_section_router_preferences": {
     "message": "Router preferences"
@@ -653,6 +695,9 @@
   "popup_collect_refresh_button": { "message": "Refresh data" },
   "popup_collect_button": { "message": "Collect data" },
   "popup_reboot_router": { "message": "Reboot router" },
+  "popup_reboot_router_confirm_prompt": {
+    "message": "Reboot the router now? The connection may be interrupted for a few minutes."
+  },
   "popup_empty_no_data_title": { "message": "No data collected yet." },
   "popup_empty_no_data_desc": {
     "message": "Click $collect_button$ to see router information.",

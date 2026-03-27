@@ -2,8 +2,8 @@ export type { ExtractionResult, PingTestResult } from '@/domain/schemas/validati
 export type { CredentialBookmark, ModelBookmarks } from '@/application/types';
 
 export enum Band {
-  GHz24 = '2.4 GHz',
-  GHz5 = '5 GHz',
+  GHz24 = '24gHz',
+  GHz5 = '5gHz',
 }
 
 export enum DiagnosticsMode {

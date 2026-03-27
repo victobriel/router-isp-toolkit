@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Settings } from '@/ui/modules/settings/components/App';
+import { Settings } from '@/ui/modules/settings/App';
 import '@/ui/styles/globals.css';
 import { AppThemeProvider } from '@/ui/hooks/use-app-theme';
 

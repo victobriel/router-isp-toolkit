@@ -4,11 +4,10 @@ import {
   PopupBoolBadge,
   PopupCompareBadge,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
-import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
 import { ArrowUpRight, Copy, EllipsisVertical, LucideIcon } from 'lucide-react';
-import { usePopupStatus } from '../../../contexts/popup-status-context';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { PopupStatusType } from '@/application/types';
-import { Separator } from '@/ui/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,9 +32,15 @@ export const PopupDataRow = ({
 }: PopupDataRowProps) => {
   const { setStatus, setStatusMessage } = usePopupStatus();
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (ableToCopy) {
-      void copyTextToClipboard(String(value));
+      const wasCopied = await copyTextToClipboard(String(value));
+      if (!wasCopied) {
+        setStatus(PopupStatusType.ERR);
+        setStatusMessage(translator.t('popup_error_copy_to_clipboard'));
+        return;
+      }
+
       setStatus(PopupStatusType.OK);
       setStatusMessage(translator.t('popup_copy_text_copied_to_clipboard'));
     }
@@ -53,7 +58,7 @@ export const PopupDataRow = ({
             label: translator.t('popup_copy_text'),
             value: 'copy_text',
             icon: Copy,
-            onClick: handleCopy,
+            onClick: () => void handleCopy(),
           },
         ]
       : []),
@@ -81,9 +86,7 @@ export const PopupDataRow = ({
         {compareMatch !== undefined ? (
           <PopupCompareBadge match={compareMatch} />
         ) : (
-          <div className="flex items-center justify-center h-4 w-4.5">
-            <Separator orientation="vertical" />
-          </div>
+          <div className="w-6" />
         )}
         <div className="flex min-w-0 items-center justify-end gap-1">
           {typeof value === 'boolean' ? (

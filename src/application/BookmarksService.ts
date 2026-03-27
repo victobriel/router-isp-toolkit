@@ -1,4 +1,4 @@
-import { BOOKMARKS_STORAGE_KEY, MAX_BOOKMARK_CREDENTIALS } from '@/application/constants/index';
+import { BOOKMARKS_STORAGE_KEY } from '@/application/constants/index';
 import type { BookmarkStore, ModelBookmarks, CredentialBookmark } from '@/application/types/index';
 import type { IStorage } from '@/application/ports/IStorage';
 
@@ -28,7 +28,7 @@ export class BookmarksService {
   public async addCredential(
     model: string,
     credential: Omit<CredentialBookmark, 'id'>,
-  ): Promise<{ kind: 'ok'; entry: ModelBookmarks } | { kind: 'max_reached'; max: number }> {
+  ): Promise<ModelBookmarks> {
     const store = await this.loadStore();
     const existing = store[model] ?? {
       model,
@@ -37,21 +37,17 @@ export class BookmarksService {
 
     const updatedCredentials = [...existing.credentials];
 
-    if (updatedCredentials.length >= MAX_BOOKMARK_CREDENTIALS) {
-      return { kind: 'max_reached', max: MAX_BOOKMARK_CREDENTIALS };
-    }
-
     updatedCredentials.push({ ...credential, id: crypto.randomUUID() });
 
-    const entry: ModelBookmarks = {
+    const bookmarks: ModelBookmarks = {
       model,
-      credentials: updatedCredentials.slice(0, MAX_BOOKMARK_CREDENTIALS),
+      credentials: updatedCredentials,
     };
 
-    store[model] = entry;
+    store[model] = bookmarks;
     await this.saveStore(store);
 
-    return { kind: 'ok', entry };
+    return bookmarks;
   }
 
   public async removeCredential(routerModel: string, id: string): Promise<ModelBookmarks | null> {

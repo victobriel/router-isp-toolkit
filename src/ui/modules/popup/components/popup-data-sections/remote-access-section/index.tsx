@@ -6,7 +6,7 @@ import {
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
 import { ExtractionResult } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
-import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface RemoteAccessSectionProps {
@@ -41,9 +41,13 @@ export const RemoteAccessSection = ({
     },
   ];
 
+  const hasData = rows.some(
+    (row) => row.value !== undefined && row.value !== null && row.value !== '-',
+  );
+
   return (
     <Collapsible
-      defaultOpen
+      defaultOpen={hasData}
       title={
         <span className="flex items-center gap-1.5">
           <Server className="size-3.5" />

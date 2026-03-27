@@ -18,14 +18,16 @@ export const topologySchema = z.object({
   cable: topologyBandSchema,
 });
 
-export const wlanSsidExtractionEntrySchema = z.object({
-  enabled: z.boolean(),
-  ssidName: z.string(),
-  ssidPassword: z.string(),
-  ssidHideMode: z.boolean(),
-  wpa2SecurityType: z.string(),
-  maxClients: z.number(),
-});
+export const wlanSsidExtractionEntrySchema = z
+  .object({
+    enabled: z.boolean(),
+    ssidName: z.string(),
+    ssidPassword: z.string(),
+    ssidHideMode: z.boolean(),
+    wpa2SecurityType: z.string(),
+    maxClients: z.number(),
+  })
+  .partial();
 
 export function wlanSsidPreferenceEntrySchema<T extends z.ZodType>(fieldSchema: T) {
   return z

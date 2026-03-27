@@ -38,17 +38,13 @@ class ExtensionManager {
 
   public static async saveDetectedRouterModel(
     tabId: number | undefined,
-    model: unknown,
+    model: string,
   ): Promise<CollectResponse> {
     if (tabId === undefined || tabId === chrome.tabs.TAB_ID_NONE) {
       return {
         success: false,
         message: 'No tab id available for detected router model',
       };
-    }
-
-    if (typeof model !== 'string' || model.trim() === '') {
-      return { success: false, message: 'Invalid router model' };
     }
 
     const storageKey = `${ROUTER_MODEL_STORAGE_KEY}:${String(tabId)}`;
@@ -60,6 +56,23 @@ class ExtensionManager {
   public static async showOverlay(tabId: number): Promise<CollectResponse> {
     try {
       await tabMessenger.sendToTab(tabId, { action: 'showOverlay' });
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return { success: false, message };
+    }
+  }
+
+  public static async copyToClipboard(text: unknown): Promise<CollectResponse> {
+    if (typeof text !== 'string' || text.length === 0) {
+      return {
+        success: false,
+        message: 'No text available to copy',
+      };
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
       return { success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -106,6 +119,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     saveLastExtractionData: () => {
       void ExtensionManager.saveLastExtractionData(sender.tab?.id, message.data)
+        .then(sendResponse)
+        .catch((error) => {
+          sendResponse({
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+        });
+      return true;
+    },
+
+    copyToClipboard: () => {
+      void ExtensionManager.copyToClipboard(message.text)
         .then(sendResponse)
         .catch((error) => {
           sendResponse({

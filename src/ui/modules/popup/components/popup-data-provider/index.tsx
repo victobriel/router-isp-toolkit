@@ -23,19 +23,22 @@ import {
   PENDING_AUTH_ERROR_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
 } from '@/application/constants/index';
-import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
+import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
 import type { RouterPreferencesStore } from '@/application/types';
 import { formatTime } from '@/ui/lib/utils';
-import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { translator } from '@/infra/i18n/I18nService';
+import { CopyTextValueKey, LogEntry } from './types';
+import {
+  arrayMatch,
+  boolMatch,
+  isExpectedNavigationError,
+  regexMatch,
+  textMatch,
+  translateAuthError,
+} from './utils';
 import { DiagnosticsMode } from '@/ui/types';
-import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
-
-interface LogEntry {
-  msg: string;
-  type: PopupStatusType;
-  time: string;
-}
+import { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 
 interface PopupDataProviderProps {
   tabId: number;
@@ -56,134 +59,7 @@ interface PopupDataProviderProps {
   }) => React.ReactNode;
 }
 
-const EXPECTED_ERRORS = [
-  'message channel closed before a response was received',
-  'receiving end does not exist',
-  'the tab was closed',
-];
-
-function isExpectedNavigationError(msg: string): boolean {
-  return EXPECTED_ERRORS.some((s) => msg.toLowerCase().includes(s));
-}
-
 const { popupUiStateService } = services;
-
-export type RouterPreferencesComparison = {
-  // WAN / overall features
-  internetEnabled?: boolean;
-  tr069Enabled?: boolean;
-  bandSteeringEnabled?: boolean;
-  upnpEnabled?: boolean;
-  requestPdEnabled?: boolean;
-  slaacEnabled?: boolean;
-  dhcpv6Enabled?: boolean;
-  pdEnabled?: boolean;
-  remoteAccessIpv4Enabled?: boolean;
-  remoteAccessIpv6Enabled?: boolean;
-  linkSpeed?: boolean;
-  routerVersion?: boolean;
-  tr069Url?: boolean;
-  pppoeUsername?: boolean;
-  ipVersion?: boolean;
-
-  // DHCP
-  dhcpEnabled?: boolean;
-  dhcpIpAddress?: boolean;
-  dhcpSubnetMask?: boolean;
-  dhcpStartIp?: boolean;
-  dhcpEndIp?: boolean;
-  dhcpIspDnsEnabled?: boolean;
-  dhcpPrimaryDns?: boolean;
-  dhcpSecondaryDns?: boolean;
-  dhcpLeaseTimeMode?: boolean;
-  dhcpLeaseTime?: boolean;
-
-  // WiFi 2.4 GHz
-  wlan24GhzRadioEnabled?: boolean;
-  wlan24GhzChannel?: boolean;
-  wlan24GhzMode?: boolean;
-  wlan24GhzBandWidth?: boolean;
-  wlan24GhzTransmittingPower?: boolean;
-
-  // WiFi 5 GHz
-  wlan5GhzRadioEnabled?: boolean;
-  wlan5GhzChannel?: boolean;
-  wlan5GhzMode?: boolean;
-  wlan5GhzBandWidth?: boolean;
-  wlan5GhzTransmittingPower?: boolean;
-
-  wlan24GhzSsids?: Array<{
-    ssidName?: boolean;
-    ssidHideMode?: boolean;
-    wpa2SecurityType?: boolean;
-    maxClients?: boolean;
-  }>;
-  wlan5GhzSsids?: Array<{
-    ssidName?: boolean;
-    ssidHideMode?: boolean;
-    wpa2SecurityType?: boolean;
-    maxClients?: boolean;
-  }>;
-};
-
-export interface SsidWlanPreferencesComparison {
-  ssidName: string;
-  ssidHideMode: boolean;
-  ssidEncryptionType: string;
-  ssidMaxClients: number;
-}
-
-function boolMatch(
-  actual: boolean | undefined,
-  expected: boolean | undefined,
-): boolean | undefined {
-  if (expected === undefined || actual === undefined) return undefined;
-  // Some older/incorrect stored values may use empty string for "unset".
-  if ((expected as unknown) === '') return undefined;
-  return actual === expected;
-}
-
-function regexMatch(actual: string | undefined, expected: string | undefined): boolean | undefined {
-  // Treat unset values as "no comparison" (stored as `undefined` or empty string).
-  if (expected === undefined || actual === undefined) return undefined;
-  if (expected.trim() === '') return undefined;
-  return new RegExp(expected).test(actual);
-}
-
-function textMatch(actual: string | undefined, expected: string | undefined): boolean | undefined {
-  // Treat unset values as "no comparison" (stored as `undefined` or empty string).
-  if (expected === undefined || actual === undefined) return undefined;
-  if (expected === '') return undefined;
-  return actual === expected;
-}
-
-function arrayMatch(
-  actual: string | undefined,
-  expected: string[] | undefined,
-): boolean | undefined {
-  if (expected === undefined || actual === undefined) return undefined;
-  if (expected.length === 0) return undefined;
-  return expected.some((e) => e === actual);
-}
-
-type CopyTextValueKey = (typeof COPY_TEXT_VALUE_KEYS)[number]['key'];
-
-function translateAuthError(msg: string | undefined): string {
-  if (!msg) return msg ?? '';
-
-  if (msg.includes('Credentials are required for authentication')) {
-    return translator.t('popup_error_save_missing_fields');
-  }
-
-  if (
-    msg.includes('Authentication failed. Please verify your username and password and try again')
-  ) {
-    return translator.t('popup_error_auth_failed');
-  }
-
-  // Fallback: keep the original message (may be non-localized).
-  return msg;
-}
 
 export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataProviderProps) => {
   const { setStatus: setStatusType, setStatusMessage } = usePopupStatus();

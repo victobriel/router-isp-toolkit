@@ -8,7 +8,7 @@ import {
 import { val } from '@/ui/lib/utils';
 import { Separator } from '@/ui/components/ui/separator';
 import { translator } from '@/infra/i18n/I18nService';
-import type { RouterPreferencesComparison } from '@/ui/modules/popup/components/popup-data-provider';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 interface WanSectionProps {
@@ -84,9 +84,13 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
     );
   }
 
+  const hasData = rows.some(
+    (row) => row.value !== undefined && row.value !== null && row.value !== '-',
+  );
+
   return (
     <Collapsible
-      defaultOpen
+      defaultOpen={hasData}
       title={
         <span className="flex items-center gap-1.5">
           <Network className="size-3.5" />

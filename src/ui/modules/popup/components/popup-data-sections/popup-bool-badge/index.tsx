@@ -1,6 +1,6 @@
 import { Badge } from '@/ui/components/ui/badge';
 import { translator } from '@/infra/i18n/I18nService';
-import { CircleCheck, CircleX } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { cn } from '@/ui/lib/utils';
 
 interface PopupBoolBadgeProps {
@@ -24,13 +24,10 @@ interface PopupCompareBadgeProps {
 export const PopupCompareBadge = ({ match }: PopupCompareBadgeProps) => {
   return (
     <Badge
-      className={cn(
-        'text-sm p-0!',
-        match ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive',
-      )}
+      className={cn(match ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive')}
       aria-label={match ? translator.t('popup_compare_ok') : translator.t('popup_compare_not_ok')}
     >
-      {match ? <CircleCheck className="size-4" /> : <CircleX className="size-4" />}
+      {match ? <Check className="size-4" /> : <X className="size-4" />}
     </Badge>
   );
 };

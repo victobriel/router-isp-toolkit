@@ -174,3 +174,37 @@ export enum RouterPageKey {
 }
 
 export type GoToPageOptions = z.infer<typeof GoToPageOptionSchema>;
+
+export type RouterSelectors = Record<string, string>;
+
+export const EXTRACTION_FILTER_KEYS = [
+  'topology',
+  'wan',
+  'remoteAccess',
+  'wlan',
+  'lan',
+  'upnp',
+  'tr069',
+  'routerInfo',
+] as const;
+
+export type ExtractionFilterKey = (typeof EXTRACTION_FILTER_KEYS)[number];
+export type ExtractionFilter = ExtractionFilterKey[];
+
+export function normalizeExtractionFilter(raw: unknown): ExtractionFilter {
+  if (!Array.isArray(raw)) {
+    return [...EXTRACTION_FILTER_KEYS];
+  }
+
+  const normalized = Array.from(
+    new Set(
+      raw.filter(
+        (value): value is ExtractionFilterKey =>
+          typeof value === 'string' &&
+          EXTRACTION_FILTER_KEYS.includes(value as ExtractionFilterKey),
+      ),
+    ),
+  );
+
+  return normalized.length ? normalized : [...EXTRACTION_FILTER_KEYS];
+}

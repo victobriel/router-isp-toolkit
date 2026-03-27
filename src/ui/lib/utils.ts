@@ -10,7 +10,7 @@ export function formatTime(): string {
 }
 
 export function val(v: string | boolean | undefined | null): string {
-  if (v === undefined || v === null || v === '') return '--';
+  if (v === undefined || v === null || v === '') return '-';
   if (typeof v === 'boolean') return v ? 'Enabled' : 'Disabled';
   return v;
 }

@@ -3,16 +3,23 @@ import { services } from '@/index';
 import {
   BOOKMARKS_STORAGE_KEY,
   COPY_TEXT_TEMPLATE_STORAGE_KEY,
+  EXTRACTION_FILTER_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
   SETTINGS_EXPORT_SCHEMA_VERSION,
 } from '@/application/constants';
-import { normalizeRouterPreferencesStorage } from '@/ui/utils/preference-storage';
+import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
 import type {
+  ExtractionFilter,
+  ExtractionFilterKey,
   ModelBookmarks,
   RouterPreferencesByModel,
   RouterPreferencesStore,
 } from '@/application/types';
-import { RouterPreferencesByModelSchema } from '@/application/types';
+import {
+  EXTRACTION_FILTER_KEYS,
+  RouterPreferencesByModelSchema,
+  normalizeExtractionFilter,
+} from '@/application/types';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
 import { Badge } from '@/ui/components/ui/badge';
@@ -26,7 +33,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/ui/components/ui/accordion';
-import { copyTextToClipboard } from '@/ui/utils/clipboard';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
 import { RouterPreferenceSection } from '@/ui/modules/settings/components/router-preference-section';
 import { cn } from '@/ui/lib/utils';
 import {
@@ -46,16 +53,17 @@ const { bookmarksService } = services;
 
 export const Settings = () => {
   const { toasts, show: showToast } = useSettingsToast();
-
   const { themePreference: theme, setThemePreference: setTheme } = useAppTheme();
 
   const [bookmarkEntries, setBookmarkEntries] = useState<Array<[string, ModelBookmarks]>>([]);
   const [totalBookmarks, setTotalBookmarks] = useState(0);
   const [copyTemplate, setCopyTemplate] = useState('');
+  const [extractionFilter, setExtractionFilter] = useState<ExtractionFilter>([
+    ...EXTRACTION_FILTER_KEYS,
+  ]);
   const [prefsByModel, setPrefsByModel] = useState<RouterPreferencesByModel>({});
   const [selectedModelKey, setSelectedModelKey] = useState('');
   const [version, setVersion] = useState('');
-
   const [importOpen, setImportOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importSections, setImportSections] = useState<Record<SettingsConfigSectionKey, boolean>>({
@@ -81,6 +89,9 @@ export const Settings = () => {
 
       const tmpl = await services.storage.get<string>(COPY_TEXT_TEMPLATE_STORAGE_KEY);
       setCopyTemplate(typeof tmpl === 'string' ? tmpl : '');
+
+      const rawFilter = await services.storage.get<unknown>(EXTRACTION_FILTER_STORAGE_KEY);
+      setExtractionFilter(normalizeExtractionFilter(rawFilter));
 
       const rawPrefs = await services.storage.get<unknown>(ROUTER_PREFERENCES_STORAGE_KEY);
       setPrefsByModel(normalizeRouterPreferencesStorage(rawPrefs));
@@ -115,6 +126,26 @@ export const Settings = () => {
     showToast(translator.t('settings_copy_template_toast_saved'), 'ok');
   };
 
+  const handleToggleExtractionFilter = (key: ExtractionFilterKey) => {
+    setExtractionFilter((prev) => {
+      if (prev.includes(key)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((entry) => entry !== key);
+      }
+      return [...prev, key];
+    });
+  };
+
+  const handleSaveExtractionFilter = async () => {
+    if (!extractionFilter.length) {
+      showToast(translator.t('settings_extraction_filter_error_empty'), 'err');
+      return;
+    }
+
+    await services.storage.save(EXTRACTION_FILTER_STORAGE_KEY, extractionFilter);
+    showToast(translator.t('settings_extraction_filter_toast_saved'), 'ok');
+  };
+
   const handleSavePrefsForModel = async (modelKey: string, prefs: RouterPreferencesStore) => {
     const key = modelKey.trim();
     if (!key) {
@@ -132,6 +163,7 @@ export const Settings = () => {
     await services.storage.clear?.();
     await refreshBookmarks();
     setCopyTemplate('');
+    setExtractionFilter([...EXTRACTION_FILTER_KEYS]);
     setPrefsByModel({});
     setSelectedModelKey('');
     showToast(translator.t('settings_toast_all_cleared'), 'ok');
@@ -342,6 +374,17 @@ export const Settings = () => {
     },
   ] as const;
 
+  const extractionFilterLabels: Record<ExtractionFilterKey, string> = {
+    topology: translator.t('settings_extraction_filter_option_topology'),
+    wan: translator.t('settings_extraction_filter_option_wan'),
+    remoteAccess: translator.t('settings_extraction_filter_option_remote_access'),
+    wlan: translator.t('settings_extraction_filter_option_wlan'),
+    lan: translator.t('settings_extraction_filter_option_lan'),
+    upnp: translator.t('settings_extraction_filter_option_upnp'),
+    tr069: translator.t('settings_extraction_filter_option_tr069'),
+    routerInfo: translator.t('settings_extraction_filter_option_router_info'),
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SettingsToastStack toasts={toasts} />
@@ -523,6 +566,48 @@ export const Settings = () => {
             </Button>
           </div>
         </section>
+
+        <Separator />
+
+        <section className="space-y-3">
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold">
+              {translator.t('settings_extraction_filter_title')}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {translator.t('settings_extraction_filter_desc')}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {EXTRACTION_FILTER_KEYS.map((key) => {
+              const active = extractionFilter.includes(key);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleToggleExtractionFilter(key)}
+                  className={cn(
+                    'rounded-md border px-3 py-2 text-xs text-left transition-colors',
+                    active
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:bg-muted/50',
+                  )}
+                >
+                  {extractionFilterLabels[key]}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {translator.t('settings_extraction_filter_hint')}
+          </p>
+          <Button size="sm" onClick={() => void handleSaveExtractionFilter()} className="gap-1.5">
+            <Save className="h-3.5 w-3.5" />
+            {translator.t('settings_extraction_filter_save')}
+          </Button>
+        </section>
+
+        <Separator />
 
         <SettingsImportExportModal
           variant="import"

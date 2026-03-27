@@ -244,3 +244,9 @@ export const COPY_TEXT_VALUE_KEYS = [
     description: translator.t('popup_label_last_external_ping_min_avg_max'),
   },
 ];
+
+export const EXPECTED_ERRORS = [
+  'message channel closed before a response was received',
+  'receiving end does not exist',
+  'the tab was closed',
+];

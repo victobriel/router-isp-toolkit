@@ -1,6 +1,6 @@
 import type { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 import type { ButtonConfig } from './IRouter.types';
-import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import { ExtractionFilter, GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 /**
  * Port for router adapter: domain contract for authentication and data extraction.
@@ -24,7 +24,7 @@ export interface IRouter {
    */
   fillLoginCredentials(credentials: Credentials): void;
 
-  extract(): Promise<ExtractionResult>;
+  extract(filter?: ExtractionFilter): Promise<ExtractionResult>;
   buttonElementConfig(): ButtonConfig | null;
   isAuthenticated(): boolean;
   ping(ip: string): Promise<PingTestResult | null>;

@@ -7,7 +7,7 @@
 export const ZteCommonSelectors = {
   // Login
   username: '#Frm_Username, input[name="Frm_Username"]',
-  password: '#Frm_Password, input[name="Frm_Password"]',
+  password: '#Frm_Password, input[name="Frm_Password"], input[type="password"]',
   submit: '#LoginId, button[type="submit"]',
 
   // Main menu

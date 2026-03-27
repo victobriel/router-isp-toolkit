@@ -8,10 +8,12 @@ import type { IRouter } from '@/domain/ports/IRouter';
 import {
   DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
+  DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,
+  DEFAULT_MAX_WAIT_AFTER_INPUT_POPULATED_MS,
 } from '@/infra/drivers/shared/constants';
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import { RouterPage, RouterPageKey } from '@/application/types';
+import { ExtractionFilter, RouterPage, RouterPageKey, RouterSelectors } from '@/application/types';
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.
@@ -20,79 +22,78 @@ import { RouterPage, RouterPageKey } from '@/application/types';
 export abstract class BaseRouter implements IRouter {
   private static readonly CLICK_SETTLE_MS = 200;
 
-  protected readonly domService: IDomGateway;
   private readonly name: string;
+  protected readonly domService: IDomGateway;
+  protected readonly s: RouterSelectors;
 
-  protected abstract readonly loginSelectors: {
-    username: string;
-    password: string;
-  };
-
-  protected constructor(name: string, domService: IDomGateway) {
+  protected constructor(name: string, domService: IDomGateway, selectors: RouterSelectors) {
     if (new.target === BaseRouter) {
       throw new Error('BaseRouter is abstract and cannot be instantiated directly');
     }
     this.name = name;
     this.domService = domService;
-  }
-
-  public get model(): string {
-    return this.name;
-  }
-
-  public isLoginPage(): boolean {
-    const selectors = [this.loginSelectors.username, this.loginSelectors.password];
-    return selectors.every((selector) => {
-      const element = document.querySelector(selector);
-      return element instanceof HTMLElement;
-    });
+    this.s = selectors;
   }
 
   public abstract authenticate(credentials: Credentials): void;
-
-  public readLoginCredentials(): Credentials | null {
-    try {
-      const usernameEl = this.domService.getValueElement(this.loginSelectors.username);
-      const passwordEl = this.domService.getValueElement(this.loginSelectors.password);
-
-      return {
-        username: usernameEl.value.trim(),
-        password: passwordEl.value,
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  public fillLoginCredentials(credentials: Credentials): void {
-    const { username, password } = credentials;
-
-    const usernameEl = this.domService.getValueElement(this.loginSelectors.username);
-    const passwordEl = this.domService.getValueElement(this.loginSelectors.password);
-
-    this.domService.updateField(usernameEl, username);
-    this.domService.updateField(passwordEl, password);
-  }
-
-  public abstract extract(): Promise<ExtractionResult>;
+  public abstract extract(filter?: ExtractionFilter): Promise<ExtractionResult>;
   public abstract buttonElementConfig(): ButtonConfig | null;
   public abstract isAuthenticated(): boolean;
   public abstract ping(ip: string): Promise<PingTestResult | null>;
   public abstract goToPage(page: RouterPage, key: RouterPageKey): void;
   public abstract reboot(): Promise<void>;
 
-  public waitForElement(selector: string, timeoutMs = 5000): Promise<HTMLElement> {
-    return new Promise((resolve, reject) => {
+  public get model(): string {
+    return this.name;
+  }
+
+  public isLoginPage(): boolean {
+    const selectors = [this.s.username, this.s.password];
+    return selectors.every((selector) => {
       const element = document.querySelector(selector);
-      if (element instanceof HTMLElement) {
-        return resolve(element);
+      return element instanceof HTMLElement;
+    });
+  }
+
+  public readLoginCredentials(): Credentials | null {
+    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
+    const passwordEl = this.domService.getHTMLElement(this.s.password, HTMLInputElement);
+
+    if (!usernameEl || !passwordEl) return null;
+
+    return {
+      username: usernameEl.value,
+      password: passwordEl.value,
+    };
+  }
+
+  public fillLoginCredentials(credentials: Credentials): void {
+    const { username, password } = credentials;
+
+    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
+    const passwordEl = this.domService.getHTMLElement(this.s.password, HTMLInputElement);
+
+    if (!usernameEl || !passwordEl) return;
+
+    this.domService.updateHTMLElementValue(usernameEl, username);
+    this.domService.updateHTMLElementValue(passwordEl, password);
+  }
+
+  public waitForElement(
+    selector: string,
+    timeoutMs = DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,
+  ): Promise<HTMLElement> {
+    return new Promise((resolve, reject) => {
+      const el = document.querySelector(selector);
+      if (el instanceof HTMLElement) {
+        return resolve(el);
       }
 
       const observer = new MutationObserver(() => {
-        const found = document.querySelector(selector);
-        if (found instanceof HTMLElement) {
+        const el = document.querySelector(selector);
+        if (el instanceof HTMLElement) {
           observer.disconnect();
-          resolve(found);
+          resolve(el);
         }
       });
 
@@ -110,7 +111,10 @@ export abstract class BaseRouter implements IRouter {
    * Necessary when the router populates input fields asynchronously after the
    * containing section is already in the DOM.
    */
-  protected waitForInputPopulated(selector: string, timeoutMs = 5000): Promise<void> {
+  protected waitForInputPopulated(
+    selector: string,
+    timeoutMs = DEFAULT_MAX_WAIT_AFTER_INPUT_POPULATED_MS,
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const isPopulated = (): boolean => {
         const el = document.querySelector<HTMLInputElement>(selector);
@@ -142,7 +146,9 @@ export abstract class BaseRouter implements IRouter {
     waitForSelector?: string,
     maxWaitMs: number = DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   ): Promise<void> {
-    const section = this.domService.getElement(sectionSelector, HTMLElement);
+    const section = this.domService.getHTMLElement(sectionSelector, HTMLElement);
+    if (!section) return;
+
     this.domService.safeClick(section);
 
     const targetSelector = waitForSelector ?? sectionSelector;
@@ -274,5 +280,23 @@ export abstract class BaseRouter implements IRouter {
 
   protected delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  protected focusTargetElement(targetSelector: string): void {
+    const target = document.querySelector<HTMLElement>(targetSelector);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    target.dispatchEvent(new MouseEvent('focus', { bubbles: true, cancelable: true }));
+    if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
+      target.focus();
+    }
+  }
+
+  protected async stepByStepNavigate(steps: string[]): Promise<void> {
+    for (const step of steps) {
+      if (!step) continue;
+      const nextStep = steps[steps.indexOf(step) + 1];
+      await this.clickElementAndWait(step, nextStep);
+    }
   }
 }

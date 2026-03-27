@@ -7,44 +7,22 @@ import {
   type ReactNode,
 } from 'react';
 
-export type AppThemePreference = 'light' | 'dark' | 'system';
-
-export const THEME_STORAGE_KEY = 'app-theme';
-
-type EffectiveTheme = 'light' | 'dark';
-
-function getSystemTheme(): EffectiveTheme {
-  // Extensions always run in a browser environment, but keep this safe for tests.
-  const mql =
-    typeof window !== 'undefined' && window.matchMedia
-      ? window.matchMedia('(prefers-color-scheme: dark)')
-      : null;
-  return mql?.matches ? 'dark' : 'light';
+export enum AppThemePreference {
+  LIGHT = 'light',
+  DARK = 'dark',
+  SYSTEM = 'system',
+}
+export const THEME_STORAGE_KEY = 'app_theme';
+export enum EffectiveTheme {
+  LIGHT = 'light',
+  DARK = 'dark',
 }
 
-function resolveEffectiveTheme(preference: AppThemePreference): EffectiveTheme {
-  return preference === 'system' ? getSystemTheme() : preference;
-}
-
-function readStoredThemePreference(): AppThemePreference {
-  try {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
-  } catch {
-    return 'system';
-  }
-}
-
-function applyThemeToDom(preference: AppThemePreference) {
-  const effective = resolveEffectiveTheme(preference);
-  document.documentElement.classList.toggle('dark', effective === 'dark');
-}
-
-type AppThemeContextValue = {
+interface AppThemeContextValue {
   themePreference: AppThemePreference;
   setThemePreference: (theme: AppThemePreference) => void;
   effectiveTheme: EffectiveTheme;
-};
+}
 
 const AppThemeContext = createContext<AppThemeContextValue | undefined>(undefined);
 
@@ -56,21 +34,44 @@ export function useAppTheme(): AppThemeContextValue {
   return value;
 }
 
-export function AppThemeProvider({
-  children,
-  persistPreference = false,
-}: {
+interface AppThemeProviderProps {
   children: ReactNode;
   persistPreference?: boolean;
-}) {
-  const [themePreference, setThemePreference] = useState<AppThemePreference>(() =>
-    readStoredThemePreference(),
-  );
+}
 
-  const effectiveTheme = useMemo(() => resolveEffectiveTheme(themePreference), [themePreference]);
+export function AppThemeProvider({ children, persistPreference = false }: AppThemeProviderProps) {
+  const [themePreference, setThemePreference] = useState<AppThemePreference>(() => {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    if (!stored) {
+      return AppThemePreference.SYSTEM;
+    }
+
+    const theme = {
+      [AppThemePreference.LIGHT]: AppThemePreference.LIGHT,
+      [AppThemePreference.DARK]: AppThemePreference.DARK,
+      [AppThemePreference.SYSTEM]: AppThemePreference.SYSTEM,
+    };
+    if (!(stored in theme)) {
+      return AppThemePreference.SYSTEM;
+    }
+    return theme[stored as AppThemePreference];
+  });
+
+  const effectiveTheme = useMemo((): EffectiveTheme => {
+    if (themePreference === AppThemePreference.SYSTEM) {
+      // Extensions always run in a browser environment, but keep this safe for tests.
+      const mql =
+        typeof window !== 'undefined' && window.matchMedia
+          ? window.matchMedia('(prefers-color-scheme: dark)')
+          : null;
+      return mql?.matches ? EffectiveTheme.DARK : EffectiveTheme.LIGHT;
+    }
+
+    return themePreference === AppThemePreference.DARK ? EffectiveTheme.DARK : EffectiveTheme.LIGHT;
+  }, [themePreference]);
 
   useLayoutEffect(() => {
-    applyThemeToDom(themePreference);
+    document.documentElement.classList.toggle('dark', effectiveTheme === EffectiveTheme.DARK);
     if (persistPreference) {
       try {
         localStorage.setItem(THEME_STORAGE_KEY, themePreference);
@@ -78,7 +79,7 @@ export function AppThemeProvider({
         // Ignore storage failures; DOM class still reflects the choice.
       }
     }
-  }, [themePreference, persistPreference]);
+  }, [themePreference, persistPreference, effectiveTheme]);
 
   const value = useMemo(
     () => ({ themePreference, setThemePreference, effectiveTheme }),

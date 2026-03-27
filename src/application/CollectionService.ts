@@ -7,11 +7,14 @@ import {
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IStorage } from '@/application/ports/IStorage';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
+import { EXTRACTION_FILTER_STORAGE_KEY } from '@/application/constants';
+import { normalizeExtractionFilter } from '@/application/types';
 
 export class CollectionService {
   constructor(
     private readonly routerFactory: IRouterFactory,
     private readonly sessionStorage: IStorage,
+    private readonly storage: IStorage,
   ) {}
 
   public async handleCollect(message: CollectMessage): Promise<CollectResponse> {
@@ -126,7 +129,9 @@ export class CollectionService {
   }
 
   private async executeExtraction(router: Router): Promise<CollectResponse> {
-    const data = await router.extract();
+    const rawFilter = await this.storage.get<unknown>(EXTRACTION_FILTER_STORAGE_KEY);
+    const filter = normalizeExtractionFilter(rawFilter);
+    const data = await router.extract(filter);
     const hasData = Object.values(data).some((value) => value !== null);
 
     return {

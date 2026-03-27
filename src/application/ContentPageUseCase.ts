@@ -101,10 +101,12 @@ export class ContentPageUseCase {
       return;
     }
 
-    const dataBtnParentElement = this.domService.getElement<HTMLElement>(
+    const dataBtnParentElement = this.domService.getHTMLElement<HTMLElement>(
       btnElementConfig.targetSelector,
       HTMLElement,
     );
+    if (!dataBtnParentElement) return;
+
     dataBtnParentElement.style.position = 'relative';
 
     try {

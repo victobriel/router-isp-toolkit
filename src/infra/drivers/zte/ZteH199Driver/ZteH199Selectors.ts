@@ -9,9 +9,3 @@ import { ZteCommonSelectors } from '@/infra/drivers/zte/ZteCommonSelectors';
 export const ZteH199Selectors = {
   ...ZteCommonSelectors,
 } as const;
-
-/** Login form selectors for Router base class (password may include fallbacks). */
-export const ZteH199LoginSelectors = {
-  username: ZteH199Selectors.username,
-  password: '#Frm_Password, input[name="Frm_Password"], input[type="password"]',
-} as const;

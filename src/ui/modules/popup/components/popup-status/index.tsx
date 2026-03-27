@@ -1,6 +1,6 @@
 import { PopupStatusType } from '@/application/types';
 import { cn } from '@/ui/lib/utils';
-import { usePopupStatus } from '@/ui/modules/popup/contexts/popup-status-context';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 
 export const PopupStatus = () => {
   const { status, statusMessage } = usePopupStatus();
