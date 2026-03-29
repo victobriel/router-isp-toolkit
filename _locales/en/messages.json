@@ -718,6 +718,9 @@
 
   "popup_log_collect_starting": { "message": "Starting data collection..." },
   "popup_log_auth_sent_waiting": { "message": "Authentication sent, waiting for router..." },
+  "popup_error_router_not_authenticated": {
+    "message": "Router is not authenticated. Please authenticate first."
+  },
   "popup_error_auth_failed": {
     "message": "Authentication failed. Please verify your username and password and try again"
   },

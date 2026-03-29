@@ -70,13 +70,8 @@ export abstract class BaseRouter implements IRouter {
   public fillLoginCredentials(credentials: Credentials): void {
     const { username, password } = credentials;
 
-    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
-    const passwordEl = this.domService.getHTMLElement(this.s.password, HTMLInputElement);
-
-    if (!usernameEl || !passwordEl) return;
-
-    this.domService.updateHTMLElementValue(usernameEl, username);
-    this.domService.updateHTMLElementValue(passwordEl, password);
+    this.domService.updateHTMLElementValue(this.s.username, username);
+    this.domService.updateHTMLElementValue(this.s.password, password);
   }
 
   public waitForElement(
@@ -146,10 +141,7 @@ export abstract class BaseRouter implements IRouter {
     waitForSelector?: string,
     maxWaitMs: number = DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
   ): Promise<void> {
-    const section = this.domService.getHTMLElement(sectionSelector, HTMLElement);
-    if (!section) return;
-
-    this.domService.safeClick(section);
+    this.domService.safeClick(sectionSelector);
 
     const targetSelector = waitForSelector ?? sectionSelector;
 
@@ -280,16 +272,6 @@ export abstract class BaseRouter implements IRouter {
 
   protected delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  protected focusTargetElement(targetSelector: string): void {
-    const target = document.querySelector<HTMLElement>(targetSelector);
-    if (!target) return;
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    target.dispatchEvent(new MouseEvent('focus', { bubbles: true, cancelable: true }));
-    if (target instanceof HTMLInputElement || target instanceof HTMLSelectElement) {
-      target.focus();
-    }
   }
 
   protected async stepByStepNavigate(steps: string[]): Promise<void> {

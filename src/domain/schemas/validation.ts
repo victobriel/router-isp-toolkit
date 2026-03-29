@@ -52,6 +52,7 @@ export const ExtractionResultSchema = z
 export enum CollectMessageAction {
   AUTHENTICATE = 'authenticate',
   COLLECT = 'collect',
+  AUTH_STATUS = 'auth_status',
   PING = 'ping',
   GO_TO_PAGE = 'go_to_page',
   REBOOT = 'reboot',
@@ -67,6 +68,7 @@ export const CollectMessageSchema = z.object({
     [
       CollectMessageAction.AUTHENTICATE,
       CollectMessageAction.COLLECT,
+      CollectMessageAction.AUTH_STATUS,
       CollectMessageAction.PING,
       CollectMessageAction.GO_TO_PAGE,
       CollectMessageAction.REBOOT,
@@ -80,6 +82,7 @@ export const CollectMessageSchema = z.object({
     })
     .optional(),
   ip: z.string().optional(),
+  onlyAuthenticate: z.boolean().optional(),
   goToPageConfig: z
     .object({
       page: z.enum(RouterPage),

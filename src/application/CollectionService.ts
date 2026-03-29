@@ -23,6 +23,10 @@ export class CollectionService {
 
     const actions = {
       [CollectMessageAction.COLLECT]: async () => await this.executeExtraction(router),
+      [CollectMessageAction.AUTH_STATUS]: async () => ({
+        success: true,
+        authenticated: router.isAuthenticated(),
+      }),
       [CollectMessageAction.AUTHENTICATE]: async () => {
         if (router.isAuthenticated()) {
           return {
@@ -48,9 +52,11 @@ export class CollectionService {
 
         const { username, password } = parsed.data;
 
-        const loginTime = Date.now();
-        await this.sessionStorage.save('router_login_pending', 'true');
-        await this.sessionStorage.save('router_login_time', loginTime.toString());
+        if (!message.onlyAuthenticate) {
+          const loginTime = Date.now();
+          await this.sessionStorage.save('router_login_pending', 'true');
+          await this.sessionStorage.save('router_login_time', loginTime.toString());
+        }
 
         router.authenticate({ username, password });
 

@@ -1,5 +1,5 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import type { HTMLValueElement } from '@/infra/dom/types';
+import { HTMLValueElement } from '@/infra/dom/types';
 
 export class DomService implements IDomGateway {
   public getHTMLElement<T extends HTMLElement>(selector: string, type: new () => T): T | null {
@@ -31,29 +31,49 @@ export class DomService implements IDomGateway {
     return option.textContent.trim();
   }
 
-  public updateHTMLElementValue(element: HTMLValueElement, value: string): void {
-    if (element instanceof HTMLInputElement) element.focus();
-    element.value = value;
-    this.dispatchValueEvents(element);
-    if (element instanceof HTMLInputElement) element.blur();
+  public updateHTMLElementValue(selector: string, value: string): void {
+    const el = this.getHTMLElement(selector, HTMLElement);
+    if (!el) return;
+    if (this.isValuedElement(el)) el.focus();
+    (el as HTMLValueElement).value = value;
+    this.dispatchValueEvents(el);
+    if (el instanceof HTMLInputElement) el.blur();
   }
 
-  public safeClick(element: HTMLElement): void {
+  public isElementVisible(selector: string): boolean {
+    const el = this.getHTMLElement(selector, HTMLElement);
+    if (!el) return false;
+    return el.style.display !== 'none' && el.style.visibility !== 'hidden';
+  }
+
+  public focusElement(selector: string): void {
+    const el = this.getHTMLElement(selector, HTMLElement);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.dispatchEvent(new MouseEvent('focus', { bubbles: true, cancelable: true }));
+    if (el instanceof HTMLInputElement || el instanceof HTMLSelectElement) {
+      el.focus();
+    }
+  }
+
+  public safeClick(selector: string): void {
+    const el = this.getHTMLElement(selector, HTMLElement);
+    if (!el) return;
     const isJavascriptHref =
-      element instanceof HTMLAnchorElement &&
-      element.getAttribute('href')?.trimStart().toLowerCase().startsWith('javascript:');
+      el instanceof HTMLAnchorElement &&
+      el.getAttribute('href')?.trimStart().toLowerCase().startsWith('javascript:');
     if (isJavascriptHref) {
-      element.addEventListener('click', (e) => e.preventDefault(), {
+      el.addEventListener('click', (e) => e.preventDefault(), {
         capture: true,
         once: true,
       });
-      element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
       return;
     }
     try {
-      element.click();
+      el.click();
     } catch {
-      element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     }
   }
 

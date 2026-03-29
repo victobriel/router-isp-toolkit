@@ -621,6 +621,9 @@
 
   "popup_log_collect_starting": { "message": "Iniciando coleta de dados..." },
   "popup_log_auth_sent_waiting": { "message": "Autenticação enviada; aguardando o roteador..." },
+  "popup_error_router_not_authenticated": {
+    "message": "O roteador não está autenticado. Por favor, autentique-se primeiro."
+  },
   "popup_error_auth_failed": {
     "message": "Falha na autenticação. Verifique seu nome de usuário e senha e tente novamente"
   },

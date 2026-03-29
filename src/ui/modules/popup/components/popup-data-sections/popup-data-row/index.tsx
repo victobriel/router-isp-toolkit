@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/ui/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/components/ui/tooltip';
 
 export interface PopupDataRowProps {
   label: string;
@@ -79,9 +80,16 @@ export const PopupDataRow = ({
 
   return (
     <div className="grid grid-cols-[3fr_5fr] items-center justify-between gap-2 py-0.5 h-9">
-      <span className="text-sm text-muted-foreground shrink-0 truncate" title={label}>
-        {label}
-      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="text-sm text-muted-foreground shrink-0 truncate cursor-default">
+            {label}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="right" align="center">
+          {label}
+        </TooltipContent>
+      </Tooltip>
       <div className="flex min-w-0 items-center justify-between gap-1">
         {compareMatch !== undefined ? (
           <PopupCompareBadge match={compareMatch} />
@@ -92,9 +100,16 @@ export const PopupDataRow = ({
           {typeof value === 'boolean' ? (
             <PopupBoolBadge value={value} />
           ) : (
-            <span className="min-w-0 flex-1 text-sm font-medium text-right truncate" title={value}>
-              {value ?? '-'}
-            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="min-w-0 flex-1 text-sm font-medium text-right truncate cursor-default">
+                  {value}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center">
+                {value}
+              </TooltipContent>
+            </Tooltip>
           )}
           {menu.length > 1 ? (
             <DropdownMenu>

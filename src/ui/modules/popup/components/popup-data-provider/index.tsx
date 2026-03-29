@@ -56,6 +56,7 @@ interface PopupDataProviderProps {
     copyText: () => Promise<{ data: string | null; error?: string }>;
     goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
     rebootRouter: () => Promise<void>;
+    isRouterAuthenticated: boolean | null;
   }) => React.ReactNode;
 }
 
@@ -72,6 +73,13 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   const [routerPrefsForModel, setRouterPrefsForModel] = useState<RouterPreferencesStore | null>(
     null,
   );
+  const [isRouterAuthenticated, setIsRouterAuthenticated] = useState<boolean | null>(null);
+  const [lastAuthCredentials, setLastAuthCredentials] = useState<{
+    username: string;
+    password: string;
+  } | null>(null);
+  const lastAuthCredentialsRef = useRef(lastAuthCredentials);
+  lastAuthCredentialsRef.current = lastAuthCredentials;
 
   const statusRef = useRef<{ type: PopupStatusType; message: string }>({
     type: PopupStatusType.NONE,
@@ -98,6 +106,21 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     },
     [],
   );
+
+  const refreshRouterAuth = useCallback(async () => {
+    try {
+      const res = await sendToTab<CollectMessage, CollectResponse>(tabId, {
+        action: CollectMessageAction.AUTH_STATUS,
+      });
+      if (res?.success && res.authenticated) {
+        setIsRouterAuthenticated(res.authenticated);
+        return;
+      }
+      setIsRouterAuthenticated(false);
+    } catch {
+      setIsRouterAuthenticated(false);
+    }
+  }, [sendToTab, tabId]);
 
   // Initialize: load persisted state, pending auth errors, ping results
   useEffect(() => {
@@ -137,6 +160,11 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       if (externalPing) setExternalPingResult(externalPing);
     })();
   }, [routerModel, tabId, setStatus]);
+
+  useEffect(() => {
+    setIsRouterAuthenticated(null);
+    void refreshRouterAuth();
+  }, [refreshRouterAuth, tabId]);
 
   const routerPreferencesComparison = useMemo<RouterPreferencesComparison | null>(() => {
     if (!data || !routerPrefsForModel) return null;
@@ -310,16 +338,13 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     [addLog, sendToTab],
   );
 
-  const onCollect = useCallback(
-    async (username: string, password: string) => {
-      setIsCollecting(true);
-      setStatus(PopupStatusType.OK, translator.t('popup_collect_collecting'));
-      addLog(translator.t('popup_log_collect_starting'));
-
+  const authenticate = useCallback(
+    async (username: string, password: string, onlyAuthenticate: boolean = false) => {
       try {
         const authResponse = await sendToTab<CollectMessage, CollectResponse>(tabId, {
           action: CollectMessageAction.AUTHENTICATE,
-          credentials: { username: username || 'admin', password },
+          credentials: { username, password },
+          onlyAuthenticate,
         });
 
         if (!authResponse?.success) {
@@ -327,6 +352,24 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
           setStatus(PopupStatusType.WARN, msg);
           return;
         }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setStatus(PopupStatusType.ERR, translator.t('popup_error_router_comm'));
+        addLog(msg, PopupStatusType.ERR);
+      }
+    },
+    [addLog, sendToTab, setStatus, tabId],
+  );
+
+  const onCollect = useCallback(
+    async (username: string, password: string) => {
+      setIsCollecting(true);
+      setStatus(PopupStatusType.OK, translator.t('popup_collect_collecting'));
+      addLog(translator.t('popup_log_collect_starting'));
+      setLastAuthCredentials({ username, password });
+
+      try {
+        await authenticate(username, password);
 
         addLog(translator.t('popup_log_auth_sent_waiting'));
         const extractedData = await startRetryLoop(tabId);
@@ -376,9 +419,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         }
       } finally {
         setIsCollecting(false);
+        void refreshRouterAuth();
       }
     },
-    [addLog, sendToTab, setStatus, startRetryLoop, tabId],
+    [addLog, authenticate, setStatus, startRetryLoop, tabId, refreshRouterAuth],
   );
 
   const onClear = useCallback(() => {
@@ -390,7 +434,8 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       status: { type: PopupStatusType.NONE, text: translator.t('popup_status_ready') },
       logs: [],
     });
-  }, [setStatus, tabId]);
+    void refreshRouterAuth();
+  }, [refreshRouterAuth, setStatus, tabId]);
 
   const onPing = useCallback(
     async (ip: string, mode: DiagnosticsMode) => {
@@ -545,8 +590,15 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   }, [data, internalPingResult, externalPingResult]);
 
   const goToPage = useCallback(
-    (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => {
-      void sendToTab<CollectMessage, CollectResponse>(tabId, {
+    async (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => {
+      await refreshRouterAuth();
+
+      if (!isRouterAuthenticated) {
+        setStatus(PopupStatusType.WARN, translator.t('popup_error_router_not_authenticated'));
+        return;
+      }
+
+      await sendToTab<CollectMessage, CollectResponse>(tabId, {
         action: CollectMessageAction.GO_TO_PAGE,
         goToPageConfig: {
           page,
@@ -559,18 +611,25 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         addLog(error instanceof Error ? error.message : String(error), PopupStatusType.ERR);
       });
     },
-    [addLog, sendToTab, setStatus, tabId],
+    [addLog, sendToTab, setStatus, tabId, refreshRouterAuth, isRouterAuthenticated],
   );
 
   const rebootRouter = useCallback(async () => {
-    void sendToTab<CollectMessage, CollectResponse>(tabId, {
+    await refreshRouterAuth();
+
+    if (!isRouterAuthenticated) {
+      setStatus(PopupStatusType.WARN, translator.t('popup_error_router_not_authenticated'));
+      return;
+    }
+
+    await sendToTab<CollectMessage, CollectResponse>(tabId, {
       action: CollectMessageAction.REBOOT,
     }).catch((error) => {
       console.error('error rebooting router', error);
       setStatus(PopupStatusType.ERR, translator.t('popup_error_router_comm'));
       addLog(error instanceof Error ? error.message : String(error), PopupStatusType.ERR);
     });
-  }, [addLog, sendToTab, setStatus, tabId]);
+  }, [refreshRouterAuth, isRouterAuthenticated, sendToTab, tabId, setStatus, addLog]);
 
   return children({
     data,
@@ -585,5 +644,6 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     copyText,
     goToPage,
     rebootRouter,
+    isRouterAuthenticated,
   });
 };

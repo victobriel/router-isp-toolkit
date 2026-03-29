@@ -49,6 +49,12 @@ import { GoToPageOptions, PopupStatusType, RouterPage, RouterPageKey } from '@/a
 import { PopupStatusProvider, usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { copyTextToClipboard } from '@/ui/lib/clipboard';
 import { translator } from '@/infra/i18n/I18nService';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/ui/components/ui/tooltip';
 
 function PopupContent({
   tabId,
@@ -65,6 +71,7 @@ function PopupContent({
   goToPage,
   onClear,
   rebootRouter,
+  isRouterAuthenticated,
 }: {
   tabId: number;
   routerModel: string;
@@ -80,6 +87,7 @@ function PopupContent({
   copyText: () => Promise<{ data: string | null; error?: string }>;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
   rebootRouter: () => Promise<void>;
+  isRouterAuthenticated: boolean | null;
 }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -199,7 +207,7 @@ function PopupContent({
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground text-sm">
+    <div className="flex flex-col h-screen bg-background text-foreground text-sm overflow-x-hidden">
       <PopupHeader routerModel={routerModel} />
       <PopupStatus />
       <PopupCredentials
@@ -208,6 +216,7 @@ function PopupContent({
         username={username}
         password={password}
         hasData={!!data}
+        isRouterAuthenticated={isRouterAuthenticated}
         onUsernameChange={setUsername}
         onPasswordChange={setPassword}
       />
@@ -216,24 +225,23 @@ function PopupContent({
         <div className="flex gap-1.5 justify-between bg-background pb-2 px-2">
           <div className="flex gap-1.5">
             {secondaryMenu.map(({ label, value, icon: Icon, onClick, disabled }) => (
-              <Button
-                key={value}
-                variant="outline"
-                onClick={onClick}
-                disabled={disabled}
-                title={label}
-                className="group min-w-0"
-              >
-                <div className="group-hover:hidden" />
-                <Icon className="size-5 group-hover:size-4" />
-                <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-200 group-hover:max-w-32 group-hover:opacity-100 group-focus-visible:max-w-32 group-focus-visible:opacity-100">
-                  {label}
-                </span>
-              </Button>
+              <Tooltip key={value}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    onClick={onClick}
+                    disabled={disabled}
+                    className="group min-w-0"
+                  >
+                    <Icon className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
             ))}
           </div>
-          <Button onClick={handleCopyText} className="min-w-0 h-full!">
-            <Copy className="size-5" />
+          <Button onClick={handleCopyText} className="min-w-0 h-full! shrink-0">
+            <Copy className="size-4" />
             <span className="truncate">{translator.t('popup_copy_text')}</span>
           </Button>
         </div>
@@ -391,44 +399,50 @@ function PopupContent({
   );
 }
 
-export const Popup = () => (
-  <AppTabProvider>
-    {({ tabId, routerModel }) => (
-      <PopupStatusProvider>
-        <PopupDataProvider tabId={tabId} routerModel={routerModel}>
-          {({
-            data,
-            isCollecting,
-            isPinging,
-            internalPingResult,
-            externalPingResult,
-            routerPreferencesComparison,
-            onCollect,
-            onClear,
-            onPing,
-            copyText,
-            goToPage,
-            rebootRouter,
-          }) => (
-            <PopupContent
-              tabId={tabId}
-              routerModel={routerModel}
-              data={data}
-              isCollecting={isCollecting}
-              isPinging={isPinging}
-              internalPingResult={internalPingResult}
-              externalPingResult={externalPingResult}
-              routerPreferencesComparison={routerPreferencesComparison}
-              onCollect={onCollect}
-              onClear={onClear}
-              onPing={onPing}
-              copyText={copyText}
-              goToPage={goToPage}
-              rebootRouter={rebootRouter}
-            />
-          )}
-        </PopupDataProvider>
-      </PopupStatusProvider>
-    )}
-  </AppTabProvider>
-);
+export const Popup = () => {
+  return (
+    <TooltipProvider>
+      <AppTabProvider>
+        {({ tabId, routerModel }) => (
+          <PopupStatusProvider>
+            <PopupDataProvider tabId={tabId} routerModel={routerModel}>
+              {({
+                data,
+                isCollecting,
+                isPinging,
+                internalPingResult,
+                externalPingResult,
+                routerPreferencesComparison,
+                onCollect,
+                onClear,
+                onPing,
+                copyText,
+                goToPage,
+                rebootRouter,
+                isRouterAuthenticated,
+              }) => (
+                <PopupContent
+                  tabId={tabId}
+                  routerModel={routerModel}
+                  data={data}
+                  isCollecting={isCollecting}
+                  isPinging={isPinging}
+                  internalPingResult={internalPingResult}
+                  externalPingResult={externalPingResult}
+                  routerPreferencesComparison={routerPreferencesComparison}
+                  onCollect={onCollect}
+                  onClear={onClear}
+                  onPing={onPing}
+                  copyText={copyText}
+                  goToPage={goToPage}
+                  rebootRouter={rebootRouter}
+                  isRouterAuthenticated={isRouterAuthenticated}
+                />
+              )}
+            </PopupDataProvider>
+          </PopupStatusProvider>
+        )}
+      </AppTabProvider>
+    </TooltipProvider>
+  );
+};

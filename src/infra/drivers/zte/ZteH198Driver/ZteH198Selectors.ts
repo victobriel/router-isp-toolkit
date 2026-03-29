@@ -11,6 +11,7 @@ export const ZteH198Selectors = {
   netSphereContainer: '#smNetSphereMAP',
   netSphereStatus: '#Enable0',
   netSphereModeSelect: '#Mode',
+  netSphereModeSelectSubmitButton: '#Btn_apply_Mode',
 
   lanTopologyShowButton: '#master-device-lan-dev4',
   wlan24TopologyShowButton: '#master-device-2G-dev4',

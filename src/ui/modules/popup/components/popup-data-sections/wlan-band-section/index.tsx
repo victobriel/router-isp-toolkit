@@ -44,7 +44,6 @@ export const WlanSsidSlider = ({ band, ssids, ssidMatches, goToPage }: WlanSsidS
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_enabled'),
-      compareMatch: ssid.enabled,
       value: ssid.enabled,
       handleGoToPage: () =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_STATUS, ssidOptions),

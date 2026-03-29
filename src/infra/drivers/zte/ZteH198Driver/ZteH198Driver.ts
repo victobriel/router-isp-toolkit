@@ -20,63 +20,100 @@ export class ZteH198Driver extends ZteBaseDriver {
   }
 
   protected override async extractTopologyData(): Promise<Pick<ExtractionResult, 'topology'>> {
+    if (!this.domService.isElementVisible(this.s.topologyTab)) {
+      await this.activeNetSphere();
+    }
+
     const clientsByBand: Record<TopologyBand, TopologyClient[]> = {
       '24ghz': [],
       '5ghz': [],
       cable: [],
     };
 
-    await this.stepByStepNavigate([this.s.topologyTab, this.s.lanTopologyShowButton]);
-    await this.waitForElement(this.s.topologyPopup);
-
-    const lanSection = this.domService.getHTMLElement(this.s.topologyAccessDevSection, HTMLElement);
-    if (lanSection) {
-      clientsByBand.cable.push(
-        ...this.topologyParser.parse(lanSection, {
-          rows: this.s.lanAccessRows,
-          hostName: this.s.topologyPopupHostName,
-          macAddr: this.s.topologyPopupMacAddr,
-          ipAddr: this.s.topologyPopupIpAddr,
-        }),
-      );
-    }
-
-    await this.stepByStepNavigate([this.s.topologyClosePopup, this.s.wlan24TopologyShowButton]);
-    await this.waitForElement(this.s.topologyPopup);
-
-    const wlan2Section = this.domService.getHTMLElement(
-      this.s.topologyAccessDevSection,
+    const lanTopologyShowButton = await this.domService.getHTMLElement(
+      this.s.lanTopologyShowButton,
       HTMLElement,
     );
-    if (wlan2Section) {
-      clientsByBand['24ghz'].push(
-        ...this.topologyParser.parse(wlan2Section, {
-          rows: this.s.wlan2Rows,
-          hostName: this.s.topologyPopupHostName,
-          macAddr: this.s.topologyPopupMacAddr,
-          ipAddr: this.s.topologyPopupIpAddr,
-          rssi: this.s.topologyPopupRssi,
-        }),
+
+    await this.clickElementAndWait(this.s.topologyTab, this.s.lanTopologyShowButton);
+
+    if (lanTopologyShowButton && lanTopologyShowButton.classList.contains('more-wlan-dev-online')) {
+      await this.clickElementAndWait(this.s.lanTopologyShowButton, this.s.topologyPopup);
+
+      const lanSection = this.domService.getHTMLElement(
+        this.s.topologyAccessDevSection,
+        HTMLElement,
       );
+      if (lanSection) {
+        clientsByBand.cable.push(
+          ...this.topologyParser.parse(lanSection, {
+            rows: this.s.lanAccessRows,
+            hostName: this.s.topologyPopupHostName,
+            macAddr: this.s.topologyPopupMacAddr,
+            ipAddr: this.s.topologyPopupIpAddr,
+          }),
+        );
+      }
     }
 
-    await this.stepByStepNavigate([this.s.topologyClosePopup, this.s.wlan5TopologyShowButton]);
-    await this.waitForElement(this.s.topologyPopup);
+    await this.clickElementAndWait(this.s.topologyClosePopup, this.s.wlan24TopologyShowButton);
 
-    const wlan5Section = this.domService.getHTMLElement(
-      this.s.topologyAccessDevSection,
+    const wlan24TopologyShowButton = await this.domService.getHTMLElement(
+      this.s.wlan24TopologyShowButton,
       HTMLElement,
     );
-    if (wlan5Section) {
-      clientsByBand['5ghz'].push(
-        ...this.topologyParser.parse(wlan5Section, {
-          rows: this.s.wlan5Rows,
-          hostName: this.s.topologyPopupHostName,
-          macAddr: this.s.topologyPopupMacAddr,
-          ipAddr: this.s.topologyPopupIpAddr,
-          rssi: this.s.topologyPopupRssi,
-        }),
+
+    if (
+      wlan24TopologyShowButton &&
+      wlan24TopologyShowButton.classList.contains('more-wlan-dev-online')
+    ) {
+      await this.clickElementAndWait(this.s.wlan24TopologyShowButton, this.s.topologyPopup);
+
+      const wlan2Section = this.domService.getHTMLElement(
+        this.s.topologyAccessDevSection,
+        HTMLElement,
       );
+      if (wlan2Section) {
+        clientsByBand['24ghz'].push(
+          ...this.topologyParser.parse(wlan2Section, {
+            rows: this.s.wlan2Rows,
+            hostName: this.s.topologyPopupHostName,
+            macAddr: this.s.topologyPopupMacAddr,
+            ipAddr: this.s.topologyPopupIpAddr,
+            rssi: this.s.topologyPopupRssi,
+          }),
+        );
+      }
+    }
+
+    await this.clickElementAndWait(this.s.topologyClosePopup, this.s.wlan5TopologyShowButton);
+
+    const wlan5TopologyShowButton = await this.domService.getHTMLElement(
+      this.s.wlan5TopologyShowButton,
+      HTMLElement,
+    );
+
+    if (
+      wlan5TopologyShowButton &&
+      wlan5TopologyShowButton.classList.contains('more-wlan-dev-online')
+    ) {
+      await this.clickElementAndWait(this.s.wlan5TopologyShowButton, this.s.topologyPopup);
+
+      const wlan5Section = this.domService.getHTMLElement(
+        this.s.topologyAccessDevSection,
+        HTMLElement,
+      );
+      if (wlan5Section) {
+        clientsByBand['5ghz'].push(
+          ...this.topologyParser.parse(wlan5Section, {
+            rows: this.s.wlan5Rows,
+            hostName: this.s.topologyPopupHostName,
+            macAddr: this.s.topologyPopupMacAddr,
+            ipAddr: this.s.topologyPopupIpAddr,
+            rssi: this.s.topologyPopupRssi,
+          }),
+        );
+      }
     }
 
     const topology: ExtractionResult['topology'] = {
@@ -98,7 +135,25 @@ export class ZteH198Driver extends ZteBaseDriver {
   }
 
   private async activeNetSphere(): Promise<void> {
-    await this.stepByStepNavigate([this.s.topologyTab, this.s.netSphereShowButton]);
-    await this.waitForElement(this.s.netSphereStatus);
+    await this.stepByStepNavigate([
+      this.s.localNetworkTab,
+      this.s.netSphereContainer,
+      this.s.netSphereStatus,
+    ]);
+
+    const netSphereModeSelect = this.domService.getHTMLElement(
+      this.s.netSphereModeSelect,
+      HTMLSelectElement,
+    );
+
+    if (!netSphereModeSelect) {
+      return;
+    }
+
+    if (netSphereModeSelect.value !== 'Master') {
+      await this.domService.updateHTMLElementValue(this.s.netSphereModeSelect, 'Master');
+    }
+
+    await this.clickElementAndWait(this.s.netSphereModeSelectSubmitButton);
   }
 }

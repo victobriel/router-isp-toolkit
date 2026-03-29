@@ -13,6 +13,7 @@ interface PopupCredentialsProps {
   username: string;
   password: string;
   hasData: boolean;
+  isRouterAuthenticated: boolean | null;
   onUsernameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
 }
@@ -23,20 +24,23 @@ export const PopupCredentials = ({
   username,
   password,
   hasData,
+  isRouterAuthenticated,
   onUsernameChange,
   onPasswordChange,
 }: PopupCredentialsProps) => {
+  const shouldAutoExpand = !hasData && isRouterAuthenticated !== true;
+
   const [showBookmarks, setShowBookmarks] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(!hasData);
+  const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);
 
   const { bookmarks, saveCredential, fillLoginFields, deleteCredential } = usePopupBookmark({
     routerModel,
   });
 
   useEffect(() => {
-    setIsExpanded(!hasData);
+    setIsExpanded(shouldAutoExpand);
     setShowBookmarks(false);
-  }, [hasData]);
+  }, [shouldAutoExpand]);
 
   const handleSaveCredential = () => {
     void saveCredential(username, password);

@@ -15,6 +15,7 @@ export interface CollectResponse {
   message?: string;
   data?: ExtractionResult;
   pingResult?: PingTestResult;
+  authenticated?: boolean;
 }
 
 /** Status type for popup UI feedback. */

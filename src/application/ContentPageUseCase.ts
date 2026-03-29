@@ -12,6 +12,7 @@ import type { IRouter as Router } from '@/domain/ports/IRouter';
 import { CollectMessageAction } from '@/domain/schemas/validation';
 import { CollectionService } from '@/application/CollectionService';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
+import { translator } from '@/infra/i18n/I18nService';
 
 /**
  * Application use case: bootstrap content script on router page.
@@ -120,7 +121,10 @@ export class ContentPageUseCase {
   private createGetDataBtn(router: Router, btnElementConfig: ButtonConfig): HTMLButtonElement {
     const btn = document.createElement('button');
     btn.id = 'routerCollectDataBtn';
-    btn.textContent = btnElementConfig.text;
+    btn.innerHTML = `
+      <span style="text-decoration:underline;">${btnElementConfig.text}</span>
+      <span class="sm-text" style="font-size:9px;color:gray;text-decoration:none;">${translator.t('extName')}</span>
+    `;
     btn.style.cssText = btnElementConfig.style;
 
     btn.addEventListener('click', async () => {
