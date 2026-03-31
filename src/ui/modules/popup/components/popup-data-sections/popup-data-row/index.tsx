@@ -86,7 +86,7 @@ export const PopupDataRow = ({
             {label}
           </span>
         </TooltipTrigger>
-        <TooltipContent side="right" align="center">
+        <TooltipContent side="top" align="start">
           {label}
         </TooltipContent>
       </Tooltip>
@@ -106,7 +106,7 @@ export const PopupDataRow = ({
                   {value}
                 </span>
               </TooltipTrigger>
-              <TooltipContent side="left" align="center">
+              <TooltipContent side="top" align="end">
                 {value}
               </TooltipContent>
             </Tooltip>
