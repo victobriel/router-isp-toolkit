@@ -18,6 +18,7 @@ export const ZteCommonSelectors = {
   managementTab: '#mgrAndDiag',
 
   // Internet -> Status
+  ethernetInformationContainer: '#EthStateinfoBar',
   linkSpeed: '#cLinkSpeed\\:0',
 
   // Internet -> WAN
@@ -74,6 +75,7 @@ export const ZteCommonSelectors = {
 
   // Local Network -> WLAN -> Band Steering
   bandSteeringContainer: '#wlanbandsteer',
+  bandSteeringWlanContainer: '#WlanBandSteerBar',
   bandSteeringEnabled: '#BandSteering1',
 
   // Local Network -> WLAN -> Basic
@@ -84,6 +86,7 @@ export const ZteCommonSelectors = {
   wlan5GhzRadioStatus: '#RadioStatus0_1',
 
   // Local Network -> WLAN -> Basic -> Global Config
+  wlanOnOffConfigurationContainer: '#WlanBasicAdOnOffBar',
   wlanGlobalConfigContainer: '#WlanBasicAdConfBar',
 
   // Local Network -> WLAN -> Basic -> Global Config -> 2.4GHz
@@ -104,23 +107,13 @@ export const ZteCommonSelectors = {
   wlanSsidConfigContainer: '#WLANSSIDConfBar',
 
   // Local Network -> WLAN -> Basic -> SSID Config -> 2.4GHz
-  wlan24GhzSsidEnabled: '#Enable1\\:0',
-  wlan24GhzSsidName: '#ESSID\\:0',
-  wlan24GhzSsidHideMode: '#ESSIDHideEnable0\\:0',
-  wlan24GhzSsidWpa2SecurityType: '#EncryptionType\\:0',
-  wlan24GhzSsidPassword: '#KeyPassphrase\\:0',
-  wlan24GhzSsidMaxClients: '#MaxUserNum\\:0',
-  wlan24GhzShowPasswordButton: '#Switch_KeyPassType\\:0',
-
-  // Local Network -> WLAN -> Basic -> SSID Config -> 5GHz
-  wlan5GhzSsidConfigContainer: '#instName_WLANSSIDConf\\:4',
-  wlan5GhzSsidEnabled: '#Enable1\\:4',
-  wlan5GhzSsidName: '#ESSID\\:4',
-  wlan5GhzSsidHideMode: '#ESSIDHideEnable0\\:4',
-  wlan5GhzSsidWpa2SecurityType: '#EncryptionType\\:4',
-  wlan5GhzSsidPassword: '#KeyPassphrase\\:4',
-  wlan5GhzSsidMaxClients: '#MaxUserNum\\:4',
-  wlan5GhzShowPasswordButton: '#Switch_KeyPassType\\:4',
+  wlan24GhzSsidEnabled: '#Enable1\\:',
+  wlanSsidName: '#ESSID\\:',
+  wlanSsidHideMode: '#ESSIDHideEnable0\\:',
+  wlanSsidWpa2SecurityType: '#EncryptionType\\:',
+  wlanSsidPassword: '#KeyPassphrase\\:',
+  wlanSsidMaxClients: '#MaxUserNum\\:',
+  wlanShowPasswordButton: '#Switch_KeyPassType\\:',
 
   // Local Network -> LAN
   lanContainer: '#lanConfig',
@@ -156,9 +149,11 @@ export const ZteCommonSelectors = {
 
   // Local Network -> UPnP
   upnpContainer: '#upnp',
+  upnpContainerPage: '#LocalUPnPBar',
   upnpEnabled: "input[id^='OBJ_UPNPCONFIG_ID.EnableUPnPIGD1:LocalUPnP']",
 
   routerVersionContainer: '#statusMgr',
+  managementContainerPage: '#ManagStatusBar',
 
   // Management -> Router Version
   routerVersion: '#SoftwareVer',
@@ -173,6 +168,7 @@ export const ZteCommonSelectors = {
 
   // Management -> TR069 URL
   tr069UrlContainer: '#remoteMgr',
+  tr069UrlContainerPage: '#TR069BasicConfBar',
   tr069Url: '#URL',
 
   // Management -> Ping

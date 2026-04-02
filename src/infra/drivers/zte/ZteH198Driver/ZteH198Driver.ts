@@ -20,7 +20,7 @@ export class ZteH198Driver extends ZteBaseDriver {
   }
 
   protected override async extractTopologyData(): Promise<Pick<ExtractionResult, 'topology'>> {
-    if (!this.domService.isElementVisible(this.s.topologyTab)) {
+    if (this.domService.isElementVisible(this.s.topologyTab) === false) {
       await this.activeNetSphere();
     }
 
@@ -30,91 +30,27 @@ export class ZteH198Driver extends ZteBaseDriver {
       cable: [],
     };
 
-    const lanTopologyShowButton = await this.domService.getHTMLElement(
-      this.s.lanTopologyShowButton,
-      HTMLElement,
+    await this.stepByStepNavigate([this.s.topologyTab]);
+    clientsByBand.cable.push(
+      ...(await this.extractPopupTopologyBand(
+        this.s.lanTopologyShowButton,
+        this.s.lanTopologyCount,
+      )),
     );
-
-    await this.clickElementAndWait(this.s.topologyTab, this.s.lanTopologyShowButton);
-
-    if (lanTopologyShowButton && lanTopologyShowButton.classList.contains('more-wlan-dev-online')) {
-      await this.clickElementAndWait(this.s.lanTopologyShowButton, this.s.topologyPopup);
-
-      const lanSection = this.domService.getHTMLElement(
-        this.s.topologyAccessDevSection,
-        HTMLElement,
-      );
-      if (lanSection) {
-        clientsByBand.cable.push(
-          ...this.topologyParser.parse(lanSection, {
-            rows: this.s.lanAccessRows,
-            hostName: this.s.topologyPopupHostName,
-            macAddr: this.s.topologyPopupMacAddr,
-            ipAddr: this.s.topologyPopupIpAddr,
-          }),
-        );
-      }
-    }
-
-    await this.clickElementAndWait(this.s.topologyClosePopup, this.s.wlan24TopologyShowButton);
-
-    const wlan24TopologyShowButton = await this.domService.getHTMLElement(
-      this.s.wlan24TopologyShowButton,
-      HTMLElement,
+    clientsByBand['24ghz'].push(
+      ...(await this.extractPopupTopologyBand(
+        this.s.wlan24TopologyShowButton,
+        this.s.wlan24TopologyCount,
+        true,
+      )),
     );
-
-    if (
-      wlan24TopologyShowButton &&
-      wlan24TopologyShowButton.classList.contains('more-wlan-dev-online')
-    ) {
-      await this.clickElementAndWait(this.s.wlan24TopologyShowButton, this.s.topologyPopup);
-
-      const wlan2Section = this.domService.getHTMLElement(
-        this.s.topologyAccessDevSection,
-        HTMLElement,
-      );
-      if (wlan2Section) {
-        clientsByBand['24ghz'].push(
-          ...this.topologyParser.parse(wlan2Section, {
-            rows: this.s.wlan2Rows,
-            hostName: this.s.topologyPopupHostName,
-            macAddr: this.s.topologyPopupMacAddr,
-            ipAddr: this.s.topologyPopupIpAddr,
-            rssi: this.s.topologyPopupRssi,
-          }),
-        );
-      }
-    }
-
-    await this.clickElementAndWait(this.s.topologyClosePopup, this.s.wlan5TopologyShowButton);
-
-    const wlan5TopologyShowButton = await this.domService.getHTMLElement(
-      this.s.wlan5TopologyShowButton,
-      HTMLElement,
+    clientsByBand['5ghz'].push(
+      ...(await this.extractPopupTopologyBand(
+        this.s.wlan5TopologyShowButton,
+        this.s.wlan5TopologyCount,
+        true,
+      )),
     );
-
-    if (
-      wlan5TopologyShowButton &&
-      wlan5TopologyShowButton.classList.contains('more-wlan-dev-online')
-    ) {
-      await this.clickElementAndWait(this.s.wlan5TopologyShowButton, this.s.topologyPopup);
-
-      const wlan5Section = this.domService.getHTMLElement(
-        this.s.topologyAccessDevSection,
-        HTMLElement,
-      );
-      if (wlan5Section) {
-        clientsByBand['5ghz'].push(
-          ...this.topologyParser.parse(wlan5Section, {
-            rows: this.s.wlan5Rows,
-            hostName: this.s.topologyPopupHostName,
-            macAddr: this.s.topologyPopupMacAddr,
-            ipAddr: this.s.topologyPopupIpAddr,
-            rssi: this.s.topologyPopupRssi,
-          }),
-        );
-      }
-    }
 
     const topology: ExtractionResult['topology'] = {
       '24ghz': {
@@ -134,25 +70,54 @@ export class ZteH198Driver extends ZteBaseDriver {
     return { topology };
   }
 
+  private async extractPopupTopologyBand(
+    showButtonSelector: string,
+    countSelector: string,
+    includeRssi = false,
+  ): Promise<TopologyClient[]> {
+    if (this.getTopologyClientCount(countSelector) === 0) {
+      return [];
+    }
+
+    await this.clickElementAndWait(showButtonSelector, this.s.topologyPopup);
+
+    await Promise.race([
+      this.waitForElement(this.s.topologyAccessRows, this.timeouts.topologyClientsLoadMaxWaitMs),
+      this.delay(this.timeouts.topologyPopupSettleMs),
+    ]).catch(() => {});
+
+    const popup = this.domService.getHTMLElement(this.s.topologyAccessDevSection, HTMLElement);
+
+    const clients = popup
+      ? this.topologyParser.parse(popup, {
+          rows: this.s.topologyAccessRows,
+          hostName: this.s.topologyPopupHostName,
+          macAddr: this.s.topologyPopupMacAddr,
+          ipAddr: this.s.topologyPopupIpAddr,
+          ...(includeRssi ? { rssi: this.s.topologyPopupRssi } : {}),
+        })
+      : [];
+
+    this.domService.safeClick(this.s.topologyClosePopup);
+    await this.waitForDisappearance(this.s.topologyPopup).catch(() => {});
+
+    return clients;
+  }
+
+  private getTopologyClientCount(selector: string): number {
+    const rawValue = this.domService.getElementValue(selector)?.trim() ?? '';
+    const value = Number.parseInt(rawValue, 10);
+    return Number.isFinite(value) ? value : 0;
+  }
+
   private async activeNetSphere(): Promise<void> {
-    await this.stepByStepNavigate([
-      this.s.localNetworkTab,
-      this.s.netSphereContainer,
-      this.s.netSphereStatus,
-    ]);
+    await this.stepByStepNavigate([this.s.localNetworkTab, this.s.netSphereContainer]);
 
-    const netSphereModeSelect = this.domService.getHTMLElement(
-      this.s.netSphereModeSelect,
-      HTMLSelectElement,
-    );
+    await this.expandIfCollapsed(this.s.netSphereStatusContainer, this.s.netSphereStatus);
 
-    if (!netSphereModeSelect) {
-      return;
-    }
+    await this.clickElementAndWait(this.s.netSphereStatus);
 
-    if (netSphereModeSelect.value !== 'Master') {
-      await this.domService.updateHTMLElementValue(this.s.netSphereModeSelect, 'Master');
-    }
+    await this.domService.updateHTMLElementValue(this.s.netSphereModeSelect, 'Master');
 
     await this.clickElementAndWait(this.s.netSphereModeSelectSubmitButton);
   }

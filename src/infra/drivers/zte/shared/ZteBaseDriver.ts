@@ -184,7 +184,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
   private async extractLinkSpeedData(): Promise<Pick<ExtractionResult, 'linkSpeed'>> {
     await this.stepByStepNavigate([this.s.internetTab]);
-    await this.waitForElement(this.s.linkSpeed);
+    await this.expandIfCollapsed(this.s.ethernetInformationContainer, this.s.linkSpeed);
     const linkSpeed = this.domService.getElementValue(this.s.linkSpeed) ?? undefined;
     return { linkSpeed };
   }
@@ -202,7 +202,10 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | 'pdEnabled'
     >
   > {
-    await this.stepByStepNavigate([this.s.internetTab, this.s.wanContainer, this.s.pppoeEntry]);
+    await this.stepByStepNavigate([this.s.internetTab, this.s.wanContainer]);
+
+    await this.expandIfCollapsed(this.s.pppoeEntry, this.s.pppoeUsername);
+
     await Promise.all([
       this.waitForElement(this.s.pppoeUsername),
       this.waitForElement(this.s.serviceListInternet),
@@ -260,16 +263,14 @@ export abstract class ZteBaseDriver extends BaseRouter {
       this.s.localServiceControl,
     ]);
 
-    await this.waitForElement(this.s.ipv4RemoteAccessToggle);
+    await this.expandIfCollapsed(this.s.serviceControlBar, this.s.ipv4RemoteAccessToggle);
 
     const remoteAccessIpv4Enabled = this.domService.getHTMLElement(
       this.s.ipv4RemoteAccessToggle,
       HTMLInputElement,
     )?.checked;
 
-    await this.clickElementAndWait(this.s.ipv6ServiceControlBar);
-
-    await this.waitForElement(this.s.ipv6RemoteAccessToggle);
+    await this.expandIfCollapsed(this.s.ipv6ServiceControlBar, this.s.ipv6RemoteAccessToggle);
 
     const remoteAccessIpv6Enabled = this.domService.getHTMLElement(
       this.s.ipv6RemoteAccessToggle,
@@ -289,7 +290,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       this.s.bandSteeringContainer,
     ]);
 
-    await this.waitForElement(this.s.bandSteeringEnabled);
+    await this.expandIfCollapsed(this.s.bandSteeringWlanContainer, this.s.bandSteeringEnabled);
 
     const bandSteeringEnabled = this.domService.getHTMLElement(
       this.s.bandSteeringEnabled,
@@ -311,6 +312,11 @@ export abstract class ZteBaseDriver extends BaseRouter {
       this.s.wlanBasicContainer,
     ]);
 
+    await this.expandIfCollapsed(
+      this.s.wlanOnOffConfigurationContainer,
+      this.s.wlan24GhzRadioStatus,
+    );
+
     await Promise.all([
       this.waitForElement(this.s.wlan24GhzRadioStatus),
       this.waitForElement(this.s.wlan5GhzRadioStatus),
@@ -326,7 +332,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       HTMLInputElement,
     )?.checked;
 
-    await this.clickElementAndWait(this.s.wlanGlobalConfigContainer);
+    await this.expandIfCollapsed(this.s.wlanGlobalConfigContainer, this.s.wlan24GhzChannel);
 
     await Promise.all([
       this.waitForElement(this.s.wlan24GhzChannel),
@@ -336,17 +342,14 @@ export abstract class ZteBaseDriver extends BaseRouter {
     ]);
 
     const wlan24GhzChannel = this.domService.getElementValue(this.s.wlan24GhzChannel) ?? undefined;
-
     const wlan24GhzMode =
       this.domService.getElementSelectedOptionText(this.s.wlan24GhzMode) ?? undefined;
-
     const wlan24GhzBandWidth =
       this.domService.getElementValue(this.s.wlan24GhzBandWidth) ?? undefined;
-
     const wlan24GhzTransmittingPower =
       this.domService.getElementValue(this.s.wlan24GhzTransmittingPower) ?? undefined;
 
-    await this.clickElementAndWait(this.s.wlan5GhzGlobalConfigContainer);
+    await this.expandIfCollapsed(this.s.wlan5GhzGlobalConfigContainer, this.s.wlan5GhzChannel);
 
     await Promise.all([
       this.waitForElement(this.s.wlan5GhzChannel),
@@ -356,21 +359,14 @@ export abstract class ZteBaseDriver extends BaseRouter {
     ]);
 
     const wlan5GhzChannel = this.domService.getElementValue(this.s.wlan5GhzChannel) ?? undefined;
-
     const wlan5GhzMode =
       this.domService.getElementSelectedOptionText(this.s.wlan5GhzMode) ?? undefined;
-
     const wlan5GhzBandWidth =
       this.domService.getElementValue(this.s.wlan5GhzBandWidth) ?? undefined;
-
     const wlan5GhzTransmittingPower =
       this.domService.getElementValue(this.s.wlan5GhzTransmittingPower) ?? undefined;
 
-    await this.clickElementAndWait(this.s.wlanSsidConfigContainer, this.s.wlan24GhzSsidName);
-    await this.clickElementAndWait(this.s.wlan24GhzShowPasswordButton);
-
-    await this.clickElementAndWait(this.s.wlan5GhzSsidConfigContainer, this.s.wlan5GhzSsidName);
-    await this.clickElementAndWait(this.s.wlan5GhzShowPasswordButton);
+    await this.expandIfCollapsed(this.s.wlanSsidConfigContainer, this.s.wlan24GhzSsidName);
 
     const wlan24GhzSsids = await this.extractMultiSsidConfigs(0, 4);
     const wlan5GhzSsids = await this.extractMultiSsidConfigs(4, 4);
@@ -410,19 +406,15 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | 'dhcpLeaseTime'
     >
   > {
-    await this.stepByStepNavigate([
-      this.s.localNetworkTab,
-      this.s.lanContainer,
-      this.s.dhcpServerContainer,
-    ]);
+    await this.stepByStepNavigate([this.s.localNetworkTab, this.s.lanContainer]);
 
-    await this.waitForElement(this.s.dhcpEnabled);
+    await this.expandIfCollapsed(this.s.dhcpServerContainer, this.s.dhcpEnabled);
 
     await Promise.all([
-      this.waitForInputPopulated(this.s.dhcpIpAddressField1).catch(() => {}),
-      this.waitForInputPopulated(this.s.dhcpSubnetMaskField1).catch(() => {}),
-      this.waitForInputPopulated(this.s.dhcpStartIpField1).catch(() => {}),
-      this.waitForInputPopulated(this.s.dhcpEndIpField1).catch(() => {}),
+      this.waitForDhcpValue('dhcpIpAddress', this.s.dhcpIpAddressField1).catch(() => {}),
+      this.waitForDhcpValue('dhcpSubnetMask', this.s.dhcpSubnetMaskField1).catch(() => {}),
+      this.waitForDhcpValue('dhcpStartIp', this.s.dhcpStartIpField1).catch(() => {}),
+      this.waitForDhcpValue('dhcpEndIp', this.s.dhcpEndIpField1).catch(() => {}),
     ]);
 
     const dhcpEnabled = this.domService.getHTMLElement(
@@ -430,52 +422,50 @@ export abstract class ZteBaseDriver extends BaseRouter {
       HTMLInputElement,
     )?.checked;
 
-    const dhcpIpAddress = this.readDhcpOctetFields('dhcpIpAddressField');
+    const dhcpIpAddress = this.readDhcpValue('dhcpIpAddress', 'dhcpIpAddressField');
 
-    const dhcpSubnetMask = this.readDhcpOctetFields('dhcpSubnetMaskField');
+    const dhcpSubnetMask = this.readDhcpValue('dhcpSubnetMask', 'dhcpSubnetMaskField');
 
-    const dhcpStartIp = this.readDhcpOctetFields('dhcpStartIpField');
+    const dhcpStartIp = this.readDhcpValue('dhcpStartIp', 'dhcpStartIpField');
 
-    const dhcpEndIp = this.readDhcpOctetFields('dhcpEndIpField');
+    const dhcpEndIp = this.readDhcpValue('dhcpEndIp', 'dhcpEndIpField');
 
     const dhcpIspDnsEnabled = this.domService.getHTMLElement(
       this.s.dhcpIspDnsEnabled,
       HTMLInputElement,
     )?.checked;
 
-    let dhcpPrimaryDns: (string | undefined)[] = [];
-    let dhcpSecondaryDns: (string | undefined)[] = [];
+    let dhcpPrimaryDns = '';
+    let dhcpSecondaryDns = '';
     if (!dhcpIspDnsEnabled) {
       await Promise.all([
-        this.waitForInputPopulated(this.s.dhcpPrimaryDnsField1).catch(() => {}),
-        this.waitForInputPopulated(this.s.dhcpSecondaryDnsField1).catch(() => {}),
+        this.waitForDhcpValue('dhcpPrimaryDns', this.s.dhcpPrimaryDnsField1).catch(() => {}),
+        this.waitForDhcpValue('dhcpSecondaryDns', this.s.dhcpSecondaryDnsField1).catch(() => {}),
       ]);
-      dhcpPrimaryDns = this.readDhcpOctetFields('dhcpPrimaryDnsField');
-      dhcpSecondaryDns = this.readDhcpOctetFields('dhcpSecondaryDnsField');
+      dhcpPrimaryDns = this.readDhcpValue('dhcpPrimaryDns', 'dhcpPrimaryDnsField');
+      dhcpSecondaryDns = this.readDhcpValue('dhcpSecondaryDns', 'dhcpSecondaryDnsField');
     }
 
     const dhcpLeaseTimeModeValue =
       this.domService.getElementValue(this.s.dhcpLeaseTimeMode) ?? undefined;
     const dhcpLeaseTime =
       dhcpLeaseTimeModeValue !== 'Infinity'
-        ? (this.domService.getElementValue(this.s.dhcpLeaseTime) ?? '')
+        ? (this.readSingleValueSelector('dhcpLeaseTimeValue') ??
+          this.domService.getElementValue(this.s.dhcpLeaseTime) ??
+          '')
         : 'Infinity';
     const dhcpLeaseTimeMode =
       this.domService.getElementSelectedOptionText(this.s.dhcpLeaseTimeMode) ?? undefined;
 
     return {
       dhcpEnabled,
-      dhcpIpAddress: dhcpIpAddress.filter((ip) => ip !== undefined).join('.'),
-      dhcpSubnetMask: dhcpSubnetMask.filter((mask) => mask !== undefined).join('.'),
-      dhcpStartIp: dhcpStartIp.filter((ip) => ip !== undefined).join('.'),
-      dhcpEndIp: dhcpEndIp.filter((ip) => ip !== undefined).join('.'),
+      dhcpIpAddress,
+      dhcpSubnetMask,
+      dhcpStartIp,
+      dhcpEndIp,
       dhcpIspDnsEnabled,
-      dhcpPrimaryDns: dhcpIspDnsEnabled
-        ? 'Auto'
-        : dhcpPrimaryDns.filter((dns) => dns !== undefined).join('.'),
-      dhcpSecondaryDns: dhcpIspDnsEnabled
-        ? 'Auto'
-        : dhcpSecondaryDns.filter((dns) => dns !== undefined).join('.'),
+      dhcpPrimaryDns: dhcpIspDnsEnabled ? 'Auto' : dhcpPrimaryDns,
+      dhcpSecondaryDns: dhcpIspDnsEnabled ? 'Auto' : dhcpSecondaryDns,
       dhcpLeaseTimeMode: dhcpLeaseTimeMode,
       dhcpLeaseTime: dhcpLeaseTime,
     };
@@ -484,7 +474,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
   private async extractUpnpData(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
     await this.stepByStepNavigate([this.s.localNetworkTab, this.s.upnpContainer]);
 
-    await this.waitForElement(this.s.upnpEnabled);
+    await this.expandIfCollapsed(this.s.upnpContainerPage, this.s.upnpEnabled);
 
     const upnpEnabled = this.domService.getHTMLElement(
       this.s.upnpEnabled,
@@ -501,10 +491,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
   > {
     await this.stepByStepNavigate([this.s.managementTab, this.s.routerVersionContainer]);
 
-    await Promise.all([
-      this.waitForElement(this.s.routerVersion),
-      this.waitForElement(this.s.routerModel),
-    ]);
+    await this.expandIfCollapsed(this.s.managementContainerPage, this.s.routerVersion);
 
     const routerVersion = this.domService.getElementValue(this.s.routerVersion)?.trim();
     const routerModel = this.domService.getElementValue(this.s.routerModel)?.trim();
@@ -514,6 +501,8 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
   private async extractTr069UrlData(): Promise<Pick<ExtractionResult, 'tr069Url'>> {
     await this.stepByStepNavigate([this.s.managementTab, this.s.tr069UrlContainer]);
+
+    await this.expandIfCollapsed(this.s.tr069UrlContainerPage, this.s.tr069Url);
 
     await this.waitForInputPopulated(this.s.tr069Url).catch(() => {});
 
@@ -536,31 +525,31 @@ export abstract class ZteBaseDriver extends BaseRouter {
     for (let offset = 0; offset < count; offset++) {
       const index = startIndex + offset;
 
-      const ssidNameSelector = `#ESSID\\:${index}`;
+      const ssidNameSelector = `${this.s.wlanSsidName}${index}`;
       const ssidName = this.domService.getElementValue(ssidNameSelector)?.trim() ?? undefined;
 
-      const enabledSelector = `#Enable1\\:${index}`;
+      const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
       const enabled = this.domService.getHTMLElement(enabledSelector, HTMLInputElement)?.checked;
 
-      await this.clickElementAndWait(`#Switch_KeyPassType\\:${index}`);
+      await this.clickElementAndWait(`${this.s.wlanShowPasswordButton}${index}`);
 
-      const passwordSelector = `#KeyPassphrase\\:${index}`;
+      const passwordSelector = `${this.s.wlanSsidPassword}${index}`;
 
       await this.waitForInputPopulated(passwordSelector).catch(() => {});
 
       const ssidPassword = this.domService.getElementValue(passwordSelector)?.trim() ?? undefined;
 
-      const hideModeInputSelector = `#ESSIDHideEnable0\\:${index}`;
+      const hideModeInputSelector = `${this.s.wlanSsidHideMode}${index}`;
       const ssidHideMode = this.domService.getHTMLElement(
         hideModeInputSelector,
         HTMLInputElement,
       )?.checked;
 
-      const wpa2SecuritySelector = `#EncryptionType\\:${index}`;
+      const wpa2SecuritySelector = `${this.s.wlanSsidWpa2SecurityType}${index}`;
       const wpa2SecurityType =
         this.domService.getElementSelectedOptionText(wpa2SecuritySelector) ?? undefined;
 
-      const maxClientsSelector = `#MaxUserNum\\:${index}`;
+      const maxClientsSelector = `${this.s.wlanSsidMaxClients}${index}`;
       const maxClientsRaw = this.domService.getElementValue(maxClientsSelector) ?? undefined;
       const maxClients = Number(maxClientsRaw);
 
@@ -588,6 +577,129 @@ export abstract class ZteBaseDriver extends BaseRouter {
   ): (string | undefined)[] {
     const keys = [1, 2, 3, 4].map((i) => `${prefix}${i}`);
     return keys.map((key) => this.domService.getElementValue(this.s[key]) ?? undefined);
+  }
+
+  private readDhcpValue(
+    singleValueKey:
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns',
+    octetPrefix:
+      | 'dhcpIpAddressField'
+      | 'dhcpSubnetMaskField'
+      | 'dhcpStartIpField'
+      | 'dhcpEndIpField'
+      | 'dhcpPrimaryDnsField'
+      | 'dhcpSecondaryDnsField',
+  ): string {
+    const singleValue = this.readSingleValueSelector(singleValueKey);
+    if (singleValue) {
+      return singleValue;
+    }
+
+    return this.readDhcpOctetFields(octetPrefix)
+      .filter((value) => value !== undefined)
+      .join('.');
+  }
+
+  private async waitForDhcpValue(
+    key:
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns',
+    fallbackSelector: string,
+  ): Promise<void> {
+    const selector = this.getDhcpSingleValueSelector(key);
+    if (selector) {
+      await this.waitForInputPopulated(selector);
+      return;
+    }
+
+    await this.waitForInputPopulated(fallbackSelector);
+  }
+
+  private readSingleValueSelector(
+    key:
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns'
+      | 'dhcpLeaseTimeValue',
+  ): string | undefined {
+    const selector = this.getDhcpSingleValueSelector(key);
+    if (!selector) {
+      return undefined;
+    }
+
+    const value = this.domService.getElementValue(selector)?.trim();
+    return value ? value : undefined;
+  }
+
+  private getDhcpSingleValueSelector(
+    key:
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns'
+      | 'dhcpLeaseTimeValue',
+  ): string | undefined {
+    const selector = this.s[key];
+    if (selector) {
+      return selector;
+    }
+
+    const fallbackSelectors: Record<typeof key, string[]> = {
+      dhcpIpAddress: ['#IPAddr\\:DHCPBasicCfg'],
+      dhcpSubnetMask: ['#SubnetMask', '#SubMask'],
+      dhcpStartIp: ['#MinAddress\\:DHCPBasicCfg'],
+      dhcpEndIp: ['#MaxAddress\\:DHCPBasicCfg'],
+      dhcpPrimaryDns: ['#DNSServer1'],
+      dhcpSecondaryDns: ['#DNSServer2'],
+      dhcpLeaseTimeValue: ['#LeaseTime'],
+    };
+
+    return fallbackSelectors[key].find(
+      (candidate) => this.domService.getElementValue(candidate)?.trim() !== undefined,
+    );
+  }
+
+  protected async expandIfCollapsed(toggleSelector: string, targetSelector: string): Promise<void> {
+    if (this.isElementActuallyVisible(targetSelector)) {
+      return;
+    }
+
+    await this.clickElementAndWait(toggleSelector, targetSelector);
+  }
+
+  private isElementActuallyVisible(selector: string): boolean {
+    const element = this.domService.getHTMLElement(selector, HTMLElement);
+
+    if (!element) {
+      return false;
+    }
+
+    let current: HTMLElement | null = element;
+
+    while (current) {
+      const style = window.getComputedStyle(current);
+      if (style.display === 'none' || style.visibility === 'hidden') {
+        return false;
+      }
+
+      current = current.parentElement;
+    }
+
+    return element.getClientRects().length > 0;
   }
 
   public isAuthenticated(): boolean {
