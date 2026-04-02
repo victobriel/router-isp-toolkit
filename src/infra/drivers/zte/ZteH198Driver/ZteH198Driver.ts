@@ -121,4 +121,10 @@ export class ZteH198Driver extends ZteBaseDriver {
 
     await this.clickElementAndWait(this.s.netSphereModeSelectSubmitButton);
   }
+
+  protected override async extractBandSteeringData(): Promise<
+    Pick<ExtractionResult, 'bandSteeringEnabled'>
+  > {
+    return { bandSteeringEnabled: false };
+  }
 }

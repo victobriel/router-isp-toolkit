@@ -283,7 +283,9 @@ export abstract class ZteBaseDriver extends BaseRouter {
     };
   }
 
-  private async extractBandSteeringData(): Promise<Pick<ExtractionResult, 'bandSteeringEnabled'>> {
+  protected async extractBandSteeringData(): Promise<
+    Pick<ExtractionResult, 'bandSteeringEnabled'>
+  > {
     await this.stepByStepNavigate([
       this.s.localNetworkTab,
       this.s.wlanContainer,

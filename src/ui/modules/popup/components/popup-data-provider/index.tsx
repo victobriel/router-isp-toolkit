@@ -180,14 +180,8 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   const routerPreferencesComparison = useMemo<RouterPreferencesComparison | null>(() => {
     if (!data || !routerPrefsForModel) return null;
 
-    const expectedPw = routerPrefsForModel.routerPassword?.trim();
-    const routerPassword =
-      expectedPw !== undefined && expectedPw !== ''
-        ? lastAuthCredentials?.password === expectedPw
-        : undefined;
-
     return {
-      ...(routerPassword !== undefined ? { routerPassword } : {}),
+      routerPassword: regexMatch(lastAuthCredentials?.password, routerPrefsForModel.routerPassword),
 
       // WAN / overall features
       internetEnabled: boolMatch(data.internetEnabled, routerPrefsForModel.internetEnabled),
