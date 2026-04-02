@@ -14,14 +14,27 @@ interface MiscSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
+  lastAuthCredentials: { username: string; password: string } | null;
 }
 
-export const MiscSection = ({ data, routerPreferencesComparison, goToPage }: MiscSectionProps) => {
+export const MiscSection = ({
+  data,
+  routerPreferencesComparison,
+  goToPage,
+  lastAuthCredentials,
+}: MiscSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
 
   const rows: PopupDataRowProps[] = [
+    {
+      label: translator.t('popup_label_router_password'),
+      compareMatch: routerPreferencesComparison?.routerPassword,
+      value: val(lastAuthCredentials?.password),
+      ableToCopy: true,
+      handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.CHANGE_CREDENTIALS),
+    },
     {
       label: translator.t('popup_label_model'),
       value: val(data.routerModel),

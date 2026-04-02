@@ -6,16 +6,19 @@ import { BookmarkIcon, ChevronDown, ChevronUp, KeyRound, Save, Trash2 } from 'lu
 import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
 import { Badge } from '@/ui/components/ui/badge';
 import { translator } from '@/infra/i18n/I18nService';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 
 interface PopupCredentialsProps {
   tabId: number;
   routerModel: string;
   username: string;
   password: string;
+  lastAuthCredentials: { username: string; password: string } | null;
   hasData: boolean;
   isRouterAuthenticated: boolean | null;
   onUsernameChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
+  routerPreferencesComparison: RouterPreferencesComparison | null;
 }
 
 export const PopupCredentials = ({
@@ -23,12 +26,16 @@ export const PopupCredentials = ({
   routerModel,
   username,
   password,
+  lastAuthCredentials,
   hasData,
   isRouterAuthenticated,
   onUsernameChange,
   onPasswordChange,
 }: PopupCredentialsProps) => {
   const shouldAutoExpand = !hasData && isRouterAuthenticated !== true;
+
+  const summaryUsername = lastAuthCredentials?.username ?? username;
+  const summaryPassword = lastAuthCredentials?.password ?? password;
 
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);
@@ -97,10 +104,14 @@ export const PopupCredentials = ({
       <section className="px-4 py-1.5 space-y-1.5">
         <div className="flex items-center gap-2">
           <KeyRound className="size-3.5 text-muted-foreground shrink-0" />
-          <span className="text-xs font-medium truncate flex-1 min-w-0">{username || '—'}</span>
-          <span className="text-xs text-muted-foreground font-mono tracking-widest">
-            {'•'.repeat(Math.min(password.length || 6, 8))}
+          <span className="text-xs font-medium truncate flex-1 min-w-0">
+            {summaryUsername || '—'}
           </span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-muted-foreground font-mono tracking-widest">
+              {'•'.repeat(Math.min(summaryPassword.length || 6, 8))}
+            </span>
+          </div>
           <div className="flex items-center gap-0.5 shrink-0">
             <Button
               variant="ghost"

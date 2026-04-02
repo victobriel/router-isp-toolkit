@@ -74,6 +74,27 @@ export abstract class BaseRouter implements IRouter {
     this.domService.updateHTMLElementValue(this.s.password, password);
   }
 
+  public attachPendingNativeLoginCapture(onSubmit: (credentials: Credentials) => void): void {
+    if (!this.isLoginPage()) return;
+
+    const handler = (): void => {
+      const creds = this.readLoginCredentials();
+      if (creds) onSubmit(creds);
+    };
+
+    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
+    const form = usernameEl?.closest('form');
+    if (form) {
+      form.addEventListener('submit', handler, { capture: true });
+      return;
+    }
+
+    const submitEl = document.querySelector(this.s.submit);
+    if (submitEl instanceof HTMLElement) {
+      submitEl.addEventListener('click', handler, { capture: true });
+    }
+  }
+
   public waitForElement(
     selector: string,
     timeoutMs = DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,

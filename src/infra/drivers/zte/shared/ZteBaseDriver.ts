@@ -898,6 +898,12 @@ export abstract class ZteBaseDriver extends BaseRouter {
       case RouterPageKey.WLAN_WPA2_SECURITY_TYPE:
       case RouterPageKey.WLAN_MAX_CLIENTS:
         return this.planWlanSsidRow(key, ssidIndex);
+      case RouterPageKey.CHANGE_CREDENTIALS:
+        return {
+          steps: [this.s.managementTab, this.s.accountManagementContainer],
+          targetSelector: this.s.oldPasswordField,
+          targetAction: ZteGoToPageTargetAction.FOCUS,
+        };
       default:
         return this.getFallbackPlanByPage(page);
     }

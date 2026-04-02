@@ -327,6 +327,7 @@
   "popup_label_isp_dns_enabled": { "message": "ISP DNS Status" },
   "popup_label_lease_time_mode": { "message": "Lease Time Mode" },
   "popup_label_lease_time": { "message": "Lease Time" },
+  "popup_label_router_password": { "message": "Router password (current)" },
   "popup_label_model": { "message": "Router Model" },
   "popup_label_version": { "message": "Router Version" },
   "popup_label_url": { "message": "URL" },
@@ -643,6 +644,10 @@
   "settings_prefs_model_pick_first": {
     "message": "Select a router model above before editing preferences."
   },
+  "settings_prefs_credentials_title": {
+    "message": "Credentials"
+  },
+  "settings_pref_router_password": { "message": "Router password" },
   "settings_prefs_wlan24_title": {
     "message": "WLAN 2.4 GHz"
   },

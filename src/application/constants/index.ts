@@ -9,6 +9,7 @@ export const EXTRACTION_FILTER_STORAGE_KEY = 'extraction_filter';
 export const LAST_EXTERNAL_IP_STORAGE_KEY = 'last_external_ip';
 export const LAST_INTERNAL_PING_TEST_STORAGE_KEY = 'last_internal_ping_ip';
 export const LAST_EXTERNAL_PING_TEST_STORAGE_KEY = 'last_external_ping_ip';
+export const LAST_AUTH_CREDENTIALS_STORAGE_KEY = 'last_auth_credentials_data';
 
 /** Bump when the settings export JSON shape under `data` changes incompatibly. */
 export const SETTINGS_EXPORT_SCHEMA_VERSION = 1;

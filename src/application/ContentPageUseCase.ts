@@ -4,6 +4,7 @@ import type { IDomGateway } from '@/application/ports/IDomGateway';
 
 import {
   BOOKMARKS_STORAGE_KEY,
+  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
   PENDING_AUTH_ERROR_STORAGE_KEY,
 } from '@/application/constants/index';
 
@@ -61,6 +62,10 @@ export class ContentPageUseCase {
 
     this.injectUIComponents(router);
     await this.fillLoginFields(router);
+
+    router.attachPendingNativeLoginCapture((credentials) => {
+      void this.sessionStorage.save(LAST_AUTH_CREDENTIALS_STORAGE_KEY, credentials);
+    });
   }
 
   private async handlePostLoginRedirect(router: Router, loginTime: number): Promise<void> {
@@ -69,7 +74,7 @@ export class ContentPageUseCase {
 
     if (!router.isAuthenticated()) {
       const storageKey = PENDING_AUTH_ERROR_STORAGE_KEY;
-      await this.storage.save(
+      await this.sessionStorage.save(
         storageKey,
         'Authentication failed. Please verify your username and password and try again',
         5 * 60 * 1000,

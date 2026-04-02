@@ -154,6 +154,9 @@ export const ZteCommonSelectors = {
 
   routerVersionContainer: '#statusMgr',
   managementContainerPage: '#ManagStatusBar',
+  accountManagementContainer: '#accountMgr',
+  accountManagementContainerPage: '#AccountManagBar\\:0',
+  oldPasswordField: '#Password\\:0',
 
   // Management -> Router Version
   routerVersion: '#SoftwareVer',

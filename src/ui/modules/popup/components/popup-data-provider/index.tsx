@@ -15,6 +15,7 @@ import type {
   RouterPageKey,
 } from '@/application/types';
 import {
+  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
   LAST_DATA_STORAGE_KEY,
   COPY_TEXT_TEMPLATE_STORAGE_KEY,
   LAST_EXTERNAL_IP_STORAGE_KEY,
@@ -57,6 +58,7 @@ interface PopupDataProviderProps {
     goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
     rebootRouter: () => Promise<void>;
     isRouterAuthenticated: boolean | null;
+    lastAuthCredentials: { username: string; password: string } | null;
   }) => React.ReactNode;
 }
 
@@ -78,8 +80,6 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     username: string;
     password: string;
   } | null>(null);
-  const lastAuthCredentialsRef = useRef(lastAuthCredentials);
-  lastAuthCredentialsRef.current = lastAuthCredentials;
 
   const statusRef = useRef<{ type: PopupStatusType; message: string }>({
     type: PopupStatusType.NONE,
@@ -107,6 +107,13 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     [],
   );
 
+  const refreshLastAuthCredentials = useCallback(async () => {
+    const raw = await services.sessionStorage.get<{ username: string; password: string }>(
+      LAST_AUTH_CREDENTIALS_STORAGE_KEY,
+    );
+    setLastAuthCredentials(raw);
+  }, []);
+
   const refreshRouterAuth = useCallback(async () => {
     try {
       const res = await sendToTab<CollectMessage, CollectResponse>(tabId, {
@@ -119,8 +126,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       setIsRouterAuthenticated(false);
     } catch {
       setIsRouterAuthenticated(false);
+    } finally {
+      void refreshLastAuthCredentials();
     }
-  }, [sendToTab, tabId]);
+  }, [refreshLastAuthCredentials, sendToTab, tabId]);
 
   // Initialize: load persisted state, pending auth errors, ping results
   useEffect(() => {
@@ -158,8 +167,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
       );
       if (externalPing) setExternalPingResult(externalPing);
+
+      void refreshLastAuthCredentials();
     })();
-  }, [routerModel, tabId, setStatus]);
+  }, [refreshLastAuthCredentials, routerModel, tabId, setStatus]);
 
   useEffect(() => {
     setIsRouterAuthenticated(null);
@@ -169,7 +180,15 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
   const routerPreferencesComparison = useMemo<RouterPreferencesComparison | null>(() => {
     if (!data || !routerPrefsForModel) return null;
 
+    const expectedPw = routerPrefsForModel.routerPassword?.trim();
+    const routerPassword =
+      expectedPw !== undefined && expectedPw !== ''
+        ? lastAuthCredentials?.password === expectedPw
+        : undefined;
+
     return {
+      ...(routerPassword !== undefined ? { routerPassword } : {}),
+
       // WAN / overall features
       internetEnabled: boolMatch(data.internetEnabled, routerPrefsForModel.internetEnabled),
       tr069Enabled: boolMatch(data.tr069Enabled, routerPrefsForModel.tr069Enabled),
@@ -307,7 +326,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
           }))
         : [],
     };
-  }, [data, routerPrefsForModel]);
+  }, [data, lastAuthCredentials, routerPrefsForModel]);
 
   // Persist UI state when logs change
   useEffect(() => {
@@ -366,7 +385,6 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       setIsCollecting(true);
       setStatus(PopupStatusType.OK, translator.t('popup_collect_collecting'));
       addLog(translator.t('popup_log_collect_starting'));
-      setLastAuthCredentials({ username, password });
 
       try {
         await authenticate(username, password);
@@ -645,5 +663,6 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     goToPage,
     rebootRouter,
     isRouterAuthenticated,
+    lastAuthCredentials,
   });
 };

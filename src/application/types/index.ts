@@ -59,22 +59,25 @@ const wlanPreferencesStorageConfigSchema = z.object({
 });
 
 /** Persisted in extension storage (JSON); pattern fields are plain strings. */
-const preferencesStorageFields = routerStateShape({
-  linkSpeed: z.string(),
-  pppoeUsername: z.string(),
-  ipVersion: z.string(),
-  tr069Url: z.string(),
-  wlan24GhzSsids: ssidPreferenceEntryStrings,
-  wlan5GhzSsids: ssidPreferenceEntryStrings,
-  dhcpIpAddress: z.string(),
-  dhcpSubnetMask: z.string(),
-  dhcpStartIp: z.string(),
-  dhcpEndIp: z.string(),
-  dhcpPrimaryDns: z.string(),
-  dhcpSecondaryDns: z.string(),
-  dhcpLeaseTimeMode: z.string(),
-  wlanConfig: wlanPreferencesStorageConfigSchema.partial(),
-});
+const preferencesStorageFields = {
+  ...routerStateShape({
+    linkSpeed: z.string(),
+    pppoeUsername: z.string(),
+    ipVersion: z.string(),
+    tr069Url: z.string(),
+    wlan24GhzSsids: ssidPreferenceEntryStrings,
+    wlan5GhzSsids: ssidPreferenceEntryStrings,
+    dhcpIpAddress: z.string(),
+    dhcpSubnetMask: z.string(),
+    dhcpStartIp: z.string(),
+    dhcpEndIp: z.string(),
+    dhcpPrimaryDns: z.string(),
+    dhcpSecondaryDns: z.string(),
+    dhcpLeaseTimeMode: z.string(),
+    wlanConfig: wlanPreferencesStorageConfigSchema.partial(),
+  }),
+  routerPassword: z.string(),
+};
 
 export const RouterPreferencesSchema = z.object(preferencesStorageFields).partial();
 
@@ -125,6 +128,8 @@ export enum RouterPage {
 }
 
 export enum RouterPageKey {
+  CHANGE_CREDENTIALS = 'change_credentials',
+
   // WAN
   PPPOE_USERNAME = 'pppoe_username',
   INTERNET_STATUS = 'internet_status',

@@ -219,6 +219,7 @@
   "popup_label_isp_dns_enabled": { "message": "ISP DNS Status" },
   "popup_label_lease_time_mode": { "message": "Modo de tempo de concessão" },
   "popup_label_lease_time": { "message": "Tempo de concessão" },
+  "popup_label_router_password": { "message": "Senha do roteador (atual)" },
   "popup_label_model": { "message": "Modelo do roteador" },
   "popup_label_version": { "message": "Versão do roteador" },
   "popup_label_url": { "message": "URL" },
@@ -546,6 +547,10 @@
   "settings_prefs_model_pick_first": {
     "message": "Selecione um modelo acima antes de editar as preferências."
   },
+  "settings_prefs_credentials_title": {
+    "message": "Credenciais"
+  },
+  "settings_pref_router_password": { "message": "Senha do roteador" },
   "settings_prefs_wlan24_title": {
     "message": "WLAN 2,4 GHz"
   },

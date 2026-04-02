@@ -5,6 +5,17 @@ import { services } from '@/index';
 
 const { tabMessenger, sessionStorage } = services;
 
+// Content scripts need this so they share `chrome.storage.session` with the popup; session is
+// trusted-only by default (see SessionStorageService).
+try {
+  const area = chrome.storage?.session;
+  if (area && typeof area.setAccessLevel === 'function') {
+    void area.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
+  }
+} catch {
+  // ignore
+}
+
 class ExtensionManager {
   public static async saveLastExtractionData(
     tabId: number | undefined,

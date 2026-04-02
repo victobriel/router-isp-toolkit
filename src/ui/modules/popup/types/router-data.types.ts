@@ -1,4 +1,6 @@
 export type RouterPreferencesComparison = {
+  routerPassword?: boolean;
+
   // WAN / overall features
   internetEnabled?: boolean;
   tr069Enabled?: boolean;

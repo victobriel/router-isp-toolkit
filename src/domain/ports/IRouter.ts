@@ -24,6 +24,12 @@ export interface IRouter {
    */
   fillLoginCredentials(credentials: Credentials): void;
 
+  /**
+   * On the login page only: registers a capture-phase listener on the native login submit control
+   * so credentials can be persisted when the user logs in via the router UI (not extension-driven auth).
+   */
+  attachPendingNativeLoginCapture(onSubmit: (credentials: Credentials) => void): void;
+
   extract(filter?: ExtractionFilter): Promise<ExtractionResult>;
   buttonElementConfig(): ButtonConfig | null;
   isAuthenticated(): boolean;

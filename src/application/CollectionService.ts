@@ -7,7 +7,10 @@ import {
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IStorage } from '@/application/ports/IStorage';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
-import { EXTRACTION_FILTER_STORAGE_KEY } from '@/application/constants';
+import {
+  EXTRACTION_FILTER_STORAGE_KEY,
+  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
+} from '@/application/constants';
 import { normalizeExtractionFilter } from '@/application/types';
 
 export class CollectionService {
@@ -72,6 +75,8 @@ export class CollectionService {
               'Authentication failed. Please verify your username and password and try again',
           };
         }
+
+        await this.sessionStorage.save(LAST_AUTH_CREDENTIALS_STORAGE_KEY, { username, password });
 
         return {
           success: true,
