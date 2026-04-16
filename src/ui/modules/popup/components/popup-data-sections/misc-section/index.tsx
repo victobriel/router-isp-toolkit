@@ -14,14 +14,14 @@ interface MiscSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
-  lastAuthCredentials: { username: string; password: string } | null;
+  lastAuthAdminCredentials: { username: string; password: string } | null;
 }
 
 export const MiscSection = ({
   data,
   routerPreferencesComparison,
   goToPage,
-  lastAuthCredentials,
+  lastAuthAdminCredentials,
 }: MiscSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
@@ -30,8 +30,8 @@ export const MiscSection = ({
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_router_password'),
-      compareMatch: routerPreferencesComparison?.routerPassword,
-      value: val(lastAuthCredentials?.password),
+      compareMatch: routerPreferencesComparison?.routerAdminPassword,
+      value: val(lastAuthAdminCredentials?.password),
       ableToCopy: true,
       handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.CHANGE_CREDENTIALS),
     },
@@ -69,9 +69,7 @@ export const MiscSection = ({
     },
   ];
 
-  const hasData = rows.some(
-    (row) => row.value !== undefined && row.value !== null && row.value !== '-',
-  );
+  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
 
   return (
     <Collapsible

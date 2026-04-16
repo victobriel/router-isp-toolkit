@@ -98,7 +98,12 @@ export class ZteH198Driver extends ZteBaseDriver {
         })
       : [];
 
-    this.domService.safeClick(this.s.topologyClosePopup);
+    const closeButtons = await this.domService.getHTMLElements('.closePopLayer', HTMLSpanElement);
+
+    for (const closeButton of closeButtons) {
+      this.domService.safeClick(closeButton);
+    }
+
     await this.waitForDisappearance(this.s.topologyPopup).catch(() => {});
 
     return clients;
@@ -112,13 +117,9 @@ export class ZteH198Driver extends ZteBaseDriver {
 
   private async activeNetSphere(): Promise<void> {
     await this.stepByStepNavigate([this.s.localNetworkTab, this.s.netSphereContainer]);
-
     await this.expandIfCollapsed(this.s.netSphereStatusContainer, this.s.netSphereStatus);
-
     await this.clickElementAndWait(this.s.netSphereStatus);
-
     await this.domService.updateHTMLElementValue(this.s.netSphereModeSelect, 'Master');
-
     await this.clickElementAndWait(this.s.netSphereModeSelectSubmitButton);
   }
 

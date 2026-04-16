@@ -6,3 +6,16 @@ export type TopologyClient = {
   mac: string;
   signal: number;
 };
+
+export enum DomTargetAction {
+  CLICK = 'click',
+  FOCUS = 'focus',
+}
+
+export type GoToPagePlan = {
+  steps: (string | null)[];
+  targetSelector: string;
+  targetAction?: DomTargetAction;
+  expandToggleSelector?: string;
+  expandedAreaSelector?: string;
+};

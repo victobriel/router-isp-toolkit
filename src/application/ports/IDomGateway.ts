@@ -11,5 +11,5 @@ export interface IDomGateway {
   updateHTMLElementValue(selector: string, value: string): void;
   isElementVisible(selector: string): boolean;
   focusElement(selector: string): void;
-  safeClick(selector: string): void;
+  safeClick(elementor: string | HTMLElement): void;
 }

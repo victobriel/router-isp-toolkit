@@ -1,10 +1,11 @@
-import { ZteH199Driver } from '@/infra/drivers/zte/ZteH199Driver/ZteH199Driver';
-import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
-import type { IRouter } from '@/domain/ports/IRouter';
-import { ZteH3601Driver } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Driver';
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { IRouterFactory } from '@/application/ports/IRouterFactory';
+import type { IRouter } from '@/domain/ports/IRouter';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { ZteH198Driver } from '@/infra/drivers/zte/ZteH198Driver/ZteH198Driver';
+import { ZteH199Driver } from '@/infra/drivers/zte/ZteH199Driver/ZteH199Driver';
+import { ZteH3601Driver } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Driver';
+import { HuaweiEG8145V5Driver } from '../drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Driver';
 
 /**
  * Infrastructure factory: creates a router adapter for the current page.
@@ -33,6 +34,10 @@ export class RouterFactory implements IRouterFactory {
 
     if (this.isZteH198(title, bodyText)) {
       return new ZteH198Driver(this.topologyParser, this.domService);
+    }
+
+    if (this.isHuaweiEG8145V5(title, bodyText)) {
+      return new HuaweiEG8145V5Driver(this.topologyParser, this.domService);
     }
 
     throw new Error('Unsupported router model: The extension does not recognize this interface');
@@ -64,6 +69,18 @@ export class RouterFactory implements IRouterFactory {
 
   private isZteH198(title: string, body: string): boolean {
     const indicators = ['h198'];
+
+    for (const term of indicators) {
+      if (title.includes(term) || body.includes(term)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isHuaweiEG8145V5(title: string, body: string): boolean {
+    const indicators = ['eg8145v5'];
 
     for (const term of indicators) {
       if (title.includes(term) || body.includes(term)) {

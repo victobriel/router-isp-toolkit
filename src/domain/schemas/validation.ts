@@ -25,7 +25,7 @@ const wlanExtractionConfigSchema = z.object({
 });
 
 const extractionRouterFields = routerStateShape({
-  routerPassword: z.string(),
+  routerAdminPassword: z.string(),
   linkSpeed: z.string(),
   pppoeUsername: z.string(),
   ipVersion: z.string(),

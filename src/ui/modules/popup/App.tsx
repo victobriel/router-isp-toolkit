@@ -72,7 +72,7 @@ function PopupContent({
   onClear,
   rebootRouter,
   isRouterAuthenticated,
-  lastAuthCredentials,
+  lastAuthAdminCredentials,
 }: {
   tabId: number;
   routerModel: string;
@@ -89,7 +89,7 @@ function PopupContent({
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
   rebootRouter: () => Promise<void>;
   isRouterAuthenticated: boolean | null;
-  lastAuthCredentials: { username: string; password: string } | null;
+  lastAuthAdminCredentials: { username: string; password: string } | null;
 }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -221,7 +221,7 @@ function PopupContent({
         isRouterAuthenticated={isRouterAuthenticated}
         onUsernameChange={setUsername}
         onPasswordChange={setPassword}
-        lastAuthCredentials={lastAuthCredentials}
+        lastAuthAdminCredentials={lastAuthAdminCredentials}
         routerPreferencesComparison={routerPreferencesComparison}
       />
 
@@ -367,7 +367,7 @@ function PopupContent({
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
                 goToPage={goToPage}
-                lastAuthCredentials={lastAuthCredentials}
+                lastAuthAdminCredentials={lastAuthAdminCredentials}
               />
               {data.timestamp && (
                 <p className="text-[10px] text-center text-muted-foreground pt-1">
@@ -425,7 +425,7 @@ export const Popup = () => {
                 goToPage,
                 rebootRouter,
                 isRouterAuthenticated,
-                lastAuthCredentials,
+                lastAuthAdminCredentials,
               }) => (
                 <PopupContent
                   tabId={tabId}
@@ -443,7 +443,7 @@ export const Popup = () => {
                   goToPage={goToPage}
                   rebootRouter={rebootRouter}
                   isRouterAuthenticated={isRouterAuthenticated}
-                  lastAuthCredentials={lastAuthCredentials}
+                  lastAuthAdminCredentials={lastAuthAdminCredentials}
                 />
               )}
             </PopupDataProvider>

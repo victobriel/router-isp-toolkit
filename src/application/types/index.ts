@@ -61,7 +61,7 @@ const wlanPreferencesStorageConfigSchema = z.object({
 /** Persisted in extension storage (JSON); pattern fields are plain strings. */
 const preferencesStorageFields = {
   ...routerStateShape({
-    routerPassword: z.string(),
+    routerAdminPassword: z.string(),
     linkSpeed: z.string(),
     pppoeUsername: z.string(),
     ipVersion: z.string(),
@@ -97,7 +97,7 @@ const wlanPreferencesConfigSchema = z.object({
 
 /** Same shape as stored prefs, with regex parsing for matching against extraction. */
 const preferencesMatchFields = routerStateShape({
-  routerPassword: regExpSchema,
+  routerAdminPassword: regExpSchema,
   linkSpeed: regExpSchema,
   pppoeUsername: regExpSchema,
   ipVersion: regExpSchema,

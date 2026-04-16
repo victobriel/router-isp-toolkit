@@ -206,14 +206,14 @@ export const Settings = () => {
         data.routerPreferences = normalizeRouterPreferencesStorage(rawPrefs);
       }
 
+      const ts = new Date().toISOString();
       const exportFile = {
         schemaVersion: SETTINGS_EXPORT_SCHEMA_VERSION,
-        exportedAt: new Date().toISOString(),
+        exportedAt: ts,
         data,
       };
 
-      const ts = new Date().toISOString().replace(/[:.]/g, '-');
-      downloadJsonFile(`router-isp-toolkit-settings-${ts}.json`, exportFile);
+      downloadJsonFile(`Router-ISP-Toolkit-Settings-${ts}.json`, exportFile);
       showToast(translator.t('settings_export_toast_success'), 'ok');
       setExportOpen(false);
     } catch (err) {
@@ -635,8 +635,6 @@ export const Settings = () => {
           onConfirm={handleExport}
           getSectionLabel={getSectionLabel}
         />
-
-        <Separator />
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-destructive">

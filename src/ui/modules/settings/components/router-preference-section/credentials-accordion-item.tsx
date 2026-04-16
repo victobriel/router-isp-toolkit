@@ -19,9 +19,9 @@ export const CredentialsAccordionItem = ({ localPrefs, setLocalPrefs }: Props) =
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <TextPref
             label={translator.t('settings_pref_router_password')}
-            value={localPrefs.routerPassword ?? ''}
-            onChange={(v) => setLocalPrefs((p) => ({ ...p, routerPassword: v }))}
-            dataField="routerPassword"
+            value={localPrefs.routerAdminPassword ?? ''}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, routerAdminPassword: v }))}
+            dataField="routerAdminPassword"
           />
         </div>
       </AccordionContent>

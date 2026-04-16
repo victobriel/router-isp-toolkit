@@ -243,6 +243,10 @@ export const COPY_TEXT_VALUE_KEYS = [
     key: 'LastExternalPingMinAvgMax',
     description: translator.t('popup_label_last_external_ping_min_avg_max'),
   },
+  {
+    key: 'RouterAdminPassword',
+    description: translator.t('settings_pref_router_password'),
+  },
 ];
 
 export const EXPECTED_ERRORS = [

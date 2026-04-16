@@ -4,7 +4,7 @@
  * For now, H199 and H3601 share an identical selector set. Keep this module as
  * a per-model wrapper so drivers can override only the differences.
  */
-import { ZteCommonSelectors } from '@/infra/drivers/zte/ZteCommonSelectors';
+import { ZteCommonSelectors } from '@/infra/drivers/zte/shared/ZteCommonSelectors';
 
 export const ZteH199Selectors = {
   ...ZteCommonSelectors,

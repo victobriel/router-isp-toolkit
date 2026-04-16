@@ -13,7 +13,7 @@ interface PopupCredentialsProps {
   routerModel: string;
   username: string;
   password: string;
-  lastAuthCredentials: { username: string; password: string } | null;
+  lastAuthAdminCredentials: { username: string; password: string } | null;
   hasData: boolean;
   isRouterAuthenticated: boolean | null;
   onUsernameChange: (value: string) => void;
@@ -26,7 +26,7 @@ export const PopupCredentials = ({
   routerModel,
   username,
   password,
-  lastAuthCredentials,
+  lastAuthAdminCredentials,
   hasData,
   isRouterAuthenticated,
   onUsernameChange,
@@ -34,8 +34,8 @@ export const PopupCredentials = ({
 }: PopupCredentialsProps) => {
   const shouldAutoExpand = !hasData && isRouterAuthenticated !== true;
 
-  const summaryUsername = lastAuthCredentials?.username ?? username;
-  const summaryPassword = lastAuthCredentials?.password ?? password;
+  const summaryUsername = lastAuthAdminCredentials?.username ?? username;
+  const summaryPassword = lastAuthAdminCredentials?.password ?? password;
 
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [isExpanded, setIsExpanded] = useState(shouldAutoExpand);

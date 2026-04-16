@@ -56,8 +56,9 @@ export class DomService implements IDomGateway {
     }
   }
 
-  public safeClick(selector: string): void {
-    const el = this.getHTMLElement(selector, HTMLElement);
+  public safeClick(elementor: string | HTMLElement): void {
+    const el =
+      typeof elementor === 'string' ? this.getHTMLElement(elementor, HTMLElement) : elementor;
     if (!el) return;
     const isJavascriptHref =
       el instanceof HTMLAnchorElement &&

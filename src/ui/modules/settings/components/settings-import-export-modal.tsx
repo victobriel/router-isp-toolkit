@@ -44,6 +44,7 @@ export function SettingsImportExportModal(props: SettingsImportExportModalProps)
     onConfirm,
     getSectionLabel,
   } = props;
+
   if (!open) return null;
 
   const isImport = variant === 'import';

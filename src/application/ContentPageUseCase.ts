@@ -1,6 +1,6 @@
-import type { IStorage } from '@/application/ports/IStorage';
-import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IDomGateway } from '@/application/ports/IDomGateway';
+import type { IRouterFactory } from '@/application/ports/IRouterFactory';
+import type { IStorage } from '@/application/ports/IStorage';
 
 import {
   BOOKMARKS_STORAGE_KEY,
@@ -8,11 +8,11 @@ import {
   PENDING_AUTH_ERROR_STORAGE_KEY,
 } from '@/application/constants/index';
 
+import { CollectionService } from '@/application/CollectionService';
 import type { BookmarkStore } from '@/application/types/index';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
-import { CollectMessageAction } from '@/domain/schemas/validation';
-import { CollectionService } from '@/application/CollectionService';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
+import { CollectMessageAction } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
 
 /**
@@ -125,12 +125,13 @@ export class ContentPageUseCase {
 
   private createGetDataBtn(router: Router, btnElementConfig: ButtonConfig): HTMLButtonElement {
     const btn = document.createElement('button');
+    const logoSpan = document.createElement('span');
+    logoSpan.style.cssText = btnElementConfig.extLogoStyle;
+    logoSpan.textContent = translator.t('extName');
     btn.id = 'routerCollectDataBtn';
-    btn.innerHTML = `
-      <span style="text-decoration:underline;">${btnElementConfig.text}</span>
-      <span class="sm-text" style="font-size:9px;color:gray;text-decoration:none;">${translator.t('extName')}</span>
-    `;
+    btn.innerHTML = `<span style="text-decoration:underline;">${btnElementConfig.text}</span>`;
     btn.style.cssText = btnElementConfig.style;
+    btn.appendChild(logoSpan);
 
     btn.addEventListener('click', async () => {
       const credentials = router.readLoginCredentials();

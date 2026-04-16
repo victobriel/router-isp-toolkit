@@ -58,7 +58,7 @@ interface PopupDataProviderProps {
     goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
     rebootRouter: () => Promise<void>;
     isRouterAuthenticated: boolean | null;
-    lastAuthCredentials: { username: string; password: string } | null;
+    lastAuthAdminCredentials: { username: string; password: string } | null;
   }) => React.ReactNode;
 }
 
@@ -76,7 +76,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     null,
   );
   const [isRouterAuthenticated, setIsRouterAuthenticated] = useState<boolean | null>(null);
-  const [lastAuthCredentials, setLastAuthCredentials] = useState<{
+  const [lastAuthAdminCredentials, setLastAuthAdminCredentials] = useState<{
     username: string;
     password: string;
   } | null>(null);
@@ -107,11 +107,11 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     [],
   );
 
-  const refreshLastAuthCredentials = useCallback(async () => {
+  const refreshLastAuthAdminCredentials = useCallback(async () => {
     const raw = await services.sessionStorage.get<{ username: string; password: string }>(
       LAST_AUTH_CREDENTIALS_STORAGE_KEY,
     );
-    setLastAuthCredentials(raw);
+    setLastAuthAdminCredentials(raw);
   }, []);
 
   const refreshRouterAuth = useCallback(async () => {
@@ -127,9 +127,9 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     } catch {
       setIsRouterAuthenticated(false);
     } finally {
-      void refreshLastAuthCredentials();
+      void refreshLastAuthAdminCredentials();
     }
-  }, [refreshLastAuthCredentials, sendToTab, tabId]);
+  }, [refreshLastAuthAdminCredentials, sendToTab, tabId]);
 
   // Initialize: load persisted state, pending auth errors, ping results
   useEffect(() => {
@@ -168,9 +168,9 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       );
       if (externalPing) setExternalPingResult(externalPing);
 
-      void refreshLastAuthCredentials();
+      void refreshLastAuthAdminCredentials();
     })();
-  }, [refreshLastAuthCredentials, routerModel, tabId, setStatus]);
+  }, [refreshLastAuthAdminCredentials, routerModel, tabId, setStatus]);
 
   useEffect(() => {
     setIsRouterAuthenticated(null);
@@ -181,7 +181,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     if (!data || !routerPrefsForModel) return null;
 
     return {
-      routerPassword: regexMatch(lastAuthCredentials?.password, routerPrefsForModel.routerPassword),
+      routerAdminPassword: regexMatch(
+        lastAuthAdminCredentials?.password,
+        routerPrefsForModel.routerAdminPassword,
+      ),
 
       // WAN / overall features
       internetEnabled: boolMatch(data.internetEnabled, routerPrefsForModel.internetEnabled),
@@ -320,7 +323,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
           }))
         : [],
     };
-  }, [data, lastAuthCredentials, routerPrefsForModel]);
+  }, [data, lastAuthAdminCredentials, routerPrefsForModel]);
 
   // Persist UI state when logs change
   useEffect(() => {
@@ -509,10 +512,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       };
 
     const asText = (v: unknown): string =>
-      v === undefined || v === null || v === '' ? '-' : String(v);
+      v === undefined || v === null || v === '' ? '' : String(v);
     const boolText = (v: boolean | undefined): string =>
       v === undefined
-        ? '-'
+        ? ''
         : v
           ? translator.t('popup_status_enabled')
           : translator.t('popup_status_disabled');
@@ -523,6 +526,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     const values: Record<CopyTextValueKey, string> = {
       RouterModel: asText(data.routerModel),
       RouterVersion: asText(data.routerVersion),
+      RouterAdminPassword: asText(lastAuthAdminCredentials?.password),
       TR069Url: asText(data.tr069Url),
       InternetStatus: boolText(data.internetEnabled),
       TR069Status: boolText(data.tr069Enabled),
@@ -537,17 +541,17 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       RemoteAccessIpv6Status: boolText(data.remoteAccessIpv6Enabled),
       BandSteeringStatus: boolText(data.bandSteeringEnabled),
       CableTotalClientsConnected: String(data.topology?.['cable']?.totalClients ?? 0),
-      Wlan24Status: wlan24 ? boolText(wlan24.enabled) : '-',
-      Wlan24Channel: wlan24 ? asText(wlan24.channel) : '-',
-      Wlan24Mode: wlan24 ? asText(wlan24.mode) : '-',
-      Wlan24BandWidth: wlan24 ? asText(wlan24.bandWidth) : '-',
-      Wlan24TransmittingPower: wlan24 ? asText(wlan24.transmittingPower) : '-',
+      Wlan24Status: boolText(wlan24?.enabled),
+      Wlan24Channel: asText(wlan24?.channel),
+      Wlan24Mode: asText(wlan24?.mode),
+      Wlan24BandWidth: asText(wlan24?.bandWidth),
+      Wlan24TransmittingPower: asText(wlan24?.transmittingPower),
       Wlan24TotalClientsConnected: String(data.topology?.['24ghz']?.totalClients ?? 0),
-      Wlan5Status: wlan5 ? boolText(wlan5.enabled) : '-',
-      Wlan5Channel: wlan5 ? asText(wlan5.channel) : '-',
-      Wlan5Mode: wlan5 ? asText(wlan5.mode) : '-',
-      Wlan5BandWidth: wlan5 ? asText(wlan5.bandWidth) : '-',
-      Wlan5TransmittingPower: wlan5 ? asText(wlan5.transmittingPower) : '-',
+      Wlan5Status: boolText(wlan5?.enabled),
+      Wlan5Channel: asText(wlan5?.channel),
+      Wlan5Mode: asText(wlan5?.mode),
+      Wlan5BandWidth: asText(wlan5?.bandWidth),
+      Wlan5TransmittingPower: asText(wlan5?.transmittingPower),
       Wlan5TotalClientsConnected: String(data.topology?.['5ghz']?.totalClients ?? 0),
       TotalClientsConnected: String(
         (['24ghz', '5ghz', 'cable'] as const).reduce(
@@ -599,7 +603,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
           : `%${key}%`,
       ),
     };
-  }, [data, internalPingResult, externalPingResult]);
+  }, [data, internalPingResult, externalPingResult, lastAuthAdminCredentials]);
 
   const goToPage = useCallback(
     async (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => {
@@ -657,6 +661,6 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     goToPage,
     rebootRouter,
     isRouterAuthenticated,
-    lastAuthCredentials,
+    lastAuthAdminCredentials,
   });
 };

@@ -1,5 +1,5 @@
 export type RouterPreferencesComparison = {
-  routerPassword?: boolean;
+  routerAdminPassword?: boolean;
 
   // WAN / overall features
   internetEnabled?: boolean;

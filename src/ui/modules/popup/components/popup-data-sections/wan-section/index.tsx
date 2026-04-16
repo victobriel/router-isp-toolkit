@@ -84,9 +84,7 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
     );
   }
 
-  const hasData = rows.some(
-    (row) => row.value !== undefined && row.value !== null && row.value !== '-',
-  );
+  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
 
   return (
     <Collapsible

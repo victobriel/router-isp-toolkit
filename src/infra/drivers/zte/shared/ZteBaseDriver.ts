@@ -1,14 +1,4 @@
-import { BaseRouter } from '@/infra/router/BaseRouter';
-import {
-  ExtractionResultSchema,
-  type Credentials,
-  type ExtractionResult,
-  type PingTestResult,
-} from '@/domain/schemas/validation';
-import type { TopologyBand, TopologyClient } from '@/infra/drivers/shared/types';
-import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import {
   ExtractionFilter,
   GoToPageOptions,
@@ -16,24 +6,26 @@ import {
   RouterPageKey,
   RouterSelectors,
 } from '@/application/types';
+import { ButtonConfig } from '@/domain/ports/IRouter.types';
+import {
+  ExtractionResultSchema,
+  type Credentials,
+  type ExtractionResult,
+  type PingTestResult,
+} from '@/domain/schemas/validation';
+import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import {
+  DomTargetAction,
+  GoToPagePlan,
+  type TopologyBand,
+  type TopologyClient,
+} from '@/infra/drivers/shared/types';
+import { BaseRouter } from '@/infra/router/BaseRouter';
 
 type ZteTimeouts = {
   dhcpLanAllocatedAddressMaxWaitMs: number;
   topologyClientsLoadMaxWaitMs: number;
   topologyPopupSettleMs: number;
-};
-
-enum ZteGoToPageTargetAction {
-  CLICK = 'click',
-  FOCUS = 'focus',
-}
-
-type ZteGoToPagePlan = {
-  steps: (string | null)[];
-  targetSelector: string;
-  targetAction?: ZteGoToPageTargetAction;
-  expandToggleSelector?: string;
-  expandedAreaSelector?: string;
 };
 
 export abstract class ZteBaseDriver extends BaseRouter {
@@ -408,7 +400,11 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | 'dhcpLeaseTime'
     >
   > {
-    await this.stepByStepNavigate([this.s.localNetworkTab, this.s.lanContainer]);
+    await this.stepByStepNavigate([
+      this.s.localNetworkTab,
+      this.s.lanContainer,
+      this.s.dhcpServerContainer,
+    ]);
 
     await this.expandIfCollapsed(this.s.dhcpServerContainer, this.s.dhcpEnabled);
 
@@ -768,7 +764,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       if (!el) return;
 
       switch (targetAction) {
-        case ZteGoToPageTargetAction.CLICK:
+        case DomTargetAction.CLICK:
           el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
           await this.delay(200);
           if (el instanceof HTMLSelectElement) {
@@ -798,7 +794,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     }
   }
 
-  private async expandCollapsedGoToTargetIfNeeded(plan: ZteGoToPagePlan): Promise<void> {
+  private async expandCollapsedGoToTargetIfNeeded(plan: GoToPagePlan): Promise<void> {
     const { expandToggleSelector, expandedAreaSelector, targetSelector } = plan;
     if (!expandToggleSelector || !expandedAreaSelector) return;
 
@@ -817,7 +813,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     page: RouterPage,
     key: RouterPageKey,
     options?: GoToPageOptions,
-  ): ZteGoToPagePlan | null {
+  ): GoToPagePlan | null {
     const isFiveGhzBand = this.isFiveGhzBand(options?.band);
     const ssidIndex =
       typeof options?.ssidIndex === 'number' ? options.ssidIndex : isFiveGhzBand ? 4 : 0;
@@ -867,25 +863,25 @@ export abstract class ZteBaseDriver extends BaseRouter {
         return {
           steps: [this.s.managementTab, this.s.managementContainer, this.s.firmwareUpdateContainer],
           targetSelector: this.s.firmwareUpdateFile,
-          targetAction: ZteGoToPageTargetAction.CLICK,
+          targetAction: DomTargetAction.CLICK,
         };
       case RouterPageKey.TR_069_URL:
         return {
           steps: [this.s.managementTab, this.s.tr069UrlContainer],
           targetSelector: this.s.tr069Url,
-          targetAction: ZteGoToPageTargetAction.FOCUS,
+          targetAction: DomTargetAction.FOCUS,
         };
       case RouterPageKey.UPNP_STATUS:
         return {
           steps: [this.s.localNetworkTab, this.s.upnpContainer],
           targetSelector: this.s.upnpEnabled,
-          targetAction: ZteGoToPageTargetAction.FOCUS,
+          targetAction: DomTargetAction.FOCUS,
         };
       case RouterPageKey.BAND_STEERING_STATUS:
         return {
           steps: [this.s.localNetworkTab, this.s.wlanContainer, this.s.bandSteeringContainer],
           targetSelector: this.s.bandSteeringEnabled,
-          targetAction: ZteGoToPageTargetAction.FOCUS,
+          targetAction: DomTargetAction.FOCUS,
         };
       case RouterPageKey.WLAN_STATUS:
       case RouterPageKey.WLAN_CHANNEL:
@@ -904,7 +900,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
         return {
           steps: [this.s.managementTab, this.s.accountManagementContainer],
           targetSelector: this.s.oldPasswordField,
-          targetAction: ZteGoToPageTargetAction.FOCUS,
+          targetAction: DomTargetAction.FOCUS,
         };
       default:
         return this.getFallbackPlanByPage(page);
@@ -921,7 +917,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | RouterPageKey.SLAAC_STATUS
       | RouterPageKey.DHCPV6_STATUS
       | RouterPageKey.PD_STATUS,
-  ): ZteGoToPagePlan {
+  ): GoToPagePlan {
     const targetByKey = {
       [RouterPageKey.PPPOE_USERNAME]: this.s.pppoeUsername,
       [RouterPageKey.INTERNET_STATUS]: this.s.serviceListInternet,
@@ -934,14 +930,14 @@ export abstract class ZteBaseDriver extends BaseRouter {
     } as const;
 
     const targetActionByKey = {
-      [RouterPageKey.PPPOE_USERNAME]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.INTERNET_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.TR_069_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.IP_VERSION]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.REQUEST_PD_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.SLAAC_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCPV6_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.PD_STATUS]: ZteGoToPageTargetAction.FOCUS,
+      [RouterPageKey.PPPOE_USERNAME]: DomTargetAction.FOCUS,
+      [RouterPageKey.INTERNET_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.TR_069_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.IP_VERSION]: DomTargetAction.FOCUS,
+      [RouterPageKey.REQUEST_PD_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.SLAAC_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCPV6_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.PD_STATUS]: DomTargetAction.FOCUS,
     } as const;
 
     return {
@@ -963,7 +959,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | RouterPageKey.DHCP_SECONDARY_DNS
       | RouterPageKey.DHCP_LEASE_TIME_MODE
       | RouterPageKey.DHCP_LEASE_TIME,
-  ): ZteGoToPagePlan {
+  ): GoToPagePlan {
     const targetByKey = {
       [RouterPageKey.DHCP_STATUS]: this.s.dhcpEnabled,
       [RouterPageKey.DHCP_IP_ADDRESS]: this.s.dhcpIpAddressField1,
@@ -978,16 +974,16 @@ export abstract class ZteBaseDriver extends BaseRouter {
     } as const;
 
     const targetActionByKey = {
-      [RouterPageKey.DHCP_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_IP_ADDRESS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_SUBNET_MASK]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_START_IP]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_END_IP]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_ISP_DNS_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_PRIMARY_DNS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_SECONDARY_DNS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_LEASE_TIME_MODE]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.DHCP_LEASE_TIME]: ZteGoToPageTargetAction.FOCUS,
+      [RouterPageKey.DHCP_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_IP_ADDRESS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_SUBNET_MASK]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_START_IP]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_END_IP]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_ISP_DNS_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_PRIMARY_DNS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_SECONDARY_DNS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_LEASE_TIME_MODE]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_LEASE_TIME]: DomTargetAction.FOCUS,
     } as const;
 
     return {
@@ -1005,7 +1001,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | RouterPageKey.WLAN_BANDWIDTH
       | RouterPageKey.WLAN_TRANSMITTING_POWER,
     isFiveGhzBand: boolean,
-  ): ZteGoToPagePlan {
+  ): GoToPagePlan {
     const pairByKey = {
       [RouterPageKey.WLAN_STATUS]: {
         g24: this.s.wlan24GhzRadioStatus,
@@ -1030,11 +1026,11 @@ export abstract class ZteBaseDriver extends BaseRouter {
     } as const;
 
     const targetActionByKey = {
-      [RouterPageKey.WLAN_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.WLAN_CHANNEL]: ZteGoToPageTargetAction.CLICK,
-      [RouterPageKey.WLAN_MODE]: ZteGoToPageTargetAction.CLICK,
-      [RouterPageKey.WLAN_BANDWIDTH]: ZteGoToPageTargetAction.CLICK,
-      [RouterPageKey.WLAN_TRANSMITTING_POWER]: ZteGoToPageTargetAction.CLICK,
+      [RouterPageKey.WLAN_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.WLAN_CHANNEL]: DomTargetAction.CLICK,
+      [RouterPageKey.WLAN_MODE]: DomTargetAction.CLICK,
+      [RouterPageKey.WLAN_BANDWIDTH]: DomTargetAction.CLICK,
+      [RouterPageKey.WLAN_TRANSMITTING_POWER]: DomTargetAction.CLICK,
     } as const;
 
     const pair = pairByKey[key];
@@ -1061,7 +1057,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | RouterPageKey.WLAN_WPA2_SECURITY_TYPE
       | RouterPageKey.WLAN_MAX_CLIENTS,
     ssidIndex: number,
-  ): ZteGoToPagePlan {
+  ): GoToPagePlan {
     const elementIdByKey = {
       [RouterPageKey.WLAN_SSID_STATUS]: 'Enable1',
       [RouterPageKey.WLAN_SSID_NAME]: 'ESSID',
@@ -1072,12 +1068,12 @@ export abstract class ZteBaseDriver extends BaseRouter {
     } as const;
 
     const targetActionByKey = {
-      [RouterPageKey.WLAN_SSID_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.WLAN_SSID_NAME]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.WLAN_SSID_PASSWORD]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS]: ZteGoToPageTargetAction.FOCUS,
-      [RouterPageKey.WLAN_WPA2_SECURITY_TYPE]: ZteGoToPageTargetAction.CLICK,
-      [RouterPageKey.WLAN_MAX_CLIENTS]: ZteGoToPageTargetAction.FOCUS,
+      [RouterPageKey.WLAN_SSID_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.WLAN_SSID_NAME]: DomTargetAction.FOCUS,
+      [RouterPageKey.WLAN_SSID_PASSWORD]: DomTargetAction.FOCUS,
+      [RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.WLAN_WPA2_SECURITY_TYPE]: DomTargetAction.CLICK,
+      [RouterPageKey.WLAN_MAX_CLIENTS]: DomTargetAction.FOCUS,
     } as const;
 
     return {
@@ -1094,7 +1090,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     };
   }
 
-  private getFallbackPlanByPage(page: RouterPage): ZteGoToPagePlan | null {
+  private getFallbackPlanByPage(page: RouterPage): GoToPagePlan | null {
     switch (page) {
       case RouterPage.WAN:
         return {
@@ -1159,6 +1155,11 @@ export abstract class ZteBaseDriver extends BaseRouter {
         border: none;
         cursor: pointer;
         background-color: transparent;
+      `,
+      extLogoStyle: `
+        font-size: 9px;
+        color: gray;
+        margin-left: 4px;
       `,
     };
   }

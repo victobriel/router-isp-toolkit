@@ -221,9 +221,7 @@ export const WlanBandSection = ({
     },
   ];
 
-  const hasData = rows.some(
-    (row) => row.value !== undefined && row.value !== null && row.value !== '-',
-  );
+  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
 
   return (
     <Collapsible
