@@ -88,6 +88,68 @@ export abstract class ZteBaseDriver extends BaseRouter {
     return ExtractionResultSchema.parse(data);
   }
 
+  public buttonElementConfig(): ButtonConfig | null {
+    return {
+      targetSelector: '#loginContainer',
+      text: 'Run data extraction',
+      style: `
+        position: absolute;
+        bottom: 6.5px;
+        left: 27px;
+        z-index: 10000;
+        padding: 8px;
+        color: #181717;
+        border: none;
+        cursor: pointer;
+        background-color: transparent;
+      `,
+      extLogoStyle: `
+        font-size: 9px;
+        color: gray;
+        margin-left: 4px;
+      `,
+    };
+  }
+
+  public isAuthenticated(): boolean {
+    const internetTab = this.domService.getHTMLElement(this.s.internetTab, HTMLElement);
+    const onLoginPage = this.isLoginPage();
+    return !onLoginPage && !!internetTab;
+  }
+
+  public async ping(ip: string): Promise<PingTestResult | null> {
+    await this.stepByStepNavigate([
+      this.s.managementTab,
+      this.s.diagnosticsContainer,
+      this.s.diagnosticsPingContainer,
+      this.s.diagnosticsPingIpAddress,
+    ]);
+
+    this.domService.updateHTMLElementValue(this.s.diagnosticsPingIpAddress, ip);
+
+    await this.clickElementAndWait(this.s.pingSendButton);
+    await this.waitForDisappearance(this.s.pingWaiting, 30000);
+
+    const result = this.domService.getElementValue(this.s.pingResult)?.trim() ?? undefined;
+    return result ? this.parsePingTestResult(result, ip) : null;
+  }
+
+  public async reboot(): Promise<void> {
+    await this.stepByStepNavigate([
+      this.s.managementTab,
+      this.s.managementContainer,
+      this.s.rebootButton,
+    ]);
+
+    await this.waitForElement(this.s.rebootConfirmationButton);
+
+    await this.clickElementAndWait(this.s.rebootConfirmationButton);
+  }
+
+  public goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void {
+    void this.navigateToPageKey(page, key, options);
+  }
+
   protected async extractTopologyData(): Promise<Pick<ExtractionResult, 'topology'>> {
     const clientsByBand: Record<TopologyBand, TopologyClient[]> = {
       '24ghz': [],
@@ -172,6 +234,33 @@ export abstract class ZteBaseDriver extends BaseRouter {
     };
 
     return { topology };
+  }
+
+  protected async expandIfCollapsed(toggleSelector: string, targetSelector: string): Promise<void> {
+    if (this.isElementActuallyVisible(targetSelector)) {
+      return;
+    }
+
+    await this.clickElementAndWait(toggleSelector, targetSelector);
+  }
+
+  protected async extractBandSteeringData(): Promise<
+    Pick<ExtractionResult, 'bandSteeringEnabled'>
+  > {
+    await this.stepByStepNavigate([
+      this.s.localNetworkTab,
+      this.s.wlanContainer,
+      this.s.bandSteeringContainer,
+    ]);
+
+    await this.expandIfCollapsed(this.s.bandSteeringWlanContainer, this.s.bandSteeringEnabled);
+
+    const bandSteeringEnabled = this.domService.getHTMLElement(
+      this.s.bandSteeringEnabled,
+      HTMLInputElement,
+    )?.checked;
+
+    return { bandSteeringEnabled };
   }
 
   private async extractLinkSpeedData(): Promise<Pick<ExtractionResult, 'linkSpeed'>> {
@@ -273,25 +362,6 @@ export abstract class ZteBaseDriver extends BaseRouter {
       remoteAccessIpv4Enabled,
       remoteAccessIpv6Enabled,
     };
-  }
-
-  protected async extractBandSteeringData(): Promise<
-    Pick<ExtractionResult, 'bandSteeringEnabled'>
-  > {
-    await this.stepByStepNavigate([
-      this.s.localNetworkTab,
-      this.s.wlanContainer,
-      this.s.bandSteeringContainer,
-    ]);
-
-    await this.expandIfCollapsed(this.s.bandSteeringWlanContainer, this.s.bandSteeringEnabled);
-
-    const bandSteeringEnabled = this.domService.getHTMLElement(
-      this.s.bandSteeringEnabled,
-      HTMLInputElement,
-    )?.checked;
-
-    return { bandSteeringEnabled };
   }
 
   private async extractWlanData(): Promise<
@@ -671,14 +741,6 @@ export abstract class ZteBaseDriver extends BaseRouter {
     );
   }
 
-  protected async expandIfCollapsed(toggleSelector: string, targetSelector: string): Promise<void> {
-    if (this.isElementActuallyVisible(targetSelector)) {
-      return;
-    }
-
-    await this.clickElementAndWait(toggleSelector, targetSelector);
-  }
-
   private isElementActuallyVisible(selector: string): boolean {
     const element = this.domService.getHTMLElement(selector, HTMLElement);
 
@@ -698,45 +760,6 @@ export abstract class ZteBaseDriver extends BaseRouter {
     }
 
     return element.getClientRects().length > 0;
-  }
-
-  public isAuthenticated(): boolean {
-    const internetTab = this.domService.getHTMLElement(this.s.internetTab, HTMLElement);
-    const onLoginPage = this.isLoginPage();
-    return !onLoginPage && !!internetTab;
-  }
-
-  public async ping(ip: string): Promise<PingTestResult | null> {
-    await this.stepByStepNavigate([
-      this.s.managementTab,
-      this.s.diagnosticsContainer,
-      this.s.diagnosticsPingContainer,
-      this.s.diagnosticsPingIpAddress,
-    ]);
-
-    this.domService.updateHTMLElementValue(this.s.diagnosticsPingIpAddress, ip);
-
-    await this.clickElementAndWait(this.s.pingSendButton);
-    await this.waitForDisappearance(this.s.pingWaiting, 30000);
-
-    const result = this.domService.getElementValue(this.s.pingResult)?.trim() ?? undefined;
-    return result ? this.parsePingTestResult(result, ip) : null;
-  }
-
-  public async reboot(): Promise<void> {
-    await this.stepByStepNavigate([
-      this.s.managementTab,
-      this.s.managementContainer,
-      this.s.rebootButton,
-    ]);
-
-    await this.waitForElement(this.s.rebootConfirmationButton);
-
-    await this.clickElementAndWait(this.s.rebootConfirmationButton);
-  }
-
-  public goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void {
-    void this.navigateToPageKey(page, key, options);
   }
 
   private async navigateToPageKey(
@@ -1139,28 +1162,5 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
   private isFiveGhzBand(band?: string): boolean {
     return typeof band === 'string' && band.includes('5');
-  }
-
-  public buttonElementConfig(): ButtonConfig | null {
-    return {
-      targetSelector: '#loginContainer',
-      text: 'Run data extraction',
-      style: `
-        position: absolute;
-        bottom: 6.5px;
-        left: 27px;
-        z-index: 10000;
-        padding: 8px;
-        color: #181717;
-        border: none;
-        cursor: pointer;
-        background-color: transparent;
-      `,
-      extLogoStyle: `
-        font-size: 9px;
-        color: gray;
-        margin-left: 4px;
-      `,
-    };
   }
 }

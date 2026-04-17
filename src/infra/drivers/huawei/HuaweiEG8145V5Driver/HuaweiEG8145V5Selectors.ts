@@ -21,6 +21,7 @@ export const HuaweiEG8145V5Selectors = {
 
   // Topology
   wifiTopologyButton: '#wifidevIcon',
+  topologyTable: '#devlist',
   wiredTopologyButton: '#linedevIcon',
 
   routerRebootButton: '#RestartIcon',
