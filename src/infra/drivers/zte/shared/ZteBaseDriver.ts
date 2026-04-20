@@ -112,9 +112,9 @@ export abstract class ZteBaseDriver extends BaseRouter {
   }
 
   public isAuthenticated(): boolean {
-    const internetTab = this.domService.getHTMLElement(this.s.internetTab, HTMLElement);
+    const $internetTab = this.domService.getHTMLElement(this.s.internetTab, HTMLElement);
     const onLoginPage = this.isLoginPage();
-    return !onLoginPage && !!internetTab;
+    return !onLoginPage && !!$internetTab;
   }
 
   public async ping(ip: string): Promise<PingTestResult | null> {
@@ -176,13 +176,13 @@ export abstract class ZteBaseDriver extends BaseRouter {
         this.delay(this.timeouts.topologyPopupSettleMs),
       ]).catch(() => {});
 
-      const popup = this.domService.getHTMLElement(this.s.topologyPopup, HTMLElement);
-      if (!popup) continue;
+      const $popup = this.domService.getHTMLElement(this.s.topologyPopup, HTMLElement);
+      if (!$popup) continue;
 
-      const lanSection = this.domService.getHTMLElement(this.s.lanAccessSection, HTMLElement);
-      if (lanSection) {
+      const $lanSection = this.domService.getHTMLElement(this.s.lanAccessSection, HTMLElement);
+      if ($lanSection) {
         clientsByBand.cable.push(
-          ...this.topologyParser.parse(lanSection, {
+          ...this.topologyParser.parse($lanSection, {
             rows: this.s.lanAccessRows,
             hostName: this.s.lanHostName,
             macAddr: this.s.lanMacAddr,
@@ -191,10 +191,10 @@ export abstract class ZteBaseDriver extends BaseRouter {
         );
       }
 
-      const wlan2Section = this.domService.getHTMLElement(this.s.wlan2Section, HTMLElement);
-      if (wlan2Section) {
+      const $wlan2Section = this.domService.getHTMLElement(this.s.wlan2Section, HTMLElement);
+      if ($wlan2Section) {
         clientsByBand['24ghz'].push(
-          ...this.topologyParser.parse(wlan2Section, {
+          ...this.topologyParser.parse($wlan2Section, {
             rows: this.s.wlan2Rows,
             hostName: this.s.wlan2HostName,
             macAddr: this.s.wlan2MacAddr,
@@ -204,10 +204,10 @@ export abstract class ZteBaseDriver extends BaseRouter {
         );
       }
 
-      const wlan5Section = this.domService.getHTMLElement(this.s.wlan5Section, HTMLElement);
-      if (wlan5Section) {
+      const $wlan5Section = this.domService.getHTMLElement(this.s.wlan5Section, HTMLElement);
+      if ($wlan5Section) {
         clientsByBand['5ghz'].push(
-          ...this.topologyParser.parse(wlan5Section, {
+          ...this.topologyParser.parse($wlan5Section, {
             rows: this.s.wlan5Rows,
             hostName: this.s.wlan5HostName,
             macAddr: this.s.wlan5MacAddr,
@@ -593,11 +593,15 @@ export abstract class ZteBaseDriver extends BaseRouter {
     for (let offset = 0; offset < count; offset++) {
       const index = startIndex + offset;
 
+      const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
+      const $enabledElement = this.domService.getHTMLElement(enabledSelector, HTMLInputElement);
+
+      if (!$enabledElement) continue;
+
+      const enabled = $enabledElement.checked;
+
       const ssidNameSelector = `${this.s.wlanSsidName}${index}`;
       const ssidName = this.domService.getElementValue(ssidNameSelector)?.trim() ?? undefined;
-
-      const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
-      const enabled = this.domService.getHTMLElement(enabledSelector, HTMLInputElement)?.checked;
 
       await this.clickElementAndWait(`${this.s.wlanShowPasswordButton}${index}`);
 
@@ -742,13 +746,13 @@ export abstract class ZteBaseDriver extends BaseRouter {
   }
 
   private isElementActuallyVisible(selector: string): boolean {
-    const element = this.domService.getHTMLElement(selector, HTMLElement);
+    const $el = this.domService.getHTMLElement(selector, HTMLElement);
 
-    if (!element) {
+    if (!$el) {
       return false;
     }
 
-    let current: HTMLElement | null = element;
+    let current: HTMLElement | null = $el;
 
     while (current) {
       const style = window.getComputedStyle(current);
@@ -759,7 +763,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       current = current.parentElement;
     }
 
-    return element.getClientRects().length > 0;
+    return $el.getClientRects().length > 0;
   }
 
   private async navigateToPageKey(
@@ -782,17 +786,17 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
       await this.waitForElement(targetSelector).catch(() => {});
 
-      const el = this.domService.getHTMLElement(targetSelector, HTMLElement);
+      const $el = this.domService.getHTMLElement(targetSelector, HTMLElement);
 
-      if (!el) return;
+      if (!$el) return;
 
       switch (targetAction) {
         case DomTargetAction.CLICK:
-          el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+          $el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
           await this.delay(200);
-          if (el instanceof HTMLSelectElement) {
-            el.focus();
-            const withPicker = el as HTMLSelectElement & { showPicker?: () => void };
+          if ($el instanceof HTMLSelectElement) {
+            $el.focus();
+            const withPicker = $el as HTMLSelectElement & { showPicker?: () => void };
             if (typeof withPicker.showPicker === 'function') {
               try {
                 withPicker.showPicker();
@@ -806,7 +810,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
           this.domService.safeClick(targetSelector);
           break;
         default: {
-          el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+          $el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
           await this.delay(200);
           this.domService.focusElement(targetSelector);
           break;
@@ -821,10 +825,8 @@ export abstract class ZteBaseDriver extends BaseRouter {
     const { expandToggleSelector, expandedAreaSelector, targetSelector } = plan;
     if (!expandToggleSelector || !expandedAreaSelector) return;
 
-    const expandedArea = document.querySelector<HTMLElement>(expandedAreaSelector);
-    const isExpanded =
-      expandedArea instanceof HTMLElement &&
-      window.getComputedStyle(expandedArea).display !== 'none';
+    const expandedArea = this.domService.getHTMLElement(expandedAreaSelector, HTMLElement);
+    const isExpanded = !!expandedArea && window.getComputedStyle(expandedArea).display !== 'none';
 
     if (isExpanded) return;
 

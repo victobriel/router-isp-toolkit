@@ -93,9 +93,9 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   public isAuthenticated(): boolean {
-    const internetTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
+    const $internetTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
     const onLoginPage = this.isLoginPage();
-    return !onLoginPage && !!internetTab;
+    return !onLoginPage && !!$internetTab;
   }
 
   public ping(ip: string): Promise<PingTestResult | null> {
@@ -114,21 +114,21 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     await this.stepByStepNavigate([this.s.homeTab, this.s.wifiTopologyButton]);
     await this.waitForElement(this.s.topologyTable);
 
-    const wifiTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
-    if (!wifiTable) {
+    const $wifiTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
+    if (!$wifiTable) {
       throw new Error('Huawei topology: Wi-Fi device table not found');
     }
-    const wifiByBand = this.collectHuaweiDevListClients(wifiTable, 'wifi');
+    const wifiByBand = this.collectHuaweiDevListClients($wifiTable, 'wifi');
 
     await this.domService.safeClick(this.s.wiredTopologyButton);
     await this.waitForElement(this.s.topologyTable);
     await this.delay(200);
 
-    const wiredTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
-    if (!wiredTable) {
+    const $wiredTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
+    if (!$wiredTable) {
       throw new Error('Huawei topology: Wired device table not found');
     }
-    const wiredByBand = this.collectHuaweiDevListClients(wiredTable, 'wired');
+    const wiredByBand = this.collectHuaweiDevListClients($wiredTable, 'wired');
 
     const clients24 = wifiByBand['24ghz'];
     const clients5 = wifiByBand['5ghz'];
@@ -146,11 +146,11 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   protected async extractBandSteeringData(): Promise<
     Pick<ExtractionResult, 'bandSteeringEnabled'>
   > {
-    throw new Error('Method not implemented.');
+    return { bandSteeringEnabled: undefined };
   }
 
   private async extractLinkSpeedData(): Promise<Pick<ExtractionResult, 'linkSpeed'>> {
-    throw new Error('Method not implemented.');
+    return { linkSpeed: undefined };
   }
 
   private async extractWanData(): Promise<
@@ -166,13 +166,25 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       | 'pdEnabled'
     >
   > {
-    throw new Error('Method not implemented.');
+    return {
+      internetEnabled: undefined,
+      tr069Enabled: undefined,
+      pppoeUsername: undefined,
+      ipVersion: undefined,
+      requestPdEnabled: undefined,
+      slaacEnabled: undefined,
+      dhcpv6Enabled: undefined,
+      pdEnabled: undefined,
+    };
   }
 
   private async extractRemoteAccessData(): Promise<
     Pick<ExtractionResult, 'remoteAccessIpv4Enabled' | 'remoteAccessIpv6Enabled'>
   > {
-    throw new Error('Method not implemented.');
+    return {
+      remoteAccessIpv4Enabled: undefined,
+      remoteAccessIpv6Enabled: undefined,
+    };
   }
 
   private async extractWlanData(): Promise<
@@ -181,7 +193,12 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       'wlan24GhzConfig' | 'wlan5GhzConfig' | 'wlan24GhzSsids' | 'wlan5GhzSsids'
     >
   > {
-    throw new Error('Method not implemented.');
+    return {
+      wlan24GhzConfig: undefined,
+      wlan5GhzConfig: undefined,
+      wlan24GhzSsids: undefined,
+      wlan5GhzSsids: undefined,
+    };
   }
 
   private async extractLanData(): Promise<
@@ -199,19 +216,30 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       | 'dhcpLeaseTime'
     >
   > {
-    throw new Error('Method not implemented.');
+    return {
+      dhcpEnabled: undefined,
+      dhcpIpAddress: undefined,
+      dhcpSubnetMask: undefined,
+      dhcpStartIp: undefined,
+      dhcpEndIp: undefined,
+      dhcpIspDnsEnabled: undefined,
+      dhcpPrimaryDns: undefined,
+      dhcpSecondaryDns: undefined,
+      dhcpLeaseTimeMode: undefined,
+      dhcpLeaseTime: undefined,
+    };
   }
 
   private async extractUpnpData(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
-    throw new Error('Method not implemented.');
+    return { upnpEnabled: undefined };
   }
 
   private async extractRouterVersionData(): Promise<Pick<ExtractionResult, 'routerVersion'>> {
-    throw new Error('Method not implemented.');
+    return { routerVersion: undefined };
   }
 
   private async extractTr069UrlData(): Promise<Pick<ExtractionResult, 'tr069Url'>> {
-    throw new Error('Method not implemented.');
+    return { tr069Url: undefined };
   }
 
   private goToHomePage(): boolean {
@@ -254,13 +282,13 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
 
     const rows = table.querySelectorAll<HTMLElement>('tbody tr.DevTableList');
     for (const row of rows) {
-      const nameEl = row.querySelector<HTMLElement>('[id^="divDevName_"]');
-      const portEl = row.querySelector<HTMLElement>('[id^="DivDevPort_"]');
-      const ipMacEl = row.querySelector<HTMLElement>('[id^="DivIpandMac_"]');
-      const parsed = this.parseHuaweiTopologyIpMacBlock(ipMacEl?.textContent ?? '');
+      const $name = row.querySelector<HTMLElement>('[id^="divDevName_"]');
+      const $port = row.querySelector<HTMLElement>('[id^="DivDevPort_"]');
+      const $ipMac = row.querySelector<HTMLElement>('[id^="DivIpandMac_"]');
+      const parsed = this.parseHuaweiTopologyIpMacBlock($ipMac?.textContent ?? '');
       if (!parsed) continue;
 
-      let rawName = nameEl?.textContent?.trim() ?? '';
+      let rawName = $name?.textContent?.trim() ?? '';
       if (rawName === '--') rawName = '';
       const name = rawName || parsed.mac;
 
@@ -276,7 +304,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
         continue;
       }
 
-      const band = this.huaweiWifiBandFromSsidPort(portEl?.textContent?.trim() ?? '');
+      const band = this.huaweiWifiBandFromSsidPort($port?.textContent?.trim() ?? '');
       if (band === '24ghz') out['24ghz'].push(client);
       else if (band === '5ghz') out['5ghz'].push(client);
     }

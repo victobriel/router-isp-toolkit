@@ -50,20 +50,20 @@ export abstract class BaseRouter implements IRouter {
   public isLoginPage(): boolean {
     const selectors = [this.s.username, this.s.password];
     return selectors.every((selector) => {
-      const element = document.querySelector(selector);
-      return element instanceof HTMLElement;
+      const $el = this.domService.getHTMLElement(selector, HTMLElement);
+      return !!$el;
     });
   }
 
   public readLoginCredentials(): Credentials | null {
-    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
-    const passwordEl = this.domService.getHTMLElement(this.s.password, HTMLInputElement);
+    const $username = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
+    const $password = this.domService.getHTMLElement(this.s.password, HTMLInputElement);
 
-    if (!usernameEl || !passwordEl) return null;
+    if (!$username || !$password) return null;
 
     return {
-      username: usernameEl.value,
-      password: passwordEl.value,
+      username: $username.value,
+      password: $password.value,
     };
   }
 
@@ -82,16 +82,16 @@ export abstract class BaseRouter implements IRouter {
       if (creds) onSubmit(creds);
     };
 
-    const usernameEl = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
-    const form = usernameEl?.closest('form');
+    const $username = this.domService.getHTMLElement(this.s.username, HTMLInputElement);
+    const form = $username?.closest('form');
     if (form) {
       form.addEventListener('submit', handler, { capture: true });
       return;
     }
 
-    const submitEl = document.querySelector(this.s.submit);
-    if (submitEl instanceof HTMLElement) {
-      submitEl.addEventListener('click', handler, { capture: true });
+    const $submit = this.domService.getHTMLElement(this.s.submit, HTMLElement);
+    if ($submit) {
+      $submit.addEventListener('click', handler, { capture: true });
     }
   }
 
@@ -100,16 +100,16 @@ export abstract class BaseRouter implements IRouter {
     timeoutMs = DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,
   ): Promise<HTMLElement> {
     return new Promise((resolve, reject) => {
-      const el = document.querySelector(selector);
-      if (el instanceof HTMLElement) {
-        return resolve(el);
+      const $el = this.domService.getHTMLElement(selector, HTMLElement);
+      if ($el) {
+        return resolve($el);
       }
 
       const observer = new MutationObserver(() => {
-        const el = document.querySelector(selector);
-        if (el instanceof HTMLElement) {
+        const $el = this.domService.getHTMLElement(selector, HTMLElement);
+        if ($el) {
           observer.disconnect();
-          resolve(el);
+          resolve($el);
         }
       });
 
@@ -133,8 +133,8 @@ export abstract class BaseRouter implements IRouter {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const isPopulated = (): boolean => {
-        const el = document.querySelector<HTMLInputElement>(selector);
-        const value = el?.value?.trim() ?? '';
+        const $el = this.domService.getHTMLElement(selector, HTMLInputElement);
+        const value = $el?.value?.trim() ?? '';
         return value.length > 0 && value !== '';
       };
 
@@ -183,9 +183,9 @@ export abstract class BaseRouter implements IRouter {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const hasDisappeared = (): boolean => {
-        const el = document.querySelector(selector) as HTMLElement | null;
-        if (!el) return true;
-        const style = window.getComputedStyle(el);
+        const $el = this.domService.getHTMLElement(selector, HTMLElement);
+        if (!$el) return true;
+        const style = window.getComputedStyle($el);
         return style.display === 'none' || style.visibility === 'hidden';
       };
 
@@ -295,11 +295,11 @@ export abstract class BaseRouter implements IRouter {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  protected async stepByStepNavigate(steps: string[]): Promise<void> {
+  protected async stepByStepNavigate(steps: string[], maxWaitMs?: number): Promise<void> {
     for (const step of steps) {
       if (!step) continue;
       const nextStep = steps[steps.indexOf(step) + 1];
-      await this.clickElementAndWait(step, nextStep);
+      await this.clickElementAndWait(step, nextStep, maxWaitMs);
     }
   }
 }
