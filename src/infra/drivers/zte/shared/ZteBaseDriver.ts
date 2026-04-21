@@ -596,7 +596,17 @@ export abstract class ZteBaseDriver extends BaseRouter {
       const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
       const $enabledElement = this.domService.getHTMLElement(enabledSelector, HTMLInputElement);
 
-      if (!$enabledElement) continue;
+      if (!$enabledElement) {
+        results.push({
+          enabled: undefined,
+          ssidName: undefined,
+          ssidPassword: undefined,
+          ssidHideMode: undefined,
+          wpa2SecurityType: undefined,
+          maxClients: undefined,
+        });
+        continue;
+      };
 
       const enabled = $enabledElement.checked;
 
