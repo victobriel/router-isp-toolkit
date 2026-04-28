@@ -47,6 +47,7 @@ export const ExtractionResultSchema = z
     ...extractionRouterFields,
     topology: topologySchema,
     routerModel: z.string(),
+    opticalSignal: z.string(),
   })
   .partial();
 

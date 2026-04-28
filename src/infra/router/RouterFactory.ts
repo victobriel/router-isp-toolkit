@@ -7,6 +7,7 @@ import { ZteH199Driver } from '@/infra/drivers/zte/ZteH199Driver/ZteH199Driver';
 import { ZteH3601Driver } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Driver';
 import { HuaweiEG8145V5Driver } from '../drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Driver';
 import { ZteE2320Driver } from '../drivers/zte/ZteE2320Driver/ZteE2320Driver';
+import { HuaweiK562E10Driver } from '../drivers/huawei/huaweiK562E-10Driver/huaweiK562E-10Driver';
 
 type RouterDriverConstructor = new (
   topologyParser: ITopologySectionParser,
@@ -29,6 +30,7 @@ export class RouterFactory implements IRouterFactory {
     { indicators: ['h198'], Driver: ZteH198Driver },
     { indicators: ['e2320'], Driver: ZteE2320Driver },
     { indicators: ['eg8145v5'], Driver: HuaweiEG8145V5Driver },
+    { indicators: ['k562e', 'k562e-10'], Driver: HuaweiK562E10Driver },
   ];
 
   private readonly domService: IDomGateway;
