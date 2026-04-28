@@ -93,9 +93,9 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   public isAuthenticated(): boolean {
-    const $internetTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
+    const $homeTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
     const onLoginPage = this.isLoginPage();
-    return !onLoginPage && !!$internetTab;
+    return !onLoginPage && !!$homeTab;
   }
 
   public ping(ip: string): Promise<PingTestResult | null> {
@@ -111,34 +111,11 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   protected async extractTopologyData(): Promise<Pick<ExtractionResult, 'topology'>> {
-    await this.stepByStepNavigate([this.s.homeTab, this.s.wifiTopologyButton]);
-    await this.waitForElement(this.s.topologyTable);
-
-    const $wifiTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
-    if (!$wifiTable) {
-      throw new Error('Huawei topology: Wi-Fi device table not found');
-    }
-    const wifiByBand = this.collectHuaweiDevListClients($wifiTable, 'wifi');
-
-    await this.domService.safeClick(this.s.wiredTopologyButton);
-    await this.waitForElement(this.s.topologyTable);
-    await this.delay(200);
-
-    const $wiredTable = this.domService.getHTMLElement(this.s.topologyTable, HTMLElement);
-    if (!$wiredTable) {
-      throw new Error('Huawei topology: Wired device table not found');
-    }
-    const wiredByBand = this.collectHuaweiDevListClients($wiredTable, 'wired');
-
-    const clients24 = wifiByBand['24ghz'];
-    const clients5 = wifiByBand['5ghz'];
-    const clientsCable = wiredByBand.cable;
-
     return {
       topology: {
-        '24ghz': { clients: clients24, totalClients: clients24.length },
-        '5ghz': { clients: clients5, totalClients: clients5.length },
-        cable: { clients: clientsCable, totalClients: clientsCable.length },
+        '24ghz': { clients: [], totalClients: 0 },
+        '5ghz': { clients: [], totalClients: 0 },
+        cable: { clients: [], totalClients: 0 },
       },
     };
   }
@@ -245,70 +222,5 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   private goToHomePage(): boolean {
     this.domService.safeClick(this.s.homeTab);
     return true;
-  }
-
-  private parseHuaweiTopologyIpMacBlock(text: string): { mac: string; ipv4: string } | null {
-    const lines = text
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0);
-    const macLine = lines.find((line) => /^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(line));
-    const ipv4Line = lines.find((line) => /^(?:\d{1,3}\.){3}\d{1,3}$/.test(line));
-    if (!macLine) return null;
-    return { mac: macLine.toLowerCase(), ipv4: ipv4Line ?? '' };
-  }
-
-  /**
-   * SSID index on the EG8145V5 UI: 1–4 map to 2.4 GHz WLAN, 5+ to 5 GHz (per Huawei numbering).
-   */
-  private huaweiWifiBandFromSsidPort(port: string): TopologyBand | null {
-    const m = port.trim().match(/^SSID\s*(\d+)\s*$/i);
-    if (!m) return null;
-    const n = Number(m[1]);
-    if (n >= 1 && n <= 4) return '24ghz';
-    if (n >= 5) return '5ghz';
-    return null;
-  }
-
-  private collectHuaweiDevListClients(
-    table: HTMLElement,
-    mode: 'wifi' | 'wired',
-  ): Record<TopologyBand, TopologyClient[]> {
-    const out: Record<TopologyBand, TopologyClient[]> = {
-      '24ghz': [],
-      '5ghz': [],
-      cable: [],
-    };
-
-    const rows = table.querySelectorAll<HTMLElement>('tbody tr.DevTableList');
-    for (const row of rows) {
-      const $name = row.querySelector<HTMLElement>('[id^="divDevName_"]');
-      const $port = row.querySelector<HTMLElement>('[id^="DivDevPort_"]');
-      const $ipMac = row.querySelector<HTMLElement>('[id^="DivIpandMac_"]');
-      const parsed = this.parseHuaweiTopologyIpMacBlock($ipMac?.textContent ?? '');
-      if (!parsed) continue;
-
-      let rawName = $name?.textContent?.trim() ?? '';
-      if (rawName === '--') rawName = '';
-      const name = rawName || parsed.mac;
-
-      const client: TopologyClient = {
-        name,
-        ip: parsed.ipv4,
-        mac: parsed.mac,
-        signal: 0,
-      };
-
-      if (mode === 'wired') {
-        out.cable.push(client);
-        continue;
-      }
-
-      const band = this.huaweiWifiBandFromSsidPort($port?.textContent?.trim() ?? '');
-      if (band === '24ghz') out['24ghz'].push(client);
-      else if (band === '5ghz') out['5ghz'].push(client);
-    }
-
-    return out;
   }
 }
