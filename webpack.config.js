@@ -62,4 +62,9 @@ export default {
       '@': path.resolve('src'),
     },
   },
+  performance: {
+    hints: 'warning',
+    maxEntrypointSize: 800000,
+    maxAssetSize: 800000,
+  },
 };

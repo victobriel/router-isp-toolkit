@@ -10,14 +10,14 @@ export const HuaweiEG8145V5Selectors = {
   // Main menu
   homeTab: '#name_MainPage',
   systemInformationTab: '#name_Systeminfo',
-  advancedTab: '#name_addconfig',
+  advancedTab: '#addconfig',
 
   // Advanced menu
-  advWanTab: '#name_wanconfig',
-  advLanTab: '#name_lanconfig',
-  advApplicationTab: '#name_application',
-  advWlanTab: '#name_wlanconfig',
-  advSystemTab: '#name_systool',
+  advWanTab: '#wanconfig',
+  advLanTab: '#lanconfig',
+  advApplicationTab: '#application',
+  advWlanTab: '#wlanconfig',
+  advSystemTab: '#systool',
 
   // Topology
   wifiTopologyButton: '#wifidevIcon',
@@ -39,6 +39,8 @@ export const HuaweiEG8145V5Selectors = {
   advWanPppoeButton: '#wanInstTable_rml0, input[name="wanInstTablerml"]',
 
   // WAN
+  advWanInput: '#wanInstTable_rml0, input[type="checkbox"]',
+
   advWanEnable: '#WanSwitch, input[type="checkbox"]',
   advPppoeUsername: '#UserName, input[type="text"]',
   advPdEnable: '#IPv6PrefixMode1, input[type="radio"]',

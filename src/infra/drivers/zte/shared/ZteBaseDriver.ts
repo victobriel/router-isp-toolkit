@@ -579,7 +579,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     return { tr069Url };
   }
 
-  private goToHomePage(): boolean {
+  protected goToHomePage(): boolean {
     this.domService.safeClick(this.s.homeTab);
     return true;
   }
@@ -606,7 +606,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
           maxClients: undefined,
         });
         continue;
-      };
+      }
 
       const enabled = $enabledElement.checked;
 

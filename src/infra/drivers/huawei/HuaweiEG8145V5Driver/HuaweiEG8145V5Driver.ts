@@ -39,6 +39,8 @@ const HUAWEI_UPNP_ENDPOINT = '/html/bbsp/upnp/upnp.asp';
 const HUAWEI_DEVICE_INFO_ENDPOINT = '/html/ssmp/deviceinfo/deviceinfo.asp';
 const HUAWEI_DIAGNOSE_ENDPOINT = '/html/bbsp/maintenance/diagnosecommon.asp';
 const HUAWEI_WAN_ENDPOINTS = ['/html/bbsp/wan/wan.asp', '/html/bbsp/waninfo/waninfo.asp'];
+/** WAN instance data for `wan.asp` (`GetWanList()`); PPPoE username is not in the static `#UserName` input. */
+const HUAWEI_WAN_LIST_ASP = '/html/bbsp/common/wan_list.asp';
 const HUAWEI_LAN_ENDPOINTS = [
   '/html/bbsp/dhcpserver/dhcpserver.asp',
   '/html/bbsp/layer3/lanhostcfg.asp',
@@ -240,10 +242,18 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     >
   > {
     const wanRaw = await this.fetchFirstHuaweiPage(HUAWEI_WAN_ENDPOINTS);
+    const wanListRaw = await this.fetchHuaweiWanListAsp();
     const diagnoseRaw = await this.fetchHuaweiPage(HUAWEI_DIAGNOSE_ENDPOINT);
 
+    console.log('wanRaw', wanRaw);
+    console.log('diagnoseRaw', diagnoseRaw);
+
     const internetEnabled = this.matchCheckedBySelector(wanRaw, this.s.advWanEnable);
-    const pppoeUsername = this.matchInputValueBySelector(wanRaw, this.s.advPppoeUsername);
+    const pppoeFromInput = this.matchInputValueBySelector(wanRaw, this.s.advPppoeUsername);
+    const pppoeUsername =
+      (pppoeFromInput?.trim() ? pppoeFromInput : null) ??
+      this.matchPppoeFromHuaweiWanPppConstructors(wanListRaw) ??
+      this.matchPppoeFromHuaweiWanInfoInstInternetPppoe(wanListRaw);
     const ipVersion =
       this.matchSelectSelectedValueBySelector(wanRaw, '#ProtocolType') ??
       this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType');
@@ -265,6 +275,128 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       dhcpv6Enabled: dhcpv6 ?? undefined,
       pdEnabled: requestPd ?? undefined,
     };
+  }
+
+  private async fetchHuaweiWanListAsp(): Promise<string | null> {
+    const withTs = `${HUAWEI_WAN_LIST_ASP}?t=${Date.now()}`;
+    return (
+      (await this.fetchHuaweiPage(withTs)) ?? (await this.fetchHuaweiPage(HUAWEI_WAN_LIST_ASP))
+    );
+  }
+
+  /**
+   * Some firmwares emit `new WANPPP(...)` / `new WanPPP(...)` rows (same idea as K562 `MainTopAP.asp`).
+   * First quoted arg is often the TR-069 domain; the next is often the PPPoE login.
+   */
+  private matchPppoeFromHuaweiWanPppConstructors(raw: string | null): string | null {
+    if (!raw) return null;
+    const ctorRe = /new\s+(?:WANPPP|WanPPP)\s*\(([^)]*)\)/gi;
+    let m: RegExpExecArray | null;
+    while ((m = ctorRe.exec(raw)) !== null) {
+      const parts = [...m[1].matchAll(/"([^"]*)"/g)].map((x) => this.unescapeHuaweiHex(x[1]));
+      const u = this.pickPppoeFromWanPppQuotedParts(parts);
+      if (u) return u;
+    }
+    return null;
+  }
+
+  private pickPppoeFromWanPppQuotedParts(parts: string[]): string | null {
+    if (!parts.length) return null;
+    const first = parts[0]?.trim() ?? '';
+    if (first.includes('InternetGatewayDevice')) {
+      const withAt = parts.slice(1).find((p) => p.includes('@'));
+      if (withAt?.trim()) return withAt.trim();
+      const second = parts[1]?.trim() ?? '';
+      if (second) return second;
+      for (let i = 2; i < parts.length; i++) {
+        const p = parts[i]?.trim();
+        if (!p) continue;
+        if (
+          /^(Connected|Connecting|Disconnected|IP_Routed|IP_Bridged|PPPoE|DHCP|Static|AlwaysOn|OnDemand|Automatic|Manual)$/i.test(
+            p,
+          )
+        ) {
+          continue;
+        }
+        if (p === '0' || p === '1') continue;
+        return p;
+      }
+      return null;
+    }
+    return first || null;
+  }
+
+  /**
+   * EG8145V5-style `wan_list.asp`: `new WanInfoInst(...)` with EncapMode `PPPoE` and an INTERNET-style
+   * service list; login is typically a quoted string containing `@`.
+   */
+  private matchPppoeFromHuaweiWanInfoInstInternetPppoe(raw: string | null): string | null {
+    if (!raw) return null;
+    const headRe = /new\s+WanInfoInst\s*\(/gi;
+    let hm: RegExpExecArray | null;
+    while ((hm = headRe.exec(raw)) !== null) {
+      const openParen = hm.index + hm[0].length - 1;
+      const closeParen = this.findMatchingClosingParen(raw, openParen);
+      if (closeParen < 0) continue;
+      const body = raw.slice(openParen + 1, closeParen);
+      if (!/PPPoE/i.test(body) || !/INTERNET/i.test(body)) continue;
+      const u = this.matchQuotedAtUserInWanInfoBody(body);
+      if (u) return u;
+    }
+    return null;
+  }
+
+  private findMatchingClosingParen(raw: string, openParenIndex: number): number {
+    let depth = 1;
+    let inStr = false;
+    let esc = false;
+    let q: '"' | "'" | null = null;
+    for (let i = openParenIndex + 1; i < raw.length; i++) {
+      const c = raw[i];
+      if (inStr) {
+        if (esc) {
+          esc = false;
+          continue;
+        }
+        if (c === '\\') {
+          esc = true;
+          continue;
+        }
+        if (q && c === q) {
+          inStr = false;
+          q = null;
+          continue;
+        }
+        continue;
+      }
+      if (c === '"' || c === "'") {
+        inStr = true;
+        q = c;
+        continue;
+      }
+      if (c === '(') {
+        depth++;
+        continue;
+      }
+      if (c === ')') {
+        depth--;
+        if (depth === 0) return i;
+      }
+    }
+    return -1;
+  }
+
+  private matchQuotedAtUserInWanInfoBody(body: string): string | null {
+    const re = /"([^"]*)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(body)) !== null) {
+      const s = this.unescapeHuaweiHex(m[1]).trim();
+      if (!s.includes('@')) continue;
+      if (s.includes('InternetGatewayDevice')) continue;
+      if (s.length < 4) continue;
+      return s;
+    }
+    return null;
   }
 
   private matchSelectSelectedTextBySelector(raw: string | null, selector: string): string | null {
