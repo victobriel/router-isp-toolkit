@@ -38,13 +38,13 @@ export const HuaweiEG8145V5Selectors = {
 
   advWanPppoeButton: '#wanInstTable_rml0, input[name="wanInstTablerml"]',
 
-  // WAN
-  advWanInput: '#wanInstTable_rml0, input[type="checkbox"]',
-
-  advWanEnable: '#WanSwitch, input[type="checkbox"]',
+  // WAN (WAN asp uses ids WanSwitch / UserName / PrifixEnabled; IPv6 radios use name=IPv6PrefixMode / IPv6AddressMode)
+  advWanEnable: '#WanSwitch, #RadioWanPSEnable',
   advPppoeUsername: '#UserName, input[type="text"]',
-  advPdEnable: '#IPv6PrefixMode1, input[type="radio"]',
-  advDhcpv6Enable: '#IPv6AddressMode, input[type="radio"]',
+  /** Legacy PD hint: DHCPv6-PD prefix mode radio (see extractWanData for PrifixEnabled + full group). */
+  advPdEnable: '#IPv6PrefixMode1',
+  /** Legacy IPv6 hint only when the IPv6AddressMode radio group is absent from HTML. */
+  advDhcpv6Enable: '#TDEDHCP6cForAddress',
 
   // LAN
   advLanDhcpServerContainer: '#landhcp',

@@ -245,9 +245,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const wanListRaw = await this.fetchHuaweiWanListAsp();
     const diagnoseRaw = await this.fetchHuaweiPage(HUAWEI_DIAGNOSE_ENDPOINT);
 
-    console.log('wanRaw', wanRaw);
-    console.log('diagnoseRaw', diagnoseRaw);
-
     const internetEnabled = this.matchCheckedBySelector(wanRaw, this.s.advWanEnable);
     const pppoeFromInput = this.matchInputValueBySelector(wanRaw, this.s.advPppoeUsername);
     const pppoeUsername =
@@ -257,8 +254,23 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const ipVersion =
       this.matchSelectSelectedValueBySelector(wanRaw, '#ProtocolType') ??
       this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType');
-    const requestPd = this.matchCheckedBySelector(wanRaw, this.s.advPdEnable);
-    const dhcpv6 = this.matchCheckedBySelector(wanRaw, this.s.advDhcpv6Enable);
+
+    const hasIpv6AddressModeRadios = /name=["']IPv6AddressMode["']/i.test(wanRaw ?? '');
+    const ipv6Acquisition = this.matchHuaweiWanIpv6AddressAcquisition(wanRaw);
+    const legacyDhcpv6Checkbox = hasIpv6AddressModeRadios
+      ? null
+      : this.matchCheckedBySelector(wanRaw, this.s.advDhcpv6Enable);
+    const dhcpv6Enabled =
+      ipv6Acquisition?.dhcpv6Enabled ??
+      (legacyDhcpv6Checkbox == null ? undefined : legacyDhcpv6Checkbox);
+    const slaacEnabled =
+      ipv6Acquisition?.slaacEnabled ??
+      (legacyDhcpv6Checkbox == null ? undefined : !legacyDhcpv6Checkbox);
+
+    const pdFlags = this.matchHuaweiWanPrefixDelegationFlags(wanRaw);
+    const legacyPd = this.matchCheckedBySelector(wanRaw, this.s.advPdEnable);
+    const requestPdEnabled = pdFlags?.requestPdEnabled ?? legacyPd ?? undefined;
+    const pdEnabled = pdFlags?.pdEnabled ?? legacyPd ?? undefined;
 
     const tr069EnabledRaw = this.matchQuotedVar(diagnoseRaw, 'Tr069Enable');
 
@@ -270,11 +282,75 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           : tr069EnabledRaw === '1' || tr069EnabledRaw.toLowerCase() === 'true',
       pppoeUsername: pppoeUsername ?? undefined,
       ipVersion: ipVersion ?? undefined,
-      requestPdEnabled: requestPd ?? undefined,
-      slaacEnabled: dhcpv6 == null ? undefined : !dhcpv6,
-      dhcpv6Enabled: dhcpv6 ?? undefined,
-      pdEnabled: requestPd ?? undefined,
+      requestPdEnabled,
+      slaacEnabled,
+      dhcpv6Enabled,
+      pdEnabled,
     };
+  }
+
+  /**
+   * Reads the checked WAN IPv6 "IP Acquisition Mode" radio group (`name="IPv6AddressMode"`).
+   * HTML uses ids IPv6AddressMode1..4, not a single `#IPv6AddressMode` control.
+   */
+  private matchHuaweiWanIpv6AddressAcquisition(
+    wanRaw: string | null,
+  ): { dhcpv6Enabled: boolean; slaacEnabled: boolean } | null {
+    const mode = this.matchCheckedInputValueByName(wanRaw, 'IPv6AddressMode');
+    if (mode == null) return null;
+    switch (mode) {
+      case 'DHCPv6':
+        return { dhcpv6Enabled: true, slaacEnabled: false };
+      case 'AutoConfigured':
+        // RFC4861-style stateless + optional DHCPv6; treat as both address mechanisms enabled for UI parity.
+        return { dhcpv6Enabled: true, slaacEnabled: true };
+      case 'Static':
+      case 'None':
+        return { dhcpv6Enabled: false, slaacEnabled: false };
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Prefix delegation: checkbox `PrifixEnabled` (firmware spelling) and/or prefix mode radios `IPv6PrefixMode*`.
+   */
+  private matchHuaweiWanPrefixDelegationFlags(
+    wanRaw: string | null,
+  ): { pdEnabled: boolean; requestPdEnabled: boolean } | null {
+    const prifix = this.matchCheckedById(wanRaw, 'PrifixEnabled');
+    const prefixMode = this.matchCheckedInputValueByName(wanRaw, 'IPv6PrefixMode');
+    const legacyOnlyPdRadio = this.matchCheckedById(wanRaw, 'IPv6PrefixMode1');
+    const fromPrefixMode = prefixMode === 'PrefixDelegation';
+
+    const hasPrifixControl = prifix !== null;
+    const hasPrefixModeGroup = prefixMode !== null;
+    let active: boolean | null = null;
+    if (hasPrifixControl) {
+      active = prifix || fromPrefixMode;
+    } else if (hasPrefixModeGroup) {
+      active = fromPrefixMode;
+    } else if (legacyOnlyPdRadio !== null) {
+      active = legacyOnlyPdRadio;
+    }
+    if (active === null) return null;
+    return { pdEnabled: active, requestPdEnabled: active };
+  }
+
+  /** Value of the checked `<input name="...">` in order of appearance (Huawei WAN form radio lists). */
+  private matchCheckedInputValueByName(raw: string | null, name: string): string | null {
+    if (!raw) return null;
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`<input[^>]*name=["']${escapedName}["'][^>]*>`, 'gi');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(raw)) !== null) {
+      const tag = m[0];
+      if (/<input\b[^>]*\bchecked\b/i.test(tag)) {
+        const vm = /value=["']([^"']*)["']/i.exec(tag);
+        return vm ? this.unescapeHuaweiHex(vm[1]) : null;
+      }
+    }
+    return null;
   }
 
   private async fetchHuaweiWanListAsp(): Promise<string | null> {
@@ -623,7 +699,8 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const tag = new RegExp(`<input[^>]*id=["']${escapedId}["'][^>]*>`, 'i').exec(raw)?.[0];
     if (!tag) return null;
-    return /\schecked(?:=["'][^"']*["'])?/i.test(tag);
+    // Use `\bchecked\b` so `checked` as the first attribute matches (`<input checked ...>`), not only after whitespace.
+    return /<input\b[^>]*\bchecked\b/i.test(tag);
   }
 
   private async extractUpnpData(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
