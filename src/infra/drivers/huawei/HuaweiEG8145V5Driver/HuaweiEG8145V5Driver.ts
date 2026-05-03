@@ -492,9 +492,12 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       'i',
     ).exec(raw)?.[1];
     if (!selectBody) return null;
-    const selectedText = /<option[^>]*selected[^>]*>([\s\S]*?)<\/option>/i.exec(selectBody)?.[1];
-    if (!selectedText) return null;
-    const text = selectedText.replace(/<[^>]+>/g, '').trim();
+    let optionInner =
+      /<option[^>]*selected[^>]*>([\s\S]*?)<\/option>/i.exec(selectBody)?.[1] ??
+      // Huawei often omits `selected` in the HTML and applies it in JS; first option is the HTML5 default.
+      /<option\b[^>]*>([\s\S]*?)<\/option>/i.exec(selectBody)?.[1];
+    if (!optionInner) return null;
+    const text = optionInner.replace(/<[^>]+>/g, '').trim();
     return text ? this.unescapeHuaweiHex(text) : null;
   }
 
@@ -679,7 +682,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       'i',
     ).exec(raw)?.[1];
     if (!selectBody) return null;
-    const selectedTag = /<option[^>]*selected[^>]*>/i.exec(selectBody)?.[0];
+    const selectedTag =
+      /<option[^>]*selected[^>]*>/i.exec(selectBody)?.[0] ??
+      /<option\b[^>]*>/i.exec(selectBody)?.[0];
     if (!selectedTag) return null;
     const value = /value=["']([^"']*)["']/i.exec(selectedTag)?.[1];
     return value == null ? null : this.unescapeHuaweiHex(value);
