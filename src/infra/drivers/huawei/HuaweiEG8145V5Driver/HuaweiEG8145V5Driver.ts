@@ -41,6 +41,62 @@ const HUAWEI_DIAGNOSE_ENDPOINT = '/html/bbsp/maintenance/diagnosecommon.asp';
 const HUAWEI_WAN_ENDPOINTS = ['/html/bbsp/wan/wan.asp', '/html/bbsp/waninfo/waninfo.asp'];
 /** WAN instance data for `wan.asp` (`GetWanList()`); PPPoE username is not in the static `#UserName` input. */
 const HUAWEI_WAN_LIST_ASP = '/html/bbsp/common/wan_list.asp';
+
+/** Shared with `matchHuaweiWanIpVersionFromFirmwareScripts` and WAN ipVersion diagnostics. */
+const HUAWEI_WAN_IP_VERSION_SCRIPT_PATTERNS: ReadonlyArray<{ id: string; re: RegExp }> = [
+  { id: 'd.ProtocolType=', re: /\bd\.ProtocolType\s*=\s*["']([^"']+)["']/i },
+  { id: 'ProtocolType:', re: /\bProtocolType\s*:\s*["']([^"']+)["']/i },
+  { id: '"ProtocolType":', re: /["']ProtocolType["']\s*:\s*["']([^"']+)["']/i },
+  { id: '["ProtocolType"]=', re: /\["']ProtocolType["']\]\s*=\s*["']([^"']+)["']/i },
+  { id: 'jQuery#ProtocolType.val', re: /\$\(\s*["']#ProtocolType["']\s*\)\.val\(\s*["']([^"']+)["']\s*\)/i },
+  { id: '(ProtocolType,', re: /\(\s*["']ProtocolType["']\s*,\s*["']([^"']+)["']/i },
+];
+
+export interface HuaweiWanIpVersionFetchMeta {
+  path: string;
+  ok: boolean;
+  status: number;
+  redirected: boolean;
+  length: number;
+  error: string | null;
+  /** Heuristic: body suggests login / session page rather than WAN config. */
+  looksLikeAuthShell: boolean;
+  hasSubstringProtocolType: boolean;
+  hasSelectIdProtocolType: boolean;
+  hasSelectNameProtocolType: boolean;
+  snippetNearProtocolType: string | null;
+  /** Collapsed head of body for quick eyeballing (no secrets targeted; may still contain user data). */
+  bodyHead: string | null;
+}
+
+export interface HuaweiWanIpVersionScriptProbe {
+  patternId: string;
+  matched: boolean;
+  /** Raw first capture group before validation. */
+  capture: string | null;
+  acceptedAsIpVersion: boolean;
+}
+
+export interface HuaweiWanIpVersionDiagnostics {
+  capturedAtIso: string;
+  resolvedIpVersion: string | undefined;
+  resolutionSteps: ReadonlyArray<{ step: string; value: string | null }>;
+  wanEndpointFetches: HuaweiWanIpVersionFetchMeta[];
+  wanListFetch: HuaweiWanIpVersionFetchMeta;
+  mergedWanUsedForParsing: {
+    length: number;
+    selectInnerFound: boolean;
+    selectInnerLength: number | null;
+    optionTagCount: number;
+    anyOptionHasSelectedAttr: boolean;
+    firstOptionOpenTagPreview: string | null;
+    firstResolvedValue: string | null;
+    firstResolvedText: string | null;
+  };
+  scriptProbesOnWanList: HuaweiWanIpVersionScriptProbe[];
+  scriptProbesOnMergedWan: HuaweiWanIpVersionScriptProbe[];
+  hints: string[];
+}
 const HUAWEI_LAN_ENDPOINTS = [
   '/html/bbsp/dhcpserver/dhcpserver.asp',
   '/html/bbsp/layer3/lanhostcfg.asp',
@@ -63,6 +119,22 @@ interface ParsedHuaweiUserDevice {
 }
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
+  /**
+   * When true, WAN extraction records rich `#ProtocolType` / ipVersion diagnostics and logs with `console.debug`.
+   * Read `lastWanIpVersionDiagnostics` or call `getWanIpVersionDebugSnapshot()` after a WAN extract.
+   */
+  public static wanIpVersionDebug = false;
+
+  public static lastWanIpVersionDiagnostics: HuaweiWanIpVersionDiagnostics | null = null;
+
+  public static setWanIpVersionDebug(enabled: boolean): void {
+    HuaweiEG8145V5Driver.wanIpVersionDebug = enabled;
+  }
+
+  public static getWanIpVersionDebugSnapshot(): HuaweiWanIpVersionDiagnostics | null {
+    return HuaweiEG8145V5Driver.lastWanIpVersionDiagnostics;
+  }
+
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
   }
@@ -256,6 +328,14 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType') ??
       this.matchHuaweiWanIpVersionFromFirmwareScripts(wanListRaw) ??
       this.matchHuaweiWanIpVersionFromFirmwareScripts(wanRaw);
+
+    if (HuaweiEG8145V5Driver.wanIpVersionDebug) {
+      const diag = await this.buildWanIpVersionDiagnostics(wanRaw, wanListRaw, ipVersion ?? undefined);
+      HuaweiEG8145V5Driver.lastWanIpVersionDiagnostics = diag;
+      console.debug('[Huawei EG8145V5] WAN ipVersion diagnostics', diag);
+    } else {
+      HuaweiEG8145V5Driver.lastWanIpVersionDiagnostics = null;
+    }
 
     const hasIpv6AddressModeRadios = /name=["']IPv6AddressMode["']/i.test(wanRaw ?? '');
     const ipv6Acquisition = this.matchHuaweiWanIpv6AddressAcquisition(wanRaw);
@@ -502,15 +582,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
    */
   private matchHuaweiWanIpVersionFromFirmwareScripts(raw: string | null): string | null {
     if (!raw) return null;
-    const patterns: RegExp[] = [
-      /\bd\.ProtocolType\s*=\s*["']([^"']+)["']/i,
-      /\bProtocolType\s*:\s*["']([^"']+)["']/i,
-      /["']ProtocolType["']\s*:\s*["']([^"']+)["']/i,
-      /\["']ProtocolType["']\]\s*=\s*["']([^"']+)["']/i,
-      /\$\(\s*["']#ProtocolType["']\s*\)\.val\(\s*["']([^"']+)["']\s*\)/i,
-      /\(\s*["']ProtocolType["']\s*,\s*["']([^"']+)["']/i,
-    ];
-    for (const re of patterns) {
+    for (const { re } of HUAWEI_WAN_IP_VERSION_SCRIPT_PATTERNS) {
       const m = re.exec(raw);
       if (!m?.[1]) continue;
       const v = this.unescapeHuaweiHex(m[1].trim());
@@ -843,6 +915,167 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       if (raw?.trim()) parts.push(raw);
     }
     return parts.length ? parts.join('\n') : null;
+  }
+
+  private huaweiSnippetAround(haystack: string | null, needle: string, pad: number): string | null {
+    if (!haystack) return null;
+    const i = haystack.toLowerCase().indexOf(needle.toLowerCase());
+    if (i < 0) return null;
+    const start = Math.max(0, i - pad);
+    const end = Math.min(haystack.length, i + needle.length + pad);
+    let s = haystack.slice(start, end).replace(/\s+/g, ' ');
+    if (start > 0) s = `…${s}`;
+    if (end < haystack.length) s = `${s}…`;
+    return s;
+  }
+
+  private analyzeBodyForWanIpVersionFetchMeta(
+    path: string,
+    ok: boolean,
+    status: number,
+    redirected: boolean,
+    text: string | null,
+    error: string | null,
+  ): HuaweiWanIpVersionFetchMeta {
+    const t = text ?? '';
+    const head = t.replace(/\s+/g, ' ').trim().slice(0, 360);
+    return {
+      path,
+      ok,
+      status,
+      redirected,
+      length: t.length,
+      error,
+      looksLikeAuthShell:
+        /(?:name=["']txt_[Pp]assword["']|id=["']txt_[Pp]assword["']|LoginRequest|login\.asp|session\s*(?:has\s*)?expired)/i.test(
+          t.slice(0, 12000),
+        ),
+      hasSubstringProtocolType: /ProtocolType/i.test(t),
+      hasSelectIdProtocolType: /<select[^>]*\bid\s*=\s*["']ProtocolType["']/i.test(t),
+      hasSelectNameProtocolType: /<select[^>]*\bname\s*=\s*["']ProtocolType["']/i.test(t),
+      snippetNearProtocolType: this.huaweiSnippetAround(t, 'ProtocolType', 160),
+      bodyHead: head.length ? head : null,
+    };
+  }
+
+  private async fetchHuaweiPageWithMeta(path: string): Promise<HuaweiWanIpVersionFetchMeta> {
+    try {
+      const response = await fetch(path, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      const text = await response.text();
+      return this.analyzeBodyForWanIpVersionFetchMeta(
+        path,
+        response.ok,
+        response.status,
+        response.redirected,
+        text,
+        null,
+      );
+    } catch (e) {
+      return this.analyzeBodyForWanIpVersionFetchMeta(path, false, 0, false, null, String(e));
+    }
+  }
+
+  private probeHuaweiWanIpVersionScripts(raw: string | null): HuaweiWanIpVersionScriptProbe[] {
+    const src = raw ?? '';
+    return HUAWEI_WAN_IP_VERSION_SCRIPT_PATTERNS.map(({ id, re }) => {
+      const m = re.exec(src);
+      const cap = m?.[1] ?? null;
+      const normalized = cap == null ? null : this.unescapeHuaweiHex(cap.trim());
+      const acceptedAsIpVersion =
+        normalized === 'IPv4' || normalized === 'IPv6' || normalized === 'IPv4/IPv6';
+      return {
+        patternId: id,
+        matched: !!m,
+        capture: cap,
+        acceptedAsIpVersion,
+      };
+    });
+  }
+
+  private async buildWanIpVersionDiagnostics(
+    wanRaw: string | null,
+    wanListRaw: string | null,
+    resolvedIpVersion: string | undefined,
+  ): Promise<HuaweiWanIpVersionDiagnostics> {
+    const [wanEndpointFetches, wanListFetch] = await Promise.all([
+      Promise.all(HUAWEI_WAN_ENDPOINTS.map((p) => this.fetchHuaweiPageWithMeta(p))),
+      this.fetchHuaweiPageWithMeta(`${HUAWEI_WAN_LIST_ASP}?t=${Date.now()}`),
+    ]);
+
+    const vSel = this.matchSelectSelectedValueBySelector(wanRaw, '#ProtocolType');
+    const tSel = this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType');
+    const sList = this.matchHuaweiWanIpVersionFromFirmwareScripts(wanListRaw);
+    const sWan = this.matchHuaweiWanIpVersionFromFirmwareScripts(wanRaw);
+
+    const inner = wanRaw ? this.matchHuaweiSelectInnerHtmlByIdOrName(wanRaw, 'ProtocolType') : null;
+    const optionTagCount = inner ? (inner.match(/<option\b/gi) ?? []).length : 0;
+    const anyOptionHasSelectedAttr = inner ? /<option[^>]*\bselected\b/i.test(inner) : false;
+    let firstOptionOpenTagPreview: string | null = null;
+    if (inner) {
+      const ft = /<option\b[^>]*>/i.exec(inner)?.[0];
+      firstOptionOpenTagPreview = ft ? ft.slice(0, 240) : null;
+    }
+
+    const hints: string[] = [];
+    if (!wanRaw?.length) {
+      hints.push('Merged WAN HTML is empty — both WAN ASP fetches may have failed or returned empty bodies.');
+    }
+    for (const f of wanEndpointFetches) {
+      if (!f.ok) hints.push(`WAN ${f.path} returned HTTP ${f.status} (ok=false).`);
+      if (f.error) hints.push(`WAN ${f.path} fetch error: ${f.error}`);
+      if (f.looksLikeAuthShell) hints.push(`WAN ${f.path} body resembles login/session shell, not advanced WAN UI.`);
+    }
+    if (!wanListFetch.ok) hints.push(`wan_list.asp probe returned HTTP ${wanListFetch.status} (ok=false).`);
+    if (wanListFetch.looksLikeAuthShell) hints.push('wan_list.asp body resembles login/session shell.');
+    const mergedHasSelect =
+      !!wanRaw &&
+      (/<select[^>]*\bid\s*=\s*["']ProtocolType["']/i.test(wanRaw) ||
+        /<select[^>]*\bname\s*=\s*["']ProtocolType["']/i.test(wanRaw));
+    if (wanRaw?.length && !mergedHasSelect) {
+      hints.push(
+        'Merged WAN HTML has no <select id="ProtocolType"> or name="ProtocolType"> — value may come only from XHR or a different control id.',
+      );
+    }
+    if (mergedHasSelect && inner && !anyOptionHasSelectedAttr) {
+      hints.push(
+        'Select exists but no <option selected>; parser falls back to first <option> (HTML5 default). If UI differs, firmware may set selection only in JS.',
+      );
+    }
+    if (!resolvedIpVersion) {
+      hints.push(
+        'ipVersion stayed undefined after select + script fallbacks — compare scriptProbes captures to expected ProtocolType literals.',
+      );
+    }
+
+    return {
+      capturedAtIso: new Date().toISOString(),
+      resolvedIpVersion,
+      resolutionSteps: [
+        { step: 'matchSelectSelectedValueBySelector(#ProtocolType)', value: vSel },
+        { step: 'matchSelectSelectedTextBySelector(#ProtocolType)', value: tSel },
+        { step: 'matchHuaweiWanIpVersionFromFirmwareScripts(wan_list.asp body used in extract)', value: sList },
+        { step: 'matchHuaweiWanIpVersionFromFirmwareScripts(merged WAN)', value: sWan },
+      ],
+      wanEndpointFetches,
+      wanListFetch,
+      mergedWanUsedForParsing: {
+        length: wanRaw?.length ?? 0,
+        selectInnerFound: inner != null,
+        selectInnerLength: inner?.length ?? null,
+        optionTagCount,
+        anyOptionHasSelectedAttr,
+        firstOptionOpenTagPreview,
+        firstResolvedValue: vSel,
+        firstResolvedText: tSel,
+      },
+      scriptProbesOnWanList: this.probeHuaweiWanIpVersionScripts(wanListRaw),
+      scriptProbesOnMergedWan: this.probeHuaweiWanIpVersionScripts(wanRaw),
+      hints,
+    };
   }
 
   private async fetchHuaweiPage(path: string): Promise<string | null> {
