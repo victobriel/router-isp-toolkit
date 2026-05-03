@@ -241,7 +241,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       | 'pdEnabled'
     >
   > {
-    const wanRaw = await this.fetchFirstHuaweiPage(HUAWEI_WAN_ENDPOINTS);
+    const wanRaw = await this.fetchHuaweiWanPagesMerged();
     const wanListRaw = await this.fetchHuaweiWanListAsp();
     const diagnoseRaw = await this.fetchHuaweiPage(HUAWEI_DIAGNOSE_ENDPOINT);
 
@@ -253,7 +253,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       this.matchPppoeFromHuaweiWanInfoInstInternetPppoe(wanListRaw);
     const ipVersion =
       this.matchSelectSelectedValueBySelector(wanRaw, '#ProtocolType') ??
-      this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType');
+      this.matchSelectSelectedTextBySelector(wanRaw, '#ProtocolType') ??
+      this.matchHuaweiWanIpVersionFromFirmwareScripts(wanListRaw) ??
+      this.matchHuaweiWanIpVersionFromFirmwareScripts(wanRaw);
 
     const hasIpv6AddressModeRadios = /name=["']IPv6AddressMode["']/i.test(wanRaw ?? '');
     const ipv6Acquisition = this.matchHuaweiWanIpv6AddressAcquisition(wanRaw);
@@ -475,6 +477,48 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     return null;
   }
 
+  /**
+   * Inner HTML of `<select>` when `id` or `name` matches `token` (some WAN pages use only `name`).
+   */
+  private matchHuaweiSelectInnerHtmlByIdOrName(raw: string | null, token: string): string | null {
+    if (!raw) return null;
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const byId = new RegExp(
+      `<select[^>]*\\bid\\s*=\\s*["']${escaped}["'][^>]*>([\\s\\S]*?)<\\/select>`,
+      'i',
+    );
+    const idMatch = byId.exec(raw);
+    if (idMatch) return idMatch[1];
+    const byName = new RegExp(
+      `<select[^>]*\\bname\\s*=\\s*["']${escaped}["'][^>]*>([\\s\\S]*?)<\\/select>`,
+      'i',
+    );
+    return byName.exec(raw)?.[1] ?? null;
+  }
+
+  /**
+   * `wan.asp` / `waninfo.asp` often omit `<option selected>`; values then live only in inline script
+   * (especially in `wan_list.asp` beside `WanInfoInst` / model objects).
+   */
+  private matchHuaweiWanIpVersionFromFirmwareScripts(raw: string | null): string | null {
+    if (!raw) return null;
+    const patterns: RegExp[] = [
+      /\bd\.ProtocolType\s*=\s*["']([^"']+)["']/i,
+      /\bProtocolType\s*:\s*["']([^"']+)["']/i,
+      /["']ProtocolType["']\s*:\s*["']([^"']+)["']/i,
+      /\["']ProtocolType["']\]\s*=\s*["']([^"']+)["']/i,
+      /\$\(\s*["']#ProtocolType["']\s*\)\.val\(\s*["']([^"']+)["']\s*\)/i,
+      /\(\s*["']ProtocolType["']\s*,\s*["']([^"']+)["']/i,
+    ];
+    for (const re of patterns) {
+      const m = re.exec(raw);
+      if (!m?.[1]) continue;
+      const v = this.unescapeHuaweiHex(m[1].trim());
+      if (v === 'IPv4' || v === 'IPv6' || v === 'IPv4/IPv6') return v;
+    }
+    return null;
+  }
+
   private matchSelectSelectedTextBySelector(raw: string | null, selector: string): string | null {
     const ids = this.extractIdsFromSelector(selector);
     for (const id of ids) {
@@ -486,11 +530,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   private matchSelectSelectedTextById(raw: string | null, id: string): string | null {
     if (!raw) return null;
-    const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const selectBody = new RegExp(
-      `<select[^>]*id=["']${escapedId}["'][^>]*>([\\s\\S]*?)<\\/select>`,
-      'i',
-    ).exec(raw)?.[1];
+    const selectBody = this.matchHuaweiSelectInnerHtmlByIdOrName(raw, id);
     if (!selectBody) return null;
     let optionInner =
       /<option[^>]*selected[^>]*>([\s\S]*?)<\/option>/i.exec(selectBody)?.[1] ??
@@ -676,11 +716,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   private matchSelectSelectedValueById(raw: string | null, id: string): string | null {
     if (!raw) return null;
-    const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const selectBody = new RegExp(
-      `<select[^>]*id=["']${escapedId}["'][^>]*>([\\s\\S]*?)<\\/select>`,
-      'i',
-    ).exec(raw)?.[1];
+    const selectBody = this.matchHuaweiSelectInnerHtmlByIdOrName(raw, id);
     if (!selectBody) return null;
     const selectedTag =
       /<option[^>]*selected[^>]*>/i.exec(selectBody)?.[0] ??
@@ -797,6 +833,16 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       if (raw) return raw;
     }
     return null;
+  }
+
+  /** Join WAN ASP responses so fields that exist on only one page (e.g. `#ProtocolType` on `waninfo.asp`) parse correctly. */
+  private async fetchHuaweiWanPagesMerged(): Promise<string | null> {
+    const parts: string[] = [];
+    for (const path of HUAWEI_WAN_ENDPOINTS) {
+      const raw = await this.fetchHuaweiPage(path);
+      if (raw?.trim()) parts.push(raw);
+    }
+    return parts.length ? parts.join('\n') : null;
   }
 
   private async fetchHuaweiPage(path: string): Promise<string | null> {
