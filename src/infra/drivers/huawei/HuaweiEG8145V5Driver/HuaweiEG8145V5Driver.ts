@@ -125,7 +125,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   private async getTr069State(): Promise<{ tr069Url?: string; tr069Enabled?: boolean }> {
     const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
+    console.log('raw', raw);
     const cwmp = this.parseHuaweiCwmp(raw);
+    console.log('cwmp', cwmp);
     if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
     return {
       tr069Url: cwmp.URL ? cwmp.URL : undefined,
@@ -141,7 +143,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         cache: 'no-store',
       });
       if (!response.ok) return null;
-      console.log('fetch', await response.text());
       return await response.text();
     } catch {
       return null;
