@@ -14,8 +14,11 @@ function escapeRegExp(s: string): string {
 /** `value="…"` on a single HTML tag fragment (Huawei pages use double or single quotes). */
 const INPUT_VALUE_ATTR = /value=["']([^"']*)["']/i;
 
-/** Single-quoted JS string literal, supporting `\x..` and other backslash escapes. */
-const JS_SINGLE_QUOTED = /'((?:\\.|[^'\\])*)'/g;
+/**
+ * Single- or double-quoted JS string literal, supporting `\x..` and other backslash
+ * escapes. Group 1 captures the content of `"…"`; group 2 captures the content of `'…'`.
+ */
+const JS_STRING_LITERAL = /"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g;
 
 const STCWMP_SIGNATURE = /function\s+stCWMP\s*\(([\s\S]*?)\)/;
 const STCWMP_CALL = /new\s+stCWMP\s*\(([\s\S]*?)\)/;
@@ -152,7 +155,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       .split(',')
       .map((p) => p.trim())
       .filter(Boolean);
-    const values = Array.from(call[1].matchAll(JS_SINGLE_QUOTED), (m) => m[1]);
+    const values = Array.from(call[1].matchAll(JS_STRING_LITERAL), (m) => m[1] ?? m[2]);
     if (!params.length || !values.length) return null;
 
     const result: Record<string, string> = {};
