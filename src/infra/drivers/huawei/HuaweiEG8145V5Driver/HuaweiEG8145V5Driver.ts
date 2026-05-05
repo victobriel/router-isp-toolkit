@@ -61,7 +61,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           upnpEnabled: undefined,
         };
       },
-      tr069: async () => ({ tr069Url: await this.getTr069Url() }),
+      tr069: async () => this.getTr069State(),
       routerInfo: async () => {
         return {
           routerVersion: undefined,
@@ -123,12 +123,14 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     throw new Error('Method not implemented.');
   }
 
-  private async getTr069Url(): Promise<string | undefined> {
+  private async getTr069State(): Promise<{ tr069Url?: string; tr069Enabled?: boolean }> {
     const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
-    if (!raw) return undefined;
-    const value = this.matchInputValueBySelector(raw, this.s.advTr069Url);
-    if (!value) return undefined;
-    return value;
+    const cwmp = this.parseHuaweiCwmp(raw);
+    if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
+    return {
+      tr069Url: cwmp.URL ? cwmp.URL : undefined,
+      tr069Enabled: cwmp.EnableCWMP === '1',
+    };
   }
 
   private async fetch(path: string): Promise<string | null> {

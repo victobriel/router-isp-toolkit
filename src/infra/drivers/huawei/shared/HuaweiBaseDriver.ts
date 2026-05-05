@@ -14,6 +14,12 @@ function escapeRegExp(s: string): string {
 /** `value="…"` on a single HTML tag fragment (Huawei pages use double or single quotes). */
 const INPUT_VALUE_ATTR = /value=["']([^"']*)["']/i;
 
+/** Single-quoted JS string literal, supporting `\x..` and other backslash escapes. */
+const JS_SINGLE_QUOTED = /'((?:\\.|[^'\\])*)'/g;
+
+const STCWMP_SIGNATURE = /function\s+stCWMP\s*\(([\s\S]*?)\)/;
+const STCWMP_CALL = /new\s+stCWMP\s*\(([\s\S]*?)\)/;
+
 function extractIdsFromCommaSelector(selector: string): string[] {
   return selector
     .split(',')
@@ -125,5 +131,35 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       if (value != null) return value;
     }
     return null;
+  }
+
+  /**
+   * Huawei's `tr069.asp` renders form fields (URL, EnableCWMP, …) at runtime from a
+   * `new stCWMP(...)` constructor call, so the raw HTML never contains `<input value="…">`
+   * for those fields. The configured values are positional arguments mapped 1:1 to the
+   * parameters declared by `function stCWMP(...)` in the same page.
+   *
+   * Returns a `paramName -> value` map (with Huawei `\xNN` escapes decoded), or `null`
+   * when either the signature or the call cannot be located.
+   */
+  protected parseHuaweiCwmp(raw: string | null): Record<string, string> | null {
+    if (!raw) return null;
+    const sig = STCWMP_SIGNATURE.exec(raw);
+    const call = STCWMP_CALL.exec(raw);
+    if (!sig || !call) return null;
+
+    const params = sig[1]
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    const values = Array.from(call[1].matchAll(JS_SINGLE_QUOTED), (m) => m[1]);
+    if (!params.length || !values.length) return null;
+
+    const result: Record<string, string> = {};
+    const len = Math.min(params.length, values.length);
+    for (let i = 0; i < len; i++) {
+      result[params[i]] = this.unescapeHuaweiHex(values[i]);
+    }
+    return result;
   }
 }
