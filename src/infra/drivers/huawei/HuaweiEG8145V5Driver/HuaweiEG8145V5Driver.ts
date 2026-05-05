@@ -13,6 +13,7 @@ import {
   HUAWEI_INDEX_ENDPOINT,
   HUAWEI_TR069_ENDPOINT,
   HUAWEI_UPNP_ENDPOINT,
+  HUAWEI_ACCESS_CONTROL_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
@@ -34,12 +35,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           linkSpeed: undefined,
         };
       },
-      remoteAccess: async () => {
-        return {
-          remoteAccessIpv4Enabled: undefined,
-          remoteAccessIpv6Enabled: undefined,
-        };
-      },
+      remoteAccess: async () => this.getRemoteAccessState(),
       wlan: async () => {
         return {
           wlan24GhzEnabled: undefined,
@@ -117,6 +113,21 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   public override goToPage(page: RouterPage, key: RouterPageKey): void {
     throw new Error('Method not implemented.');
+  }
+
+  private async getRemoteAccessState(): Promise<{
+    remoteAccessIpv4Enabled?: boolean;
+    remoteAccessIpv6Enabled?: boolean;
+  }> {
+    const raw = await this.fetch(HUAWEI_ACCESS_CONTROL_ENDPOINT);
+    if (!raw) {
+      return { remoteAccessIpv4Enabled: undefined, remoteAccessIpv6Enabled: undefined };
+    }
+    const httpEnabled = this.matchInputEnabledById(raw, 'Protocol2');
+    return {
+      remoteAccessIpv4Enabled: httpEnabled ?? false,
+      remoteAccessIpv6Enabled: undefined,
+    };
   }
 
   private async getUpnpState(): Promise<{ upnpEnabled?: boolean }> {

@@ -15,6 +15,13 @@ function escapeRegExp(s: string): string {
 const INPUT_VALUE_ATTR = /value=["']([^"']*)["']/i;
 
 /**
+ * Standalone `disabled` HTML attribute on a single tag fragment. Matches `disabled`,
+ * `disabled=""`, `disabled='disabled'`, etc., but NOT substrings like `data-disabled`
+ * or `aria-disabled` because we require a tag-start or whitespace before the keyword.
+ */
+const DISABLED_ATTR = /(?:^|\s)disabled(?:\s|=|\/|>|$)/i;
+
+/**
  * Single- or double-quoted JS string literal, supporting `\x..` and other backslash
  * escapes. Group 1 captures the content of `"…"`; group 2 captures the content of `'…'`.
  */
@@ -112,12 +119,33 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   protected matchInputValueById(raw: string | null, id: string): string | null {
-    if (!raw) return null;
-    const escapedId = escapeRegExp(id);
-    const tag = new RegExp(`<input[^>]*id=["']${escapedId}["'][^>]*>`, 'i').exec(raw)?.[0];
+    const tag = this.matchInputTagById(raw, id);
     if (!tag) return null;
     const value = INPUT_VALUE_ATTR.exec(tag)?.[1];
     return value == null ? null : this.unescapeHuaweiHex(value);
+  }
+
+  /** First `<input … id="…" …>` tag (verbatim) for the given id, or `null` if absent. */
+  protected matchInputTagById(raw: string | null, id: string): string | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    return new RegExp(`<input[^>]*id=["']${escapedId}["'][^>]*>`, 'i').exec(raw)?.[0] ?? null;
+  }
+
+  /**
+   * Returns the enabled state of an `<input id="…">` element in raw HTML:
+   * - `true`  → element exists and is **not** marked `disabled`,
+   * - `false` → element exists but carries a `disabled` attribute,
+   * - `null`  → element is absent.
+   *
+   * Useful for Huawei pages that always emit a form field but communicate
+   * availability through the `disabled` attribute (e.g. WAN-side ACL toggles
+   * like `#Protocol2` for HTTP remote access).
+   */
+  protected matchInputEnabledById(raw: string | null, id: string): boolean | null {
+    const tag = this.matchInputTagById(raw, id);
+    if (!tag) return null;
+    return !DISABLED_ATTR.test(tag);
   }
 
   /**
