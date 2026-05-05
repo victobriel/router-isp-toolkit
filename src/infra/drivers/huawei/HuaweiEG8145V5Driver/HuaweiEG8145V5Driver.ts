@@ -123,10 +123,30 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     if (!raw) {
       return { remoteAccessIpv4Enabled: undefined, remoteAccessIpv6Enabled: undefined };
     }
-    const httpEnabled = this.matchInputEnabledById(raw, 'Protocol2');
+
+    const masterToggle = this.parseHuaweiStructCall(raw, 'stNewAclEnable');
+    const aclEnabled = masterToggle?.enable === '1';
+
+    const httpWanRules = this.parseHuaweiStructCallAll(raw, 'stNewDeviceAcl').filter(
+      (rule) =>
+        rule.SrcPortType === '2' &&
+        rule.Mode === '0' &&
+        rule.Protocol.toUpperCase()
+          .split(',')
+          .map((p) => p.trim())
+          .includes('HTTP'),
+    );
+
+    const hasIpv4Rule = httpWanRules.some(
+      (rule) => rule.SrcIp === '' || !rule.SrcIp.includes(':'),
+    );
+    const hasIpv6Rule = httpWanRules.some(
+      (rule) => rule.SrcIp === '' || rule.SrcIp.includes(':'),
+    );
+
     return {
-      remoteAccessIpv4Enabled: httpEnabled ?? false,
-      remoteAccessIpv6Enabled: undefined,
+      remoteAccessIpv4Enabled: aclEnabled && hasIpv4Rule,
+      remoteAccessIpv6Enabled: aclEnabled && hasIpv6Rule,
     };
   }
 
