@@ -19,27 +19,53 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
       opticalSignal: async () => ({ opticalSignal: undefined }),
-      topology: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      topology: async () => {
+        return {
+          topology: undefined,
+        };
       },
-      wan: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      wan: async () => {
+        return {
+          wan: undefined,
+          linkSpeed: undefined,
+        };
       },
-      remoteAccess: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      remoteAccess: async () => {
+        return {
+          remoteAccessIpv4Enabled: undefined,
+          remoteAccessIpv6Enabled: undefined,
+        };
       },
-      wlan: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      wlan: async () => {
+        return {
+          wlan24GhzEnabled: undefined,
+          wlan5GhzEnabled: undefined,
+          wlan24GhzSsids: undefined,
+          wlan5GhzSsids: undefined,
+        };
       },
-      lan: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      lan: async () => {
+        return {
+          lan: undefined,
+          dhcpIpAddress: undefined,
+          dhcpSubnetMask: undefined,
+          dhcpStartIp: undefined,
+          dhcpEndIp: undefined,
+          dhcpPrimaryDns: undefined,
+          dhcpSecondaryDns: undefined,
+          dhcpLeaseTimeMode: undefined,
+        };
       },
-      upnp: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      upnp: async () => {
+        return {
+          upnpEnabled: undefined,
+        };
       },
       tr069: async () => ({ tr069Url: await this.getTr069Url() }),
-      routerInfo: function (): Promise<Partial<ExtractionResult>> {
-        throw new Error('Function not implemented.');
+      routerInfo: async () => {
+        return {
+          routerVersion: undefined,
+        };
       },
     };
 
