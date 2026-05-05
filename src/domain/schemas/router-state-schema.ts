@@ -41,6 +41,7 @@ export function wlanSsidPreferenceEntrySchema<T extends z.ZodType>(fieldSchema: 
 }
 
 export function routerStateShape<
+  TOpticalSignal extends z.ZodType,
   TRouterAdminPassword extends z.ZodType,
   TPppoe extends z.ZodType,
   TLinkSpeed extends z.ZodType,
@@ -57,6 +58,7 @@ export function routerStateShape<
   TDhcpLeaseTimeMode extends z.ZodType,
   TWlanConfig extends z.ZodType,
 >(params: {
+  opticalSignal: TOpticalSignal;
   routerAdminPassword: TRouterAdminPassword;
   pppoeUsername: TPppoe;
   linkSpeed: TLinkSpeed;
@@ -92,6 +94,7 @@ export function routerStateShape<
     routerVersion: z.string(),
     dhcpLeaseTime: z.string(),
 
+    opticalSignal: params.opticalSignal,
     linkSpeed: params.linkSpeed,
     routerAdminPassword: params.routerAdminPassword,
     pppoeUsername: params.pppoeUsername,

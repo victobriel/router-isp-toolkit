@@ -18,6 +18,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
+      opticalSignal: async () => ({ opticalSignal: undefined }),
       topology: function (): Promise<Partial<ExtractionResult>> {
         throw new Error('Function not implemented.');
       },

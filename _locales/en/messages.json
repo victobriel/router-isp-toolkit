@@ -587,6 +587,12 @@
   "settings_extraction_filter_error_empty": {
     "message": "Select at least one extraction section"
   },
+  "settings_extraction_filter_option_optical_signal": {
+    "message": "Optical signal"
+  },
+  "settings_extraction_filter_hint_optical_signal": {
+    "message": "The optical signal is not available on all routers."
+  },
   "settings_extraction_filter_option_topology": {
     "message": "Topology"
   },
@@ -609,7 +615,7 @@
     "message": "TR-069"
   },
   "settings_extraction_filter_option_router_info": {
-    "message": "Router Info"
+    "message": "Other (router version, TR-069, PPPoE, UPnP, status fields…)"
   },
   "settings_section_router_preferences": {
     "message": "Router preferences"
@@ -644,6 +650,10 @@
   "settings_prefs_model_pick_first": {
     "message": "Select a router model above before editing preferences."
   },
+  "settings_prefs_optical_signal_title": {
+    "message": "Optical signal"
+  },
+  "settings_pref_optical_signal": { "message": "Optical signal" },
   "settings_prefs_credentials_title": {
     "message": "Credentials"
   },
@@ -811,7 +821,7 @@
 
   "popup_label_link_speed": { "message": "Link Mode" },
   "popup_label_request_pd": { "message": "Request PD" },
-  "popup_section_misc_router_info": { "message": "Router Info" },
+  "popup_section_misc_router_info": { "message": "Others" },
 
   "popup_label_radio": { "message": "Radio" },
   "popup_label_ssid": { "message": "SSID" },

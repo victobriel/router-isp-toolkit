@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { services } from '@/index';
 import {
   BOOKMARKS_STORAGE_KEY,
@@ -25,7 +25,7 @@ import { Button } from '@/ui/components/ui/button';
 import { Badge } from '@/ui/components/ui/badge';
 import { Separator } from '@/ui/components/ui/separator';
 import { Collapsible } from '@/ui/components/ui/collapsible';
-import { Trash2, Save, Sun, Moon, Monitor, Copy, Upload, Download } from 'lucide-react';
+import { Trash2, Save, Sun, Moon, Monitor, Copy, Upload, Download, Info } from 'lucide-react';
 import { useAppTheme, type AppThemePreference } from '@/ui/hooks/use-app-theme';
 import {
   Accordion,
@@ -47,6 +47,12 @@ import {
   useSettingsToast,
 } from '@/ui/modules/settings/components/settings-toast-stack';
 import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/ui/components/ui/tooltip';
 
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;
@@ -375,6 +381,7 @@ export const Settings = () => {
   ] as const;
 
   const extractionFilterLabels: Record<ExtractionFilterKey, string> = {
+    opticalSignal: translator.t('settings_extraction_filter_option_optical_signal'),
     topology: translator.t('settings_extraction_filter_option_topology'),
     wan: translator.t('settings_extraction_filter_option_wan'),
     remoteAccess: translator.t('settings_extraction_filter_option_remote_access'),
@@ -386,272 +393,290 @@ export const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <SettingsToastStack toasts={toasts} />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground">
+        <SettingsToastStack toasts={toasts} />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {translator.t('settings_header_subtitle')}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {translator.t('settings_header_title')} v{version}
-          </p>
-        </div>
-
-        <Separator />
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold">{translator.t('settings_section_appearance')}</h2>
-          <div className="flex gap-2">
-            {themeOptions.map(({ id, label, icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => handleTheme(id)}
-                className={cn(
-                  'flex-1 flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-xs font-medium transition-all cursor-pointer',
-                  theme === id
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border hover:border-muted-foreground/30 text-muted-foreground',
-                )}
-              >
-                {icon}
-                {label}
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold">
-              {translator.t('settings_saved_bookmarks_label')}
-            </h2>
-            <Badge variant="secondary">{totalBookmarks}</Badge>
-          </div>
-
-          {bookmarkEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {translator.t('settings_bookmarks_empty')}
+        <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {translator.t('settings_header_subtitle')}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {translator.t('settings_header_title')} v{version}
             </p>
-          ) : (
-            <div className="space-y-2">
-              {bookmarkEntries.map(([modelKey, { model, credentials }]) => (
-                <Collapsible key={modelKey} title={model}>
-                  <div className="space-y-1">
-                    {credentials.map((cred) => (
-                      <div
-                        key={cred.id}
-                        className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
+          </div>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold">{translator.t('settings_section_appearance')}</h2>
+            <div className="flex gap-2">
+              {themeOptions.map(({ id, label, icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => handleTheme(id)}
+                  className={cn(
+                    'flex-1 flex flex-col items-center gap-1.5 rounded-lg border-2 p-3 text-xs font-medium transition-all cursor-pointer',
+                    theme === id
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-muted-foreground/30 text-muted-foreground',
+                  )}
+                >
+                  {icon}
+                  {label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold">
+                {translator.t('settings_saved_bookmarks_label')}
+              </h2>
+              <Badge variant="secondary">{totalBookmarks}</Badge>
+            </div>
+
+            {bookmarkEntries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {translator.t('settings_bookmarks_empty')}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {bookmarkEntries.map(([modelKey, { model, credentials }]) => (
+                  <Collapsible key={modelKey} title={model}>
+                    <div className="space-y-1">
+                      {credentials.map((cred) => (
+                        <div
+                          key={cred.id}
+                          className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium truncate">{cred.username}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {cred.password}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={() => void handleDeleteCredential(modelKey, cred.id)}
+                            aria-label={translator.t(
+                              'settings_bookmarks_delete_aria',
+                              cred.username,
+                            )}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </Collapsible>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-sm font-semibold">
+                {translator.t('settings_section_copy_template')}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {translator.t('settings_copy_template_desc')}
+              </p>
+            </div>
+            <textarea
+              className="w-full h-40 rounded-md border border-input bg-background px-3 py-2 text-xs font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
+              value={copyTemplate}
+              onChange={(e) => setCopyTemplate(e.target.value)}
+              placeholder={translator.t('settings_copy_template_textarea_placeholder')}
+            />
+            <Accordion type="single" collapsible>
+              <AccordionItem value="available_placeholders">
+                <AccordionTrigger>{translator.t('settings_copy_template_hint')}</AccordionTrigger>
+                <AccordionContent>
+                  <ul className="list-disc list-inside text-xs text-muted-foreground">
+                    {COPY_TEXT_VALUE_KEYS.map(({ key, description }) => (
+                      <li
+                        key={key}
+                        className="flex items-center justify-between gap-2 h-7 border-b border-border hover:bg-muted/50"
                       >
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium truncate">{cred.username}</p>
-                          <p className="text-xs text-muted-foreground truncate">{cred.password}</p>
+                        <div className="flex items-center">
+                          <span className="font-medium">{`%${key}%`}</span>
+                          <span className="mx-1">-</span>
+                          <span>{description}</span>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-7 w-7 shrink-0"
-                          onClick={() => void handleDeleteCredential(modelKey, cred.id)}
-                          aria-label={translator.t('settings_bookmarks_delete_aria', cred.username)}
+                          onClick={() => void handleCopyPlaceholder(key)}
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          <Copy className="size-3.5" />
                         </Button>
-                      </div>
+                      </li>
                     ))}
-                  </div>
-                </Collapsible>
-              ))}
-            </div>
-          )}
-        </section>
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            <Button size="sm" onClick={handleSaveTemplate} className="gap-1.5">
+              <Save className="h-3.5 w-3.5" />
+              {translator.t('settings_copy_template_save')}
+            </Button>
+          </section>
 
-        <Separator />
+          <Separator />
 
-        <section className="space-y-3">
-          <div>
-            <h2 className="text-sm font-semibold">
-              {translator.t('settings_section_copy_template')}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {translator.t('settings_copy_template_desc')}
-            </p>
-          </div>
-          <textarea
-            className="w-full h-40 rounded-md border border-input bg-background px-3 py-2 text-xs font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
-            value={copyTemplate}
-            onChange={(e) => setCopyTemplate(e.target.value)}
-            placeholder={translator.t('settings_copy_template_textarea_placeholder')}
+          <RouterPreferenceSection
+            bookmarkEntries={bookmarkEntries}
+            existingPreferenceModelKeys={Object.keys(prefsByModel)}
+            selectedModelKey={selectedModelKey}
+            onSelectedModelKeyChange={setSelectedModelKey}
+            prefs={prefsByModel[selectedModelKey] ?? {}}
+            onSavePrefs={(prefs) => void handleSavePrefsForModel(selectedModelKey, prefs)}
           />
-          <Accordion type="single" collapsible>
-            <AccordionItem value="available_placeholders">
-              <AccordionTrigger>{translator.t('settings_copy_template_hint')}</AccordionTrigger>
-              <AccordionContent>
-                <ul className="list-disc list-inside text-xs text-muted-foreground">
-                  {COPY_TEXT_VALUE_KEYS.map(({ key, description }) => (
-                    <li
-                      key={key}
-                      className="flex items-center justify-between gap-2 h-7 border-b border-border hover:bg-muted/50"
+
+          <Separator />
+
+          <section className="space-y-3">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">
+                {translator.t('settings_import_export_section_title')}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {translator.t('settings_import_export_section_desc')}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setImportOpen(true)}
+                className="gap-1.5 flex-1"
+                type="button"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                {translator.t('settings_import_button')}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setExportOpen(true)}
+                className="gap-1.5 flex-1"
+                type="button"
+                disabled={isExporting}
+              >
+                <Download className="h-3.5 w-3.5" />
+                {translator.t('settings_export_button')}
+              </Button>
+            </div>
+          </section>
+
+          <Separator />
+
+          <section className="space-y-3">
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">
+                {translator.t('settings_extraction_filter_title')}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {translator.t('settings_extraction_filter_desc')}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {EXTRACTION_FILTER_KEYS.map((key, index) => {
+                const active = extractionFilter.includes(key);
+                return (
+                  <Fragment key={key}>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleExtractionFilter(key)}
+                      className={cn(
+                        'rounded-md border px-3 py-2 text-xs text-left transition-colors',
+                        active
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:bg-muted/50',
+                      )}
                     >
-                      <div className="flex items-center">
-                        <span className="font-medium">{`%${key}%`}</span>
-                        <span className="mx-1">-</span>
-                        <span>{description}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => void handleCopyPlaceholder(key)}
-                      >
-                        <Copy className="size-3.5" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-          <Button size="sm" onClick={handleSaveTemplate} className="gap-1.5">
-            <Save className="h-3.5 w-3.5" />
-            {translator.t('settings_copy_template_save')}
-          </Button>
-        </section>
+                      {extractionFilterLabels[key]}
+                    </button>
+                    {index === 0 && (
+                      <Tooltip>
+                        <TooltipTrigger className="w-fit">
+                          <Info className="size-3.5" />
+                        </TooltipTrigger>
+                        <TooltipContent align="start" side="top">
+                          {translator.t('settings_extraction_filter_hint_optical_signal')}
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {translator.t('settings_extraction_filter_hint')}
+            </p>
+            <Button size="sm" onClick={() => void handleSaveExtractionFilter()} className="gap-1.5">
+              <Save className="h-3.5 w-3.5" />
+              {translator.t('settings_extraction_filter_save')}
+            </Button>
+          </section>
 
-        <Separator />
+          <Separator />
 
-        <RouterPreferenceSection
-          bookmarkEntries={bookmarkEntries}
-          existingPreferenceModelKeys={Object.keys(prefsByModel)}
-          selectedModelKey={selectedModelKey}
-          onSelectedModelKeyChange={setSelectedModelKey}
-          prefs={prefsByModel[selectedModelKey] ?? {}}
-          onSavePrefs={(prefs) => void handleSavePrefsForModel(selectedModelKey, prefs)}
-        />
+          <SettingsImportExportModal
+            variant="import"
+            open={importOpen}
+            onRequestClose={() => {
+              setImportOpen(false);
+              setImportFile(null);
+            }}
+            sections={importSections}
+            setSections={setImportSections}
+            isBusy={isImporting}
+            onConfirm={handleImport}
+            getSectionLabel={getSectionLabel}
+            importFile={importFile}
+            onImportFileChange={setImportFile}
+          />
 
-        <Separator />
+          <SettingsImportExportModal
+            variant="export"
+            open={exportOpen}
+            onRequestClose={() => setExportOpen(false)}
+            sections={exportSections}
+            setSections={setExportSections}
+            isBusy={isExporting}
+            onConfirm={handleExport}
+            getSectionLabel={getSectionLabel}
+          />
 
-        <section className="space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold">
-              {translator.t('settings_import_export_section_title')}
+          <section className="space-y-3">
+            <h2 className="text-sm font-semibold text-destructive">
+              {translator.t('settings_danger_zone_title')}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              {translator.t('settings_import_export_section_desc')}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setImportOpen(true)}
-              className="gap-1.5 flex-1"
-              type="button"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              {translator.t('settings_import_button')}
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setExportOpen(true)}
-              className="gap-1.5 flex-1"
-              type="button"
-              disabled={isExporting}
-            >
-              <Download className="h-3.5 w-3.5" />
-              {translator.t('settings_export_button')}
-            </Button>
-          </div>
-        </section>
-
-        <Separator />
-
-        <section className="space-y-3">
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold">
-              {translator.t('settings_extraction_filter_title')}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {translator.t('settings_extraction_filter_desc')}
-            </p>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {EXTRACTION_FILTER_KEYS.map((key) => {
-              const active = extractionFilter.includes(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => handleToggleExtractionFilter(key)}
-                  className={cn(
-                    'rounded-md border px-3 py-2 text-xs text-left transition-colors',
-                    active
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:bg-muted/50',
-                  )}
-                >
-                  {extractionFilterLabels[key]}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {translator.t('settings_extraction_filter_hint')}
-          </p>
-          <Button size="sm" onClick={() => void handleSaveExtractionFilter()} className="gap-1.5">
-            <Save className="h-3.5 w-3.5" />
-            {translator.t('settings_extraction_filter_save')}
-          </Button>
-        </section>
-
-        <Separator />
-
-        <SettingsImportExportModal
-          variant="import"
-          open={importOpen}
-          onRequestClose={() => {
-            setImportOpen(false);
-            setImportFile(null);
-          }}
-          sections={importSections}
-          setSections={setImportSections}
-          isBusy={isImporting}
-          onConfirm={handleImport}
-          getSectionLabel={getSectionLabel}
-          importFile={importFile}
-          onImportFileChange={setImportFile}
-        />
-
-        <SettingsImportExportModal
-          variant="export"
-          open={exportOpen}
-          onRequestClose={() => setExportOpen(false)}
-          sections={exportSections}
-          setSections={setExportSections}
-          isBusy={isExporting}
-          onConfirm={handleExport}
-          getSectionLabel={getSectionLabel}
-        />
-
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-destructive">
-            {translator.t('settings_danger_zone_title')}
-          </h2>
-          <div className="rounded-lg border border-destructive/30 p-4 space-y-2">
-            <p className="text-sm font-medium">{translator.t('settings_clear_all_label')}</p>
-            <p className="text-xs text-muted-foreground">
-              {translator.t('settings_clear_all_desc')}
-            </p>
-            <Button variant="destructive" size="sm" onClick={handleClearAll} className="gap-1.5">
-              <Trash2 className="size-3.5 text-white" />
-              <span className="text-white">{translator.t('settings_clear_all_button')}</span>
-            </Button>
-          </div>
-        </section>
+            <div className="rounded-lg border border-destructive/30 p-4 space-y-2">
+              <p className="text-sm font-medium">{translator.t('settings_clear_all_label')}</p>
+              <p className="text-xs text-muted-foreground">
+                {translator.t('settings_clear_all_desc')}
+              </p>
+              <Button variant="destructive" size="sm" onClick={handleClearAll} className="gap-1.5">
+                <Trash2 className="size-3.5 text-white" />
+                <span className="text-white">{translator.t('settings_clear_all_button')}</span>
+              </Button>
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };

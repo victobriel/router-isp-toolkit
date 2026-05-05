@@ -9,8 +9,8 @@ export function formatTime(): string {
   return new Date().toLocaleTimeString('en-US', { hour12: false });
 }
 
-export function val(v: string | boolean | undefined | null): string {
-  if (v === undefined || v === null || v === '') return '-';
+export function val(v: string | boolean | undefined | null): string | undefined {
+  if (v === undefined || v === null || v === '') return undefined;
   if (typeof v === 'boolean') return v ? 'Enabled' : 'Disabled';
-  return v;
+  return String(v);
 }

@@ -490,6 +490,12 @@
   "settings_extraction_filter_error_empty": {
     "message": "Selecione pelo menos uma seção de extração"
   },
+  "settings_extraction_filter_option_optical_signal": {
+    "message": "Sinal óptico"
+  },
+  "settings_extraction_filter_hint_optical_signal": {
+    "message": "O sinal óptico não está disponível em todos os roteadores."
+  },
   "settings_extraction_filter_option_topology": {
     "message": "Topologia"
   },
@@ -512,7 +518,7 @@
     "message": "TR-069"
   },
   "settings_extraction_filter_option_router_info": {
-    "message": "Informações do roteador"
+    "message": "Outros (versão do roteador, TR-069, PPPoE, etc...)"
   },
   "settings_section_router_preferences": {
     "message": "Preferências do roteador"
@@ -547,6 +553,10 @@
   "settings_prefs_model_pick_first": {
     "message": "Selecione um modelo acima antes de editar as preferências."
   },
+  "settings_prefs_optical_signal_title": {
+    "message": "Sinal óptico"
+  },
+  "settings_pref_optical_signal": { "message": "Sinal óptico" },
   "settings_prefs_credentials_title": {
     "message": "Credenciais"
   },
@@ -714,7 +724,7 @@
 
   "popup_label_link_speed": { "message": "Modo de link" },
   "popup_label_request_pd": { "message": "Request PD" },
-  "popup_section_misc_router_info": { "message": "Informações do roteador" },
+  "popup_section_misc_router_info": { "message": "Outros" },
 
   "popup_label_radio": { "message": "Rádio" },
   "popup_label_ssid": { "message": "SSID" },

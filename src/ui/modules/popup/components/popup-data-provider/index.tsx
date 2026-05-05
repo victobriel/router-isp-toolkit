@@ -267,60 +267,68 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
 
       // WiFi SSIDs
       wlan24GhzSsids: data.wlan24GhzSsids
-        ? data.wlan24GhzSsids.map((ssid) => ({
-            ssidName: regexMatch(
-              ssid.ssidName,
-              typeof routerPrefsForModel.wlan24GhzSsids?.ssidName === 'string'
-                ? routerPrefsForModel.wlan24GhzSsids?.ssidName
-                : undefined,
-            ),
-            ssidHideMode: boolMatch(
-              ssid.ssidHideMode,
-              typeof routerPrefsForModel.wlan24GhzSsids?.ssidHideMode === 'boolean'
-                ? routerPrefsForModel.wlan24GhzSsids?.ssidHideMode
-                : undefined,
-            ),
-            wpa2SecurityType: textMatch(
-              ssid.wpa2SecurityType,
-              typeof routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType === 'string'
-                ? routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType
-                : undefined,
-            ),
-            maxClients: regexMatch(
-              String(ssid.maxClients),
-              typeof routerPrefsForModel.wlan24GhzSsids?.maxClients === 'string'
-                ? routerPrefsForModel.wlan24GhzSsids?.maxClients
-                : undefined,
-            ),
-          }))
+        ? data.wlan24GhzSsids.map((ssid) =>
+            ssid
+              ? {
+                  ssidName: regexMatch(
+                    ssid.ssidName,
+                    typeof routerPrefsForModel.wlan24GhzSsids?.ssidName === 'string'
+                      ? routerPrefsForModel.wlan24GhzSsids?.ssidName
+                      : undefined,
+                  ),
+                  ssidHideMode: boolMatch(
+                    ssid.ssidHideMode,
+                    typeof routerPrefsForModel.wlan24GhzSsids?.ssidHideMode === 'boolean'
+                      ? routerPrefsForModel.wlan24GhzSsids?.ssidHideMode
+                      : undefined,
+                  ),
+                  wpa2SecurityType: textMatch(
+                    ssid.wpa2SecurityType,
+                    typeof routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType === 'string'
+                      ? routerPrefsForModel.wlan24GhzSsids?.wpa2SecurityType
+                      : undefined,
+                  ),
+                  maxClients: regexMatch(
+                    String(ssid.maxClients),
+                    typeof routerPrefsForModel.wlan24GhzSsids?.maxClients === 'string'
+                      ? routerPrefsForModel.wlan24GhzSsids?.maxClients
+                      : undefined,
+                  ),
+                }
+              : undefined,
+          )
         : [],
       wlan5GhzSsids: data.wlan5GhzSsids
-        ? data.wlan5GhzSsids.map((ssid) => ({
-            ssidName: regexMatch(
-              ssid.ssidName,
-              typeof routerPrefsForModel.wlan5GhzSsids?.ssidName === 'string'
-                ? routerPrefsForModel.wlan5GhzSsids?.ssidName
-                : undefined,
-            ),
-            ssidHideMode: boolMatch(
-              ssid.ssidHideMode,
-              typeof routerPrefsForModel.wlan5GhzSsids?.ssidHideMode === 'boolean'
-                ? routerPrefsForModel.wlan5GhzSsids?.ssidHideMode
-                : undefined,
-            ),
-            wpa2SecurityType: textMatch(
-              ssid.wpa2SecurityType,
-              typeof routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType === 'string'
-                ? routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType
-                : undefined,
-            ),
-            maxClients: regexMatch(
-              String(ssid.maxClients),
-              typeof routerPrefsForModel.wlan5GhzSsids?.maxClients === 'string'
-                ? routerPrefsForModel.wlan5GhzSsids?.maxClients
-                : undefined,
-            ),
-          }))
+        ? data.wlan5GhzSsids.map((ssid) =>
+            ssid
+              ? {
+                  ssidName: regexMatch(
+                    ssid.ssidName,
+                    typeof routerPrefsForModel.wlan5GhzSsids?.ssidName === 'string'
+                      ? routerPrefsForModel.wlan5GhzSsids?.ssidName
+                      : undefined,
+                  ),
+                  ssidHideMode: boolMatch(
+                    ssid.ssidHideMode,
+                    typeof routerPrefsForModel.wlan5GhzSsids?.ssidHideMode === 'boolean'
+                      ? routerPrefsForModel.wlan5GhzSsids?.ssidHideMode
+                      : undefined,
+                  ),
+                  wpa2SecurityType: textMatch(
+                    ssid.wpa2SecurityType,
+                    typeof routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType === 'string'
+                      ? routerPrefsForModel.wlan5GhzSsids?.wpa2SecurityType
+                      : undefined,
+                  ),
+                  maxClients: regexMatch(
+                    String(ssid.maxClients),
+                    typeof routerPrefsForModel.wlan5GhzSsids?.maxClients === 'string'
+                      ? routerPrefsForModel.wlan5GhzSsids?.maxClients
+                      : undefined,
+                  ),
+                }
+              : undefined,
+          )
         : [],
     };
   }, [data, lastAuthAdminCredentials, routerPrefsForModel]);

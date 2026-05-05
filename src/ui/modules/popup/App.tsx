@@ -55,6 +55,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/ui/components/ui/tooltip';
+import { OpticalSignalSection } from './components/popup-data-sections/optical-signal-section';
 
 function PopupContent({
   tabId,
@@ -205,6 +206,7 @@ function PopupContent({
       value: 'reboot',
       icon: Power,
       onClick: handleRebootRouter,
+      disabled: !isRouterAuthenticated,
     },
   ];
 
@@ -332,6 +334,11 @@ function PopupContent({
             </Empty>
           ) : (
             <div className="flex flex-col gap-1.5">
+              <OpticalSignalSection
+                data={data}
+                routerPreferencesComparison={routerPreferencesComparison}
+                goToPage={goToPage}
+              />
               <WanSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
@@ -354,6 +361,7 @@ function PopupContent({
                 band={Band.GHz5}
                 config={data.wlan5GhzConfig}
                 ssids={data.wlan5GhzSsids}
+                ssidOffset={data.wlan24GhzSsids?.length ?? 0}
                 totalClients={data.topology?.['5ghz']?.totalClients ?? 0}
                 routerPreferencesComparison={routerPreferencesComparison}
                 goToPage={goToPage}

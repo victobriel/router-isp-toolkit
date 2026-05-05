@@ -57,6 +57,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
+      opticalSignal: async () => ({ opticalSignal: undefined }), // ZTE routers don't have optical signal data
       topology: () => this.extractTopologyData(),
       wan: async () => {
         const linkSpeedData = await this.extractLinkSpeedData();
@@ -597,14 +598,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       const $enabledElement = this.domService.getHTMLElement(enabledSelector, HTMLInputElement);
 
       if (!$enabledElement) {
-        results.push({
-          enabled: undefined,
-          ssidName: undefined,
-          ssidPassword: undefined,
-          ssidHideMode: undefined,
-          wpa2SecurityType: undefined,
-          maxClients: undefined,
-        });
+        results.push(undefined);
         continue;
       }
 

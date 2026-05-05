@@ -1,35 +1,32 @@
-import { Collapsible } from '@/ui/components/ui/collapsible';
-import { Server } from 'lucide-react';
-import {
-  PopupDataRow,
-  PopupDataRowProps,
-} from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 import { ExtractionResult } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
+import { Collapsible } from '@/ui/components/ui/collapsible';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import { Signal } from 'lucide-react';
+import { PopupDataRow, PopupDataRowProps } from '../popup-data-row';
+import { val } from '@/ui/lib/utils';
 
-interface RemoteAccessSectionProps {
+interface OpticalSignalSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const RemoteAccessSection = ({
+export const OpticalSignalSection = ({
   data,
   routerPreferencesComparison,
   goToPage,
-}: RemoteAccessSectionProps) => {
+}: OpticalSignalSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
 
-  const remoteAccessData = {
-    ipv4Enabled: data.remoteAccessIpv4Enabled,
-    ipv6Enabled: data.remoteAccessIpv6Enabled,
+  const opticalSignalData = {
+    opticalSignal: data.opticalSignal,
   };
 
-  const dataIsEmpty = Object.values(remoteAccessData).every(
+  const dataIsEmpty = Object.values(opticalSignalData).every(
     (value) => value === undefined || value === null,
   );
 
@@ -37,18 +34,11 @@ export const RemoteAccessSection = ({
 
   const rows: PopupDataRowProps[] = [
     {
-      label: translator.t('popup_label_remote_access_ipv4'),
-      compareMatch: routerPreferencesComparison?.remoteAccessIpv4Enabled,
-      value: remoteAccessData.ipv4Enabled,
+      label: translator.t('popup_label_optical_signal'),
+      value: val(opticalSignalData.opticalSignal),
+      compareMatch: routerPreferencesComparison?.opticalSignal,
       handleGoToPage: () =>
-        handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV4_STATUS),
-    },
-    {
-      label: translator.t('popup_label_remote_access_ipv6'),
-      compareMatch: routerPreferencesComparison?.remoteAccessIpv6Enabled,
-      value: remoteAccessData.ipv6Enabled,
-      handleGoToPage: () =>
-        handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV6_STATUS),
+        handleGoToPage(RouterPage.OPTICAL_SIGNAL, RouterPageKey.OPTICAL_SIGNAL_STATUS),
     },
   ];
 
@@ -57,8 +47,8 @@ export const RemoteAccessSection = ({
       defaultOpen
       title={
         <span className="flex items-center gap-1.5">
-          <Server className="size-3.5" />
-          {translator.t('popup_section_remote_access')}
+          <Signal className="size-3.5" />
+          {translator.t('popup_section_optical_signal')}
         </span>
       }
     >

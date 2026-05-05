@@ -61,6 +61,7 @@ const wlanPreferencesStorageConfigSchema = z.object({
 /** Persisted in extension storage (JSON); pattern fields are plain strings. */
 const preferencesStorageFields = {
   ...routerStateShape({
+    opticalSignal: z.string(),
     routerAdminPassword: z.string(),
     linkSpeed: z.string(),
     pppoeUsername: z.string(),
@@ -97,6 +98,7 @@ const wlanPreferencesConfigSchema = z.object({
 
 /** Same shape as stored prefs, with regex parsing for matching against extraction. */
 const preferencesMatchFields = routerStateShape({
+  opticalSignal: regExpSchema,
   routerAdminPassword: regExpSchema,
   linkSpeed: regExpSchema,
   pppoeUsername: regExpSchema,
@@ -118,6 +120,7 @@ export const RouterPreferencesMatchSchema = z.object(preferencesMatchFields).par
 export type RouterPreferencesMatch = z.infer<typeof RouterPreferencesMatchSchema>;
 
 export enum RouterPage {
+  OPTICAL_SIGNAL = 'optical_signal',
   WAN = 'wan',
   REMOTE_ACCESS = 'remote_access',
   WLAN = 'wlan',
@@ -130,6 +133,9 @@ export enum RouterPage {
 
 export enum RouterPageKey {
   CHANGE_CREDENTIALS = 'change_credentials',
+
+  // OPTICAL SIGNAL
+  OPTICAL_SIGNAL_STATUS = 'optical_signal_status',
 
   // WAN
   PPPOE_USERNAME = 'pppoe_username',
@@ -185,6 +191,7 @@ export type GoToPageOptions = z.infer<typeof GoToPageOptionSchema>;
 export type RouterSelectors = Record<string, string>;
 
 export const EXTRACTION_FILTER_KEYS = [
+  'opticalSignal',
   'topology',
   'wan',
   'remoteAccess',

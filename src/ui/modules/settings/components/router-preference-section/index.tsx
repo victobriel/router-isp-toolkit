@@ -18,6 +18,7 @@ import { OtherAccordionItem } from './other-accordion-item';
 import { WlanBandAccordionItem } from './wlan-band-accordion-item';
 import { Band } from '@/ui/types';
 import { CredentialsAccordionItem } from './credentials-accordion-item';
+import { OpticalSignalAccordionItem } from './optical-signal-accordion-item';
 
 export interface RouterPreferenceSectionProps {
   bookmarkEntries: Array<[string, ModelBookmarks]>;
@@ -146,6 +147,7 @@ export const RouterPreferenceSection = ({
           type="multiple"
           className="w-full border border-border rounded-lg px-3 space-y-3"
         >
+          <OpticalSignalAccordionItem localPrefs={localPrefs} setLocalPrefs={setLocalPrefs} />
           <CredentialsAccordionItem localPrefs={localPrefs} setLocalPrefs={setLocalPrefs} />
           <WlanBandAccordionItem
             accordionValue={Band.GHz24}

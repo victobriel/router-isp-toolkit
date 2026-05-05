@@ -21,74 +21,91 @@ export const DhcpSection = ({ data, routerPreferencesComparison, goToPage }: Dhc
     void goToPage(page, key);
   };
 
+  const dhcpData = {
+    enabled: data.dhcpEnabled,
+    ipAddress: data.dhcpIpAddress,
+    subnetMask: data.dhcpSubnetMask,
+    startIp: data.dhcpStartIp,
+    endIp: data.dhcpEndIp,
+    ispDnsEnabled: data.dhcpIspDnsEnabled,
+    primaryDns: data.dhcpPrimaryDns,
+    secondaryDns: data.dhcpSecondaryDns,
+    leaseTimeMode: data.dhcpLeaseTimeMode,
+    leaseTime: data.dhcpLeaseTime,
+  };
+
+  const dataIsEmpty = Object.values(dhcpData).every(
+    (value) => value === undefined || value === null,
+  );
+
+  if (dataIsEmpty) return null;
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpEnabled,
-      value: data.dhcpEnabled,
+      value: dhcpData.enabled,
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_STATUS),
     },
     {
       label: translator.t('popup_label_ip_address'),
       compareMatch: routerPreferencesComparison?.dhcpIpAddress,
-      value: val(data.dhcpIpAddress),
+      value: val(dhcpData.ipAddress),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_IP_ADDRESS),
     },
     {
       label: translator.t('popup_label_subnet_mask'),
       compareMatch: routerPreferencesComparison?.dhcpSubnetMask,
-      value: val(data.dhcpSubnetMask),
+      value: val(dhcpData.subnetMask),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SUBNET_MASK),
     },
     {
       label: translator.t('popup_label_start_ip'),
       compareMatch: routerPreferencesComparison?.dhcpStartIp,
-      value: val(data.dhcpStartIp),
+      value: val(dhcpData.startIp),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_START_IP),
     },
     {
       label: translator.t('popup_label_end_ip'),
       compareMatch: routerPreferencesComparison?.dhcpEndIp,
-      value: val(data.dhcpEndIp),
+      value: val(dhcpData.endIp),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_END_IP),
     },
     {
       label: translator.t('popup_label_isp_dns_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpIspDnsEnabled,
-      value: data.dhcpIspDnsEnabled,
+      value: dhcpData.ispDnsEnabled,
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_ISP_DNS_STATUS),
     },
     {
       label: translator.t('popup_label_primary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpPrimaryDns,
-      value: val(data.dhcpPrimaryDns),
+      value: val(dhcpData.primaryDns),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_PRIMARY_DNS),
     },
     {
       label: translator.t('popup_label_secondary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpSecondaryDns,
-      value: val(data.dhcpSecondaryDns),
+      value: val(dhcpData.secondaryDns),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SECONDARY_DNS),
     },
     {
       label: translator.t('popup_label_lease_time_mode'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTimeMode,
-      value: val(data.dhcpLeaseTimeMode),
+      value: val(dhcpData.leaseTimeMode),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME_MODE),
     },
     {
       label: translator.t('popup_label_lease_time'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTime,
-      value: val(data.dhcpLeaseTime),
+      value: val(dhcpData.leaseTime),
       handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME),
     },
   ];
 
-  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
-
   return (
     <Collapsible
-      defaultOpen={hasData}
+      defaultOpen
       title={
         <span className="flex items-center gap-1.5">
           <Network className="size-3.5" />

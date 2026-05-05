@@ -22,36 +22,54 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
     void goToPage(page, key);
   };
 
+  const wanData = {
+    pppoeUsername: data.pppoeUsername,
+    internetEnabled: data.internetEnabled,
+    tr069Enabled: data.tr069Enabled,
+    linkSpeed: data.linkSpeed,
+    ipVersion: data.ipVersion,
+    requestPdEnabled: data.requestPdEnabled,
+    slaacEnabled: data.slaacEnabled,
+    dhcpv6Enabled: data.dhcpv6Enabled,
+    pdEnabled: data.pdEnabled,
+  };
+
+  const dataIsEmpty = Object.values(wanData).every(
+    (value) => value === undefined || value === null,
+  );
+
+  if (dataIsEmpty) return null;
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_pppoe'),
       compareMatch: routerPreferencesComparison?.pppoeUsername,
-      value: val(data.pppoeUsername),
+      value: val(wanData.pppoeUsername),
       ableToCopy: true,
       handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PPPOE_USERNAME),
     },
     {
       label: translator.t('popup_label_internet'),
       compareMatch: routerPreferencesComparison?.internetEnabled,
-      value: data.internetEnabled,
+      value: wanData.internetEnabled,
       handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.INTERNET_STATUS),
     },
     {
       label: translator.t('popup_label_tr069'),
       compareMatch: routerPreferencesComparison?.tr069Enabled,
-      value: data.tr069Enabled,
+      value: wanData.tr069Enabled,
       handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.TR_069_STATUS),
     },
     {
       label: translator.t('popup_label_link_speed'),
       compareMatch: routerPreferencesComparison?.linkSpeed,
-      value: val(data.linkSpeed),
+      value: val(wanData.linkSpeed),
       handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.LINK_SPEED),
     },
     {
       label: translator.t('popup_label_ip_version'),
       compareMatch: routerPreferencesComparison?.ipVersion,
-      value: val(data.ipVersion ?? undefined),
+      value: val(wanData.ipVersion ?? undefined),
       handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.IP_VERSION),
     },
   ];
@@ -60,35 +78,33 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
       {
         label: translator.t('popup_label_request_pd'),
         compareMatch: routerPreferencesComparison?.requestPdEnabled,
-        value: data.requestPdEnabled,
+        value: wanData.requestPdEnabled,
         handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.REQUEST_PD_STATUS),
       },
       {
         label: translator.t('popup_label_slaac_status'),
         compareMatch: routerPreferencesComparison?.slaacEnabled,
-        value: data.slaacEnabled,
+        value: wanData.slaacEnabled,
         handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.SLAAC_STATUS),
       },
       {
         label: translator.t('popup_label_dhcpv6_status'),
         compareMatch: routerPreferencesComparison?.dhcpv6Enabled,
-        value: data.dhcpv6Enabled,
+        value: wanData.dhcpv6Enabled,
         handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.DHCPV6_STATUS),
       },
       {
         label: translator.t('popup_label_pd_status'),
         compareMatch: routerPreferencesComparison?.pdEnabled,
-        value: data.pdEnabled,
+        value: wanData.pdEnabled,
         handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PD_STATUS),
       },
     );
   }
 
-  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
-
   return (
     <Collapsible
-      defaultOpen={hasData}
+      defaultOpen
       title={
         <span className="flex items-center gap-1.5">
           <Network className="size-3.5" />

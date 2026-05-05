@@ -33,6 +33,9 @@ export const PopupDataRow = ({
 }: PopupDataRowProps) => {
   const { setStatus, setStatusMessage } = usePopupStatus();
 
+  const valueIsEmpty = value === undefined || value === null;
+  if (valueIsEmpty) return null;
+
   const handleCopy = async () => {
     if (ableToCopy) {
       const wasCopied = await copyTextToClipboard(String(value));

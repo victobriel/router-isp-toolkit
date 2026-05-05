@@ -1,6 +1,9 @@
 export type RouterPreferencesComparison = {
   routerAdminPassword?: boolean;
 
+  // OPTICAL SIGNAL
+  opticalSignal?: boolean;
+
   // WAN / overall features
   internetEnabled?: boolean;
   tr069Enabled?: boolean;
@@ -44,16 +47,22 @@ export type RouterPreferencesComparison = {
   wlan5GhzBandWidth?: boolean;
   wlan5GhzTransmittingPower?: boolean;
 
-  wlan24GhzSsids?: Array<{
-    ssidName?: boolean;
-    ssidHideMode?: boolean;
-    wpa2SecurityType?: boolean;
-    maxClients?: boolean;
-  }>;
-  wlan5GhzSsids?: Array<{
-    ssidName?: boolean;
-    ssidHideMode?: boolean;
-    wpa2SecurityType?: boolean;
-    maxClients?: boolean;
-  }>;
+  wlan24GhzSsids?: Array<
+    | {
+        ssidName?: boolean;
+        ssidHideMode?: boolean;
+        wpa2SecurityType?: boolean;
+        maxClients?: boolean;
+      }
+    | undefined
+  >;
+  wlan5GhzSsids?: Array<
+    | {
+        ssidName?: boolean;
+        ssidHideMode?: boolean;
+        wpa2SecurityType?: boolean;
+        maxClients?: boolean;
+      }
+    | undefined
+  >;
 };

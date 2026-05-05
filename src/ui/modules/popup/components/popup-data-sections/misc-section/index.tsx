@@ -27,53 +27,66 @@ export const MiscSection = ({
     void goToPage(page, key);
   };
 
+  const miscData = {
+    routerAdminPassword: lastAuthAdminCredentials?.password,
+    routerModel: data.routerModel,
+    routerVersion: data.routerVersion,
+    tr069Url: data.tr069Url,
+    upnpEnabled: data.upnpEnabled,
+    bandSteeringEnabled: data.bandSteeringEnabled,
+  };
+
+  const dataIsEmpty = Object.values(miscData).every(
+    (value) => value === undefined || value === null,
+  );
+
+  if (dataIsEmpty) return null;
+
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_router_password'),
       compareMatch: routerPreferencesComparison?.routerAdminPassword,
-      value: val(lastAuthAdminCredentials?.password),
+      value: val(miscData.routerAdminPassword),
       ableToCopy: true,
       handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.CHANGE_CREDENTIALS),
     },
     {
       label: translator.t('popup_label_model'),
-      value: val(data.routerModel),
+      value: val(miscData.routerModel),
       ableToCopy: true,
     },
     {
       label: translator.t('popup_label_version'),
       compareMatch: routerPreferencesComparison?.routerVersion,
-      value: val(data.routerVersion),
+      value: val(miscData.routerVersion),
       ableToCopy: true,
       handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.UPDATE),
     },
     {
       label: `${translator.t('popup_label_tr069')} ${translator.t('popup_label_url')}`,
       compareMatch: routerPreferencesComparison?.tr069Url,
-      value: val(data.tr069Url),
+      value: val(miscData.tr069Url),
       ableToCopy: true,
       handleGoToPage: () => handleGoToPage(RouterPage.TR_069, RouterPageKey.TR_069_URL),
     },
     {
       label: translator.t('popup_section_upnp'),
       compareMatch: routerPreferencesComparison?.upnpEnabled,
-      value: data.upnpEnabled,
+      value: miscData.upnpEnabled,
       handleGoToPage: () => handleGoToPage(RouterPage.UPnP, RouterPageKey.UPNP_STATUS),
     },
     {
       label: translator.t('popup_section_band_steering'),
       compareMatch: routerPreferencesComparison?.bandSteeringEnabled,
-      value: data.bandSteeringEnabled,
+      value: miscData.bandSteeringEnabled,
       handleGoToPage: () =>
         handleGoToPage(RouterPage.BAND_STEERING, RouterPageKey.BAND_STEERING_STATUS),
     },
   ];
 
-  const hasData = rows.some((row) => row.value !== undefined && row.value !== null);
-
   return (
     <Collapsible
-      defaultOpen={hasData}
+      defaultOpen
       title={
         <span className="flex items-center gap-1.5">
           <Router className="size-3.5" />

@@ -30,8 +30,8 @@ const extractionRouterFields = routerStateShape({
   pppoeUsername: z.string(),
   ipVersion: z.string(),
   tr069Url: z.string(),
-  wlan24GhzSsids: z.array(wlanSsidExtractionEntrySchema),
-  wlan5GhzSsids: z.array(wlanSsidExtractionEntrySchema),
+  wlan24GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),
+  wlan5GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),
   dhcpIpAddress: z.string(),
   dhcpSubnetMask: z.string(),
   dhcpStartIp: z.string(),
@@ -40,6 +40,7 @@ const extractionRouterFields = routerStateShape({
   dhcpSecondaryDns: z.string(),
   dhcpLeaseTimeMode: z.string(),
   wlanConfig: wlanExtractionConfigSchema.partial(),
+  opticalSignal: z.string(),
 });
 
 export const ExtractionResultSchema = z
@@ -47,7 +48,6 @@ export const ExtractionResultSchema = z
     ...extractionRouterFields,
     topology: topologySchema,
     routerModel: z.string(),
-    opticalSignal: z.string(),
   })
   .partial();
 
