@@ -9,7 +9,11 @@ import {
   PingTestResult,
 } from '@/domain/schemas/validation';
 import { ExtractionFilter, RouterPage, RouterPageKey } from '@/application/types';
-import { HUAWEI_TR069_ENDPOINT } from '../shared/HuaweiCommonDriverConstants';
+import {
+  HUAWEI_INDEX_ENDPOINT,
+  HUAWEI_TR069_ENDPOINT,
+  HUAWEI_UPNP_ENDPOINT,
+} from '../shared/HuaweiCommonDriverConstants';
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
@@ -56,17 +60,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           dhcpLeaseTimeMode: undefined,
         };
       },
-      upnp: async () => {
-        return {
-          upnpEnabled: undefined,
-        };
-      },
+      upnp: async () => this.getUpnpState(),
       tr069: async () => this.getTr069State(),
-      routerInfo: async () => {
-        return {
-          routerVersion: undefined,
-        };
-      },
+      routerInfo: async () => this.getRouterInfoState(),
     };
 
     const keys = filter?.length ? filter : Object.keys(extractors);
@@ -123,15 +119,35 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     throw new Error('Method not implemented.');
   }
 
+  private async getUpnpState(): Promise<{ upnpEnabled?: boolean }> {
+    const raw = await this.fetch(HUAWEI_UPNP_ENDPOINT);
+    const upnp = this.parseHuaweiUpnp(raw);
+    if (!upnp) return { upnpEnabled: undefined };
+    return {
+      upnpEnabled: upnp.Enable === '1',
+    };
+  }
+
   private async getTr069State(): Promise<{ tr069Url?: string; tr069Enabled?: boolean }> {
     const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
-    console.log('raw', raw);
     const cwmp = this.parseHuaweiCwmp(raw);
-    console.log('cwmp', cwmp);
     if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
     return {
       tr069Url: cwmp.URL ? cwmp.URL : undefined,
       tr069Enabled: cwmp.EnableCWMP === '1',
+    };
+  }
+
+  private async getRouterInfoState(): Promise<{
+    routerModel?: string;
+    routerVersion?: string;
+  }> {
+    const raw = await this.fetch(HUAWEI_INDEX_ENDPOINT);
+    if (!raw) return { routerModel: undefined, routerVersion: undefined };
+    const productName = this.matchHuaweiScriptVar(raw, 'ProductName');
+    return {
+      routerModel: productName ?? undefined,
+      routerVersion: undefined,
     };
   }
 

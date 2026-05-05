@@ -20,9 +20,6 @@ const INPUT_VALUE_ATTR = /value=["']([^"']*)["']/i;
  */
 const JS_STRING_LITERAL = /"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g;
 
-const STCWMP_SIGNATURE = /function\s+stCWMP\s*\(([\s\S]*?)\)/;
-const STCWMP_CALL = /new\s+stCWMP\s*\(([\s\S]*?)\)/;
-
 function extractIdsFromCommaSelector(selector: string): string[] {
   return selector
     .split(',')
@@ -137,18 +134,23 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   /**
-   * Huawei's `tr069.asp` renders form fields (URL, EnableCWMP, …) at runtime from a
-   * `new stCWMP(...)` constructor call, so the raw HTML never contains `<input value="…">`
-   * for those fields. The configured values are positional arguments mapped 1:1 to the
-   * parameters declared by `function stCWMP(...)` in the same page.
+   * Huawei feature pages (e.g. `tr069.asp`, `upnp.asp`) render form fields at runtime
+   * from a `new stXxx(...)` constructor call, so the raw HTML never contains
+   * `<input value="…">` for those fields. The configured values are positional
+   * arguments mapped 1:1 to the parameters declared by `function stXxx(...)` in the
+   * same page.
    *
    * Returns a `paramName -> value` map (with Huawei `\xNN` escapes decoded), or `null`
    * when either the signature or the call cannot be located.
    */
-  protected parseHuaweiCwmp(raw: string | null): Record<string, string> | null {
+  protected parseHuaweiStructCall(
+    raw: string | null,
+    structName: string,
+  ): Record<string, string> | null {
     if (!raw) return null;
-    const sig = STCWMP_SIGNATURE.exec(raw);
-    const call = STCWMP_CALL.exec(raw);
+    const escaped = escapeRegExp(structName);
+    const sig = new RegExp(`function\\s+${escaped}\\s*\\(([\\s\\S]*?)\\)`).exec(raw);
+    const call = new RegExp(`new\\s+${escaped}\\s*\\(([\\s\\S]*?)\\)`).exec(raw);
     if (!sig || !call) return null;
 
     const params = sig[1]
@@ -164,5 +166,39 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       result[params[i]] = this.unescapeHuaweiHex(values[i]);
     }
     return result;
+  }
+
+  /** Parse the `new stCWMP(...)` constructor in `tr069.asp`. */
+  protected parseHuaweiCwmp(raw: string | null): Record<string, string> | null {
+    return this.parseHuaweiStructCall(raw, 'stCWMP');
+  }
+
+  /** Parse the `new stUpnp(...)` constructor in `upnp.asp`. */
+  protected parseHuaweiUpnp(raw: string | null): Record<string, string> | null {
+    return this.parseHuaweiStructCall(raw, 'stUpnp');
+  }
+
+  /**
+   * Read a top-level inline `<script>` variable declaration of the form
+   * `var <name> = "value";` (or single-quoted) from a Huawei page.
+   *
+   * Used for shell/index pages (e.g. `/index.asp`) that surface device metadata as
+   * plain JS variables (`ProductName`, `UserName`, `IsModifiedPwd`, `CfgMode`, …)
+   * instead of via a `stXxx(...)` constructor.
+   *
+   * Picks the **last** matching declaration so duplicated variables (`var X = 'A';
+   * … var X = 'B';`) resolve to the value the firmware actually uses at runtime.
+   */
+  protected matchHuaweiScriptVar(raw: string | null, name: string): string | null {
+    if (!raw) return null;
+    const escaped = escapeRegExp(name);
+    const re = new RegExp(
+      `var\\s+${escaped}\\s*=\\s*(?:"((?:\\\\.|[^"\\\\])*)"|'((?:\\\\.|[^'\\\\])*)')\\s*;?`,
+      'g',
+    );
+    let last: RegExpExecArray | null = null;
+    for (const match of raw.matchAll(re)) last = match as RegExpExecArray;
+    if (!last) return null;
+    return this.unescapeHuaweiHex(last[1] ?? last[2]);
   }
 }

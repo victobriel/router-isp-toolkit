@@ -6,3 +6,4 @@
  */
 export const HUAWEI_UPNP_ENDPOINT = '/html/bbsp/upnp/upnp.asp';
 export const HUAWEI_TR069_ENDPOINT = '/html/ssmp/tr069/tr069.asp';
+export const HUAWEI_INDEX_ENDPOINT = '/index.asp';
