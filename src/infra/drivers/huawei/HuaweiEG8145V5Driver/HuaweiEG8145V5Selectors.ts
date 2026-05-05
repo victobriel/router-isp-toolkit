@@ -12,108 +12,11 @@ export const HuaweiEG8145V5Selectors = {
   systemInformationTab: '#name_Systeminfo',
   advancedTab: '#addconfig',
 
-  // Advanced menu
-  advWanTab: '#wanconfig',
-  advLanTab: '#lanconfig',
-  advApplicationTab: '#application',
-  advWlanTab: '#wlanconfig',
-  advSystemTab: '#systool',
-
-  // Topology
-  wifiTopologyButton: '#wifidevIcon',
-  wifiTopologyCount: '#wifinumspan',
-  topologyTable: '#devlist',
-  wiredTopologyButton: '#linedevIcon',
-
-  routerRebootButton: '#RestartIcon',
-  routerRebootConfirmButton: '#btnReboot, input[type="button"]',
-
-  // System information
-  siDeviceInfoContainer: '#name_deviceinfo',
-  siDeviceType: '#td1_2',
-  siVersion: '#td5_2',
-
-  siOpticalContainer: '#name_opticinfo',
-  siRxOpticalPower: '#optic_status_table > tbody > tr:nth-child(7) > td:nth-child(2)',
-
-  advWanPppoeButton: '#wanInstTable_rml0, input[name="wanInstTablerml"]',
-
-  // WAN (WAN asp uses ids WanSwitch / UserName / PrifixEnabled; IPv6 radios use name=IPv6PrefixMode / IPv6AddressMode)
-  advWanEnable: '#WanSwitch, #RadioWanPSEnable',
-  advPppoeUsername: '#UserName, input[type="text"]',
-  /** Legacy PD hint: DHCPv6-PD prefix mode radio (see extractWanData for PrifixEnabled + full group). */
-  advPdEnable: '#IPv6PrefixMode1',
-  /** Legacy IPv6 hint only when the IPv6AddressMode radio group is absent from HTML. */
-  advDhcpv6Enable: '#TDEDHCP6cForAddress',
-
-  // LAN
-  advLanDhcpServerContainer: '#landhcp',
-  advLanDhcpHostIp: '#LanHostIP',
-  advLanDhcpSubnetMask: '#LanHostMask',
-  advLanDhcpStartIp: '#mainstartipaddr, input[type="text"]',
-  advLanDhcpEndIp: '#mainendipaddr, input[type="text"]',
-  advLanLeaseTime1: '#MainLeasedTime, input[type="text"]',
-  advLanLeaseTime2: '#maindhcpLeasedTimeFrag',
-  advLanPrimaryDns: '#dnsMainPri, input[type="text"]',
-  advLanSecondaryDns: '#dnsMainSec, input[type="text"]',
-  advLanDhcpServerEnable: '#dhcpSrvType, input[type="checkbox"]',
-  advLanDhcpRelayEnable: '#dhcpL2relay, input[type="checkbox"]',
-
-  // DHCPv6
-  advDhcpv6Container: '#landhcpv6',
-  advDhcpv6AddressPrefixModeSlaac: '#AssignType2, input[type="radio"]',
-  advDhcpv6OtherInformationModeSlaac: '#OtherType2, input[type="radio"]',
-
   // UPNP
   advUpnpTab: '#upnp',
   advUpnpEnabled: '#Enable, input[type="checkbox"]',
 
-  // WLAN 2.4GHz
-  advWlan24GhzBasicTab: '#wlan2basic',
-  advWlan24GhzSsidName: '#wlSsid',
-  advWlan24GhzSsidEnabled: '#wlEnable, input[type="checkbox"]',
-  advWlan24GhzSsidMaxClients: '#X_HW_AssociateNum, input[type="text"]',
-  advWlan24GhzSsidHideMode: '#wlHide, input[type="checkbox"]',
-  advWlan24GhzSsidWpa2SecurityType: '#wlAuthMode',
-  advWlan24GhzSsidEncryptionType: '#wlEncryption',
-  advWlan24GhzSsidPassword: '#wlWpaPsk, input[type="password"]',
-
-  advWlan24GhzAdvancedTab: '#wlan2adv',
-  advWlan24GhzTransmittingPower: '#TransmitPower',
-  advWlan24GhzChannel: '#Channel',
-  advWlan24GhzBandWidth: '#X_HW_HT20',
-  advWlan24GhzMode: '#X_HW_Standard',
-
-  // WLAN 5GHz
-  advWlan5GhzBasicTab: '#wlan5basic',
-  advWlan5GhzSsidName: '#wlSsid',
-  advWlan5GhzSsidEnabled: '#wlEnable, input[type="checkbox"]',
-  advWlan5GhzSsidMaxClients: '#X_HW_AssociateNum, input[type="text"]',
-  advWlan5GhzSsidHideMode: '#wlHide, input[type="checkbox"]',
-  advWlan5GhzSsidWpa2SecurityType: '#wlAuthMode',
-  advWlan5GhzSsidEncryptionType: '#wlEncryption',
-  advWlan5GhzSsidPassword: '#wlWpaPsk, input[type="password"]',
-
-  advWlan5GhzAdvancedTab: '#wlan5adv',
-  advWlan5GhzTransmittingPower: '#TransmitPower',
-  advWlan5GhzChannel: '#Channel',
-  advWlan5GhzBandWidth: '#X_HW_HT20',
-  advWlan5GhzMode: '#X_HW_Standard',
-
   // TR-069
-  advTr069Tab: '#tr069config',
-  advTr069Enabled: '#EnableCWMP, input[type="checkbox"]',
-  advTr069Url: '#URL, input[type="text"]',
-
-  // Account Management
-  advAccountManagementTab: '#userconfig',
-
-  // Software Update
-  advSoftwareUpdateTab: '#fireware',
-  advSoftwareUpdateBrowseButton: '#t_file',
-
-  // Maintenance
-  advMaintenanceTab: '#maintainconfig',
-  advMaintenancePingTargetIp: '#IPAddress, input[type="text"]',
-  advMaintenancePingButton: '#ButtonApply',
+  advTr069Enabled: 'input#EnableCWMP[type="checkbox"]',
+  advTr069Url: 'input#URL[type="text"]',
 } as const;
