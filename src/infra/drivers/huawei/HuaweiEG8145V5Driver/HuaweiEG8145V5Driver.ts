@@ -121,10 +121,12 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   private async getUpnpState(): Promise<{ upnpEnabled?: boolean }> {
     const raw = await this.fetch(HUAWEI_UPNP_ENDPOINT);
-    const upnp = this.parseHuaweiUpnp(raw);
-    if (!upnp) return { upnpEnabled: undefined };
+    if (!raw) return { upnpEnabled: undefined };
+    const main = this.matchHuaweiScriptVar(raw, 'enblMainUpnp');
+    const slave = this.matchHuaweiScriptVar(raw, 'enblSlvUpnp');
+    if (main == null || slave == null) return { upnpEnabled: undefined };
     return {
-      upnpEnabled: upnp.Enable === '1',
+      upnpEnabled: main === '1' && slave === '1',
     };
   }
 

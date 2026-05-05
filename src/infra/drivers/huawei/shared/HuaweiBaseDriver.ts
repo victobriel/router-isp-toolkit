@@ -173,11 +173,6 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     return this.parseHuaweiStructCall(raw, 'stCWMP');
   }
 
-  /** Parse the `new stUpnp(...)` constructor in `upnp.asp`. */
-  protected parseHuaweiUpnp(raw: string | null): Record<string, string> | null {
-    return this.parseHuaweiStructCall(raw, 'stUpnp');
-  }
-
   /**
    * Read a top-level inline `<script>` variable declaration of the form
    * `var <name> = "value";` (or single-quoted) from a Huawei page.
