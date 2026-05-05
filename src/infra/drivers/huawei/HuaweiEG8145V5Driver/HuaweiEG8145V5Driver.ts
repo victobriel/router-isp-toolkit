@@ -139,6 +139,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         cache: 'no-store',
       });
       if (!response.ok) return null;
+      console.log('fetch', await response.text());
       return await response.text();
     } catch {
       return null;
