@@ -324,6 +324,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
     const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
       const domain = row.domain ?? row.Domain;
+
+      console.log(row);
+
       return {
         domain,
         index: parseWlanIndex(domain),
@@ -334,8 +337,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         maxClients: row.DeviceNum,
       };
     });
-
-    console.log(wlanRows);
 
     const preSharedRows = this.parseHuaweiStructCallAll(allRaw, 'stPreSharedKey').map((row) => ({
       domain: row.domain,
