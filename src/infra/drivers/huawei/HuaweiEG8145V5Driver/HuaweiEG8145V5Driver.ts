@@ -286,19 +286,35 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
               : bandWidth === '2'
                 ? '40MHz'
                 : undefined;
+
+        const mode = row.mode ?? row.X_HW_Standard;
+        const modeLabel =
+          mode === '11b'
+            ? '802.11b'
+            : mode === '11g'
+              ? '802.11g'
+              : mode === '11bg'
+                ? '802.11b/g'
+                : mode === '11bgn'
+                  ? '802.11b/g/n'
+                  : mode === '11a'
+                    ? '802.11a'
+                    : mode === '11na'
+                      ? '802.11a/n'
+                      : mode === '11ac'
+                        ? '802.11a/n/ac'
+                        : undefined;
         return {
           domain,
           index: parseWlanIndex(domain),
           enabled: row.enable ?? row.Enable,
-          mode: row.mode ?? row.X_HW_Standard,
+          mode: modeLabel,
           channel: row.channel ?? row.Channel,
           transmittingPower: `${row.power ?? row.TransmitPower}%`,
           bandWidth: bandWidthLabel,
         };
       }),
     ];
-
-    console.log(wlanWifiRows);
 
     const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
       const domain = row.domain ?? row.Domain;
