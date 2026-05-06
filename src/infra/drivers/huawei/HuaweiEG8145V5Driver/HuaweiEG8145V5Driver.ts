@@ -14,6 +14,9 @@ import {
   HUAWEI_TR069_ENDPOINT,
   HUAWEI_UPNP_ENDPOINT,
   HUAWEI_ACCESS_CONTROL_ENDPOINT,
+  HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT,
+  HUAWEI_WAN_LIST_ENDPOINT,
+  HUAWEI_WAN_LIST_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
@@ -29,12 +32,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           topology: undefined,
         };
       },
-      wan: async () => {
-        return {
-          wan: undefined,
-          linkSpeed: undefined,
-        };
-      },
+      wan: async () => this.getWanState(),
       remoteAccess: async () => this.getRemoteAccessState(),
       wlan: async () => {
         return {
@@ -113,6 +111,133 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   public override goToPage(page: RouterPage, key: RouterPageKey): void {
     throw new Error('Method not implemented.');
+  }
+
+  private async getWanState(): Promise<
+    Pick<
+      ExtractionResult,
+      | 'internetEnabled'
+      | 'pppoeUsername'
+      | 'ipVersion'
+      | 'requestPdEnabled'
+      | 'slaacEnabled'
+      | 'dhcpv6Enabled'
+      | 'pdEnabled'
+      | 'linkSpeed'
+    >
+  > {
+    const undefinedResult = {
+      internetEnabled: undefined,
+      pppoeUsername: undefined,
+      ipVersion: undefined,
+      requestPdEnabled: undefined,
+      slaacEnabled: undefined,
+      dhcpv6Enabled: undefined,
+      pdEnabled: undefined,
+      linkSpeed: undefined,
+    };
+
+    const [info, list, addressAcquire] = await Promise.all([
+      this.fetch(HUAWEI_WAN_LIST_INFO_ENDPOINT),
+      this.fetch(HUAWEI_WAN_LIST_ENDPOINT),
+      this.fetch(HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT),
+    ]);
+
+    if (!info || !list) return undefinedResult;
+
+    // wan_list.asp only contains the `new WanPPP(...)` / `new WanIP(...)` calls,
+    // while wan_list_info.asp holds their constructor signatures. Concatenate so
+    // the existing `parseHuaweiStructCall*` helpers find both in one buffer.
+    const wanListBuffer = `${info}\n${list}`;
+
+    const wanEntries: Array<{
+      data: Record<string, string>;
+      encapMode: 'PPPoE' | 'IPoE';
+    }> = [
+      ...this.parseHuaweiStructCallAll(wanListBuffer, 'WanPPP').map((data) => ({
+        data,
+        encapMode: 'PPPoE' as const,
+      })),
+      ...this.parseHuaweiStructCallAll(wanListBuffer, 'WanIP').map((data) => ({
+        data,
+        encapMode: 'IPoE' as const,
+      })),
+    ];
+
+    if (wanEntries.length === 0) return undefinedResult;
+
+    // Pick the routed INTERNET WAN — that is what wan.asp's form binds to when
+    // the user selects the Internet entry. Fall back to any INTERNET WAN, then
+    // to the first entry, mirroring how the firmware itself iterates WanList.
+    const isInternet = (e: { data: Record<string, string> }) =>
+      (e.data.ServiceList ?? '').toUpperCase().includes('INTERNET');
+    const isRouted = (e: { data: Record<string, string> }) =>
+      (e.data.Mode ?? '').toUpperCase().includes('ROUTED');
+
+    const chosen =
+      wanEntries.find((e) => isInternet(e) && isRouted(e)) ??
+      wanEntries.find(isInternet) ??
+      wanEntries[0];
+
+    const { data, encapMode } = chosen;
+
+    const internetEnabled = data.Enable === '1';
+
+    const pppoeUsername =
+      encapMode === 'PPPoE' ? (data.Username ? data.Username : undefined) : undefined;
+
+    // Mirror GetProtocolType() in wan_list_info.asp.
+    let ipVersion: string | undefined;
+    if (data.IPv4Enable === '1' && data.IPv6Enable === '1') ipVersion = 'IPv4/IPv6';
+    else if (data.IPv4Enable === '1') ipVersion = 'IPv4';
+    else if (data.IPv6Enable === '1') ipVersion = 'IPv6';
+
+    // IPv6 acquisition modes — match wan.asp's #IPv6AddressMode1 (DHCPv6) and
+    // #IPv6PrefixMode1 (PrefixDelegation) radios. The actual values are patched
+    // onto each WanList entry by GetIPv6AddressAcquireInfo / GetIPv6PrefixAcquireInfo
+    // in wan_list.asp, sourced from wanaddressacquire.asp.
+    let dhcpv6Enabled: boolean | undefined;
+    let pdEnabled: boolean | undefined;
+
+    if (data.IPv6Enable !== '1') {
+      dhcpv6Enabled = false;
+      pdEnabled = false;
+    } else if (addressAcquire && data.domain) {
+      const addressItems = [
+        ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquireIPItem'),
+        ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquirePPPItem'),
+      ];
+      const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
+
+      const addressItem = addressItems.find(
+        (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+      );
+      const prefixItem = prefixItems.find(
+        (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+      );
+
+      const addressOrigin = (addressItem?._Origin ?? '').toUpperCase();
+      const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
+
+      dhcpv6Enabled = addressOrigin === 'DHCPV6';
+      // PrefixAcquireItem coerces AutoConfigured / RouterAdvertisement to
+      // PrefixDelegation, so they should also count as PD-enabled.
+      pdEnabled =
+        prefixOrigin === 'PREFIXDELEGATION' ||
+        prefixOrigin === 'AUTOCONFIGURED' ||
+        prefixOrigin === 'ROUTERADVERTISEMENT';
+    }
+
+    return {
+      internetEnabled,
+      pppoeUsername,
+      ipVersion,
+      requestPdEnabled: undefined,
+      slaacEnabled: undefined,
+      dhcpv6Enabled,
+      pdEnabled,
+      linkSpeed: undefined,
+    };
   }
 
   private async getRemoteAccessState(): Promise<{
