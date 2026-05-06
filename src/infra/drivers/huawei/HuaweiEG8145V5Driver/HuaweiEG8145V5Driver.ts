@@ -329,6 +329,8 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       };
     });
 
+    console.log(wlanRows);
+
     const preSharedRows = this.parseHuaweiStructCallAll(allRaw, 'stPreSharedKey').map((row) => ({
       domain: row.domain,
       password: row.psk || row.kpp || '',
