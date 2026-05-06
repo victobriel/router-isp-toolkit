@@ -289,6 +289,8 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       }),
     ];
 
+    console.log(wlanWifiRows);
+
     const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
       const domain = row.domain ?? row.Domain;
       return {
