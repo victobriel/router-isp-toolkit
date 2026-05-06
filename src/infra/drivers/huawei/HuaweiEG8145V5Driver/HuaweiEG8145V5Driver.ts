@@ -23,6 +23,25 @@ import {
   HUAWEI_WLAN5G_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 
+/** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
+const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {
+  '0': 'Auto',
+  '1': '20MHz',
+  '2': '40MHz',
+  '3': 'Auto',
+};
+
+/** Huawei `mode` / `X_HW_Standard` codes → display label */
+const HUAWEI_WLAN_MODE_LABELS: Partial<Record<string, string>> = {
+  '11b': '802.11b',
+  '11g': '802.11g',
+  '11bg': '802.11b/g',
+  '11bgn': '802.11b/g/n',
+  '11a': '802.11a',
+  '11na': '802.11a/n',
+  '11ac': '802.11a/n/ac',
+};
+
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
@@ -278,32 +297,19 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       ...this.parseHuaweiStructCallAll(allRaw, 'stWlanWifi').map((row) => {
         const domain = row.domain ?? row.Domain;
         const bandWidth = row.channelWidth ?? row.X_HW_HT20;
-        const bandWidthLabel =
-          bandWidth === '0' || bandWidth === '3'
-            ? 'Auto'
-            : bandWidth === '1'
-              ? '20MHz'
-              : bandWidth === '2'
-                ? '40MHz'
-                : undefined;
+        const bandWidthKey =
+          bandWidth !== undefined && bandWidth !== null && bandWidth !== ''
+            ? String(bandWidth)
+            : undefined;
+        const bandWidthLabel = bandWidthKey
+          ? HUAWEI_WLAN_BANDWIDTH_LABELS[bandWidthKey]
+          : undefined;
 
         const mode = row.mode ?? row.X_HW_Standard;
-        const modeLabel =
-          mode === '11b'
-            ? '802.11b'
-            : mode === '11g'
-              ? '802.11g'
-              : mode === '11bg'
-                ? '802.11b/g'
-                : mode === '11bgn'
-                  ? '802.11b/g/n'
-                  : mode === '11a'
-                    ? '802.11a'
-                    : mode === '11na'
-                      ? '802.11a/n'
-                      : mode === '11ac'
-                        ? '802.11a/n/ac'
-                        : undefined;
+        const modeKey =
+          mode !== undefined && mode !== null && mode !== '' ? String(mode) : undefined;
+        const modeLabel = modeKey ? HUAWEI_WLAN_MODE_LABELS[modeKey] : undefined;
+
         return {
           domain,
           index: parseWlanIndex(domain),
@@ -323,7 +329,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         index: parseWlanIndex(domain),
         enabled: row.enable ?? row.Enable,
         ssid: row.ssid ?? row.SSID,
-        ssidHideMode: row.wlHide,
+        ssidHideMode: !row.wlHide,
         wpa2SecurityType: row.BeaconType,
         maxClients: row.DeviceNum,
       };
