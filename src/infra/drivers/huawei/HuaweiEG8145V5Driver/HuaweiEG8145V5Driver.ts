@@ -330,7 +330,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         enabled: row.enable ?? row.Enable,
         ssid: row.ssid ?? row.SSID,
         ssidHideMode: !row.wlHide,
-        wpa2SecurityType: row.AuthMode,
+        wpa2SecurityType: row.BasicAuthenticationMode,
         maxClients: row.DeviceNum,
       };
     });
