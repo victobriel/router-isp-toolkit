@@ -12,6 +12,10 @@ const HUAWEI_UPNP_ENDPOINT = '/html/bbsp/upnp/upnp.asp';
 const HUAWEI_TR069_ENDPOINT = '/html/ssmp/tr069/tr069.asp';
 const HUAWEI_ACCESS_CONTROL_ENDPOINT = '/html/bbsp/portacl/newacl.asp';
 const HUAWEI_INDEX_ENDPOINT = '/index.asp';
+const HUAWEI_WLAN24G_ENDPOINT = '/html/amp/wlanbasic/WlanBasic.asp?2G';
+const HUAWEI_WLAN5G_ENDPOINT = '/html/amp/wlanbasic/WlanBasic.asp?5G';
+const HUAWEI_WLAN24G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?2G';
+const HUAWEI_WLAN5G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?5G';
 
 export {
   HUAWEI_WAN_ENDPOINT,
@@ -22,4 +26,8 @@ export {
   HUAWEI_TR069_ENDPOINT,
   HUAWEI_ACCESS_CONTROL_ENDPOINT,
   HUAWEI_INDEX_ENDPOINT,
+  HUAWEI_WLAN24G_ENDPOINT,
+  HUAWEI_WLAN5G_ENDPOINT,
+  HUAWEI_WLAN24G_ADVANCED_ENDPOINT,
+  HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
 };

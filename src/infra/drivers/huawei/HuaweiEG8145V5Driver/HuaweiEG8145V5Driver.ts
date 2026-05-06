@@ -17,6 +17,10 @@ import {
   HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT,
   HUAWEI_WAN_LIST_ENDPOINT,
   HUAWEI_WAN_LIST_INFO_ENDPOINT,
+  HUAWEI_WLAN24G_ADVANCED_ENDPOINT,
+  HUAWEI_WLAN24G_ENDPOINT,
+  HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
+  HUAWEI_WLAN5G_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
@@ -34,14 +38,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       },
       wan: async () => this.getWanState(),
       remoteAccess: async () => this.getRemoteAccessState(),
-      wlan: async () => {
-        return {
-          wlan24GhzEnabled: undefined,
-          wlan5GhzEnabled: undefined,
-          wlan24GhzSsids: undefined,
-          wlan5GhzSsids: undefined,
-        };
-      },
+      wlan: async () => this.getWlanState(),
       lan: async () => {
         return {
           lan: undefined,
@@ -240,10 +237,118 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     };
   }
 
-  private async getRemoteAccessState(): Promise<{
-    remoteAccessIpv4Enabled?: boolean;
-    remoteAccessIpv6Enabled?: boolean;
-  }> {
+  private async getWlanState(): Promise<
+    Pick<
+      ExtractionResult,
+      'wlan24GhzConfig' | 'wlan5GhzConfig' | 'wlan24GhzSsids' | 'wlan5GhzSsids'
+    >
+  > {
+    const [wlanBasic2g, wlanBasic5g, wlanAdvance2g, wlanAdvance5g] = await Promise.all([
+      this.fetch(HUAWEI_WLAN24G_ENDPOINT),
+      this.fetch(HUAWEI_WLAN5G_ENDPOINT),
+      this.fetch(HUAWEI_WLAN24G_ADVANCED_ENDPOINT),
+      this.fetch(HUAWEI_WLAN5G_ADVANCED_ENDPOINT),
+    ]);
+
+    const allRaw = [wlanBasic2g, wlanBasic5g, wlanAdvance2g, wlanAdvance5g]
+      .filter((raw): raw is string => !!raw)
+      .join('\n');
+
+    if (!allRaw) {
+      return {
+        wlan24GhzConfig: undefined,
+        wlan5GhzConfig: undefined,
+        wlan24GhzSsids: undefined,
+        wlan5GhzSsids: undefined,
+      };
+    }
+
+    const parseWlanIndex = (domain: string | undefined): number | null => {
+      if (!domain) return null;
+      const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
+      if (!match) return null;
+      const index = Number.parseInt(match[1], 10);
+      return Number.isNaN(index) ? null : index;
+    };
+
+    const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
+    const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
+
+    const wlanWifiRows = [
+      ...this.parseHuaweiStructCallAll(allRaw, 'stWlanWifi').map((row) => {
+        const domain = row.domain ?? row.Domain;
+        return {
+          domain,
+          index: parseWlanIndex(domain),
+          enabled: row.enable ?? row.Enable,
+          mode: row.mode ?? row.X_HW_Standard,
+          channel: row.channel ?? row.Channel,
+          transmittingPower: row.power ?? row.TransmitPower,
+          bandWidth: row.channelWidth ?? row.X_HW_HT20,
+        };
+      }),
+    ];
+
+    const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
+      const domain = row.domain ?? row.Domain;
+      return {
+        domain,
+        index: parseWlanIndex(domain),
+        enabled: row.enable ?? row.Enable,
+        ssid: row.ssid ?? row.SSID,
+        ssidHideMode: row.wlHide,
+        wpa2SecurityType: row.BeaconType,
+        maxClients: row.DeviceNum,
+      };
+    });
+
+    const preSharedRows = this.parseHuaweiStructCallAll(allRaw, 'stPreSharedKey').map((row) => ({
+      domain: row.domain,
+      password: row.psk || row.kpp || '',
+    }));
+
+    const findBandConfig = (isBandIndex: (idx: number | null) => boolean) => {
+      const row = wlanWifiRows.find((item) => isBandIndex(item.index));
+      if (!row) return undefined;
+      return {
+        enabled: row.enabled === '1',
+        channel: row.channel || undefined,
+        mode: row.mode || undefined,
+        bandWidth: row.bandWidth || undefined,
+        transmittingPower: row.transmittingPower || undefined,
+      };
+    };
+
+    const buildSsids = (isBandIndex: (idx: number | null) => boolean) => {
+      const bandRows = wlanRows.filter((row) => isBandIndex(row.index));
+      if (!bandRows.length) return undefined;
+      return bandRows.map((row) => {
+        const password =
+          preSharedRows.find((key) => key.domain?.includes(row.domain || ''))?.password ||
+          undefined;
+        const maxClients = Number.parseInt(row.maxClients ?? '', 10);
+        return {
+          enabled: row.enabled === '1',
+          ssidName: row.ssid || undefined,
+          ssidPassword: password,
+          ssidHideMode: row.ssidHideMode === '1',
+          wpa2SecurityType: row.wpa2SecurityType || undefined,
+          maxClients: Number.isNaN(maxClients) ? undefined : maxClients,
+        };
+      });
+    };
+
+    return {
+      wlan24GhzConfig: findBandConfig(is2gIndex),
+      wlan5GhzConfig: findBandConfig(is5gIndex),
+      wlan24GhzSsids: buildSsids(is2gIndex),
+      wlan5GhzSsids: buildSsids(is5gIndex),
+    };
+  }
+
+  private async getRemoteAccessState(): Promise<
+    Pick<ExtractionResult, 'remoteAccessIpv4Enabled' | 'remoteAccessIpv6Enabled'>
+  > {
     const raw = await this.fetch(HUAWEI_ACCESS_CONTROL_ENDPOINT);
     if (!raw) {
       return { remoteAccessIpv4Enabled: undefined, remoteAccessIpv6Enabled: undefined };
@@ -265,18 +370,16 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     };
   }
 
-  private async getUpnpState(): Promise<{ upnpEnabled?: boolean }> {
+  private async getUpnpState(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
     const raw = await this.fetch(HUAWEI_UPNP_ENDPOINT);
     if (!raw) return { upnpEnabled: undefined };
     const main = this.matchHuaweiScriptVar(raw, 'enblMainUpnp');
     const slave = this.matchHuaweiScriptVar(raw, 'enblSlvUpnp');
     if (main == null || slave == null) return { upnpEnabled: undefined };
-    return {
-      upnpEnabled: main === '1' && slave === '1',
-    };
+    return { upnpEnabled: main === '1' && slave === '1' };
   }
 
-  private async getTr069State(): Promise<{ tr069Url?: string; tr069Enabled?: boolean }> {
+  private async getTr069State(): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
     const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
     const cwmp = this.parseHuaweiCwmp(raw);
     if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
@@ -286,10 +389,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     };
   }
 
-  private async getRouterInfoState(): Promise<{
-    routerModel?: string;
-    routerVersion?: string;
-  }> {
+  private async getRouterInfoState(): Promise<
+    Pick<ExtractionResult, 'routerModel' | 'routerVersion'>
+  > {
     const raw = await this.fetch(HUAWEI_INDEX_ENDPOINT);
     if (!raw) return { routerModel: undefined, routerVersion: undefined };
     const productName = this.matchHuaweiScriptVar(raw, 'ProductName');
