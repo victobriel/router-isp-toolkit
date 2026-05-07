@@ -143,7 +143,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       Object.assign(data, await extractor());
     }
     data.timestamp = new Date().toISOString();
-    data.goToHomePage = this.goToHomePage();
 
     return ExtractionResultSchema.parse(data);
   }

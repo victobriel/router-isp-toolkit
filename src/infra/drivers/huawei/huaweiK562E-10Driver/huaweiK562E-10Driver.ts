@@ -52,7 +52,6 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     }
 
     data.timestamp = new Date().toISOString();
-    data.goToHomePage = this.goToHomePage();
     return ExtractionResultSchema.parse(data);
   }
 
