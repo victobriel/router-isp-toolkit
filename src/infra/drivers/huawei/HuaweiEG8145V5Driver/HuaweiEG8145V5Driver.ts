@@ -21,6 +21,7 @@ import {
   HUAWEI_WLAN24G_ENDPOINT,
   HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
   HUAWEI_WLAN5G_ENDPOINT,
+  HUAWEI_OPTICAL_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
@@ -55,6 +56,38 @@ const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>> = {
   TKIPandAESEncryption: 'TKIP&AES',
 };
 
+/**
+ * `opticinfo.asp` declares two `stOpticInfo` shapes (GPON vs RF ONT). Map the
+ * `new stOpticInfo(...)` positional args after decoding — do not rely on
+ * `parseHuaweiStructCall`, which would bind to the first `function stOpticInfo`
+ * in the HTML and mis-align when the firmware uses the longer constructor.
+ */
+const HUAWEI_ST_OPTIC_INFO_KEYS_12 = [
+  'domain',
+  'LinkStatus',
+  'transOpticPower',
+  'revOpticPower',
+  'voltage',
+  'temperature',
+  'bias',
+  'rfRxPower',
+  'rfOutputPower',
+  'VendorName',
+  'VendorSN',
+] as const;
+
+const HUAWEI_ST_OPTIC_INFO_KEYS_16 = [
+  ...HUAWEI_ST_OPTIC_INFO_KEYS_12,
+  'DateCode',
+  'TxWaveLength',
+  'RxWaveLength',
+  'MaxTxDistance',
+  'LosStatus',
+] as const;
+
+/** Same literal pattern as {@link HuaweiBaseDriver}'s `parseHuaweiStructCall`. */
+const HUAWEI_JS_STRING_LITERAL = /"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g;
+
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
@@ -62,7 +95,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
-      opticalSignal: async () => ({ opticalSignal: undefined }),
+      opticalSignal: async () => this.getOpticalSignalState(),
       topology: async () => {
         return {
           topology: undefined,
@@ -140,6 +173,74 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
   public override goToPage(page: RouterPage, key: RouterPageKey): void {
     throw new Error('Method not implemented.');
+  }
+
+  private async getOpticalSignalState(): Promise<Pick<ExtractionResult, 'opticalSignal'>> {
+    const raw = await this.fetch(HUAWEI_OPTICAL_INFO_ENDPOINT);
+    if (!raw) return { opticalSignal: undefined };
+
+    const optic = this.parseStOpticInfo(raw);
+    if (!optic) return { opticalSignal: undefined };
+
+    const ontPonMode = this.matchHuaweiScriptVar(raw, 'ontPonMode');
+    const summary = this.formatOpticalSignalSummary(optic, ontPonMode);
+    return { opticalSignal: summary || undefined };
+  }
+
+  /**
+   * Parses the first `new stOpticInfo('…', …)` row from `opticinfo.asp`
+   * (`docs/opticinfo-example.asp`): TX/RX optical power, link state, optional
+   * wavelengths (16-arg GPON form) or the shorter RF ONT form (12 args).
+   */
+  private parseStOpticInfo(raw: string): Record<string, string> | null {
+    const call = /new\s+stOpticInfo\s*\(([\s\S]*?)\)/.exec(raw);
+    if (!call) return null;
+
+    const values = Array.from(call[1].matchAll(HUAWEI_JS_STRING_LITERAL), (m) =>
+      this.unescapeHuaweiHex(m[1] ?? m[2]),
+    );
+    if (values.length < 12) return null;
+
+    const keys = values.length >= 16 ? HUAWEI_ST_OPTIC_INFO_KEYS_16 : HUAWEI_ST_OPTIC_INFO_KEYS_12;
+    const record: Record<string, string> = {};
+    const len = Math.min(keys.length, values.length);
+    for (let i = 0; i < len; i++) {
+      record[keys[i]] = values[i];
+    }
+    return record;
+  }
+
+  private formatOpticalSignalSummary(o: Record<string, string>, ontPonMode: string | null): string {
+    const trim = (s: string | null | undefined) => (s ?? '').trim();
+
+    const fmtPower = (v: string | undefined): string | null => {
+      const t = trim(v);
+      if (!t || t === '--') return null;
+      return t.toLowerCase().includes('dbm') ? t : `${t} dBm`;
+    };
+
+    const tx = fmtPower(o.transOpticPower);
+    const rx = fmtPower(o.revOpticPower);
+    const link = trim(o.LinkStatus);
+    const parts: string[] = [];
+
+    const mode = trim(ontPonMode);
+    if (mode && mode.toLowerCase() !== 'auto') {
+      parts.push(mode.toUpperCase());
+    }
+    if (link) {
+      parts.push(link.toLowerCase() === 'ok' ? 'OK' : link);
+    }
+    if (tx) parts.push(`TX ${tx}`);
+    if (rx) parts.push(`RX ${rx}`);
+
+    const txWl = trim(o.TxWaveLength);
+    const rxWl = trim(o.RxWaveLength);
+    if (txWl && rxWl && txWl !== '--' && rxWl !== '--') {
+      parts.push(`${txWl}/${rxWl} nm`);
+    }
+
+    return parts.join(' · ');
   }
 
   private async getWanState(): Promise<
@@ -387,7 +488,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           enabled: row.enabled === '1',
           ssidName: row.ssid || undefined,
           ssidPassword: password,
-          ssidHideMode: row.ssidHideMode === '1',
+          ssidHideMode: row.ssidHideMode,
           wpa2SecurityType: row.wpa2SecurityType || undefined,
           maxClients: Number.isNaN(maxClients) ? undefined : maxClients,
         };
