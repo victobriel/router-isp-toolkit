@@ -138,9 +138,6 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
    * targets we leave it unset so the LAN default keeps working.
    */
   public async ping(ip: string): Promise<PingTestResult | null> {
-    const token = await this.readHuaweiCsrfToken();
-    if (!token) return null;
-
     const params: Record<string, string> = {
       'x.Host': ip,
       'x.DiagnosticsState': 'Requested',
@@ -149,7 +146,6 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       'x.Timeout': String(HUAWEI_PING_DEFAULT_TIMEOUT_MS),
       'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
       'RUNSTATE_FLAG.value': 'START',
-      'x.X_HW_Token': token,
     };
 
     if (!HuaweiBaseDriver.isPrivateOrLocalIPv4(ip)) {
@@ -157,10 +153,25 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       if (wanDomain) params['x.Interface'] = wanDomain;
     }
 
+    // Token must be fetched *just before* the POST: the firmware rotates
+    // onttoken on every accepted CGI write, so any cached value (DOM, prior
+    // response, previous ping invocation) is already stale and will be
+    // silently rejected. Without this, a second ping() call leaves the
+    // firmware's PingResult buffer untouched and `GetPingResult.asp` keeps
+    // replaying the previous target's output.
+    const token = await this.fetchHuaweiCsrfToken();
+    if (!token) return null;
+    params['x.X_HW_Token'] = token;
+
     const startBody = new URLSearchParams(params).toString();
 
     const started = await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, startBody);
     if (started == null) return null;
+
+    // complex.cgi's response is the diagnose page rendered with the rotated
+    // token already inlined, so we get the next token for free — no extra GET
+    // needed for the cancel path.
+    const tokenAfterStart = this.matchInputValueById(started, 'hwonttoken') ?? token;
 
     const deadline =
       Date.now() +
@@ -184,7 +195,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
         'x.Host': ip,
         // Firmware misspelling — must be sent as-is to be accepted.
         'RUNSTATE_FLAG.value': 'TERMIANL',
-        'x.X_HW_Token': token,
+        'x.X_HW_Token': tokenAfterStart,
       }).toString();
       await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, stopBody);
     }
@@ -338,18 +349,17 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   /**
-   * Read the Huawei CSRF token (`onttoken`). Tries the live document first
-   * because the hidden input is rendered on essentially every Huawei admin
-   * page; falls back to a one-shot GET of the diagnose page so `ping()` still
-   * works when invoked from contexts without DOM access.
+   * Fetch a fresh Huawei CSRF token (`onttoken`) from `diagnosecommon.asp`.
+   *
+   * Why no DOM shortcut: the firmware rotates `onttoken` on every accepted
+   * `complex.cgi` write, so the value embedded in the live page (or in the
+   * response of the previous CGI POST) goes stale immediately after use.
+   * Reading the DOM-cached token across calls causes the next CGI POST to be
+   * silently dropped — the firmware returns 200 with a redirect-to-diagnose
+   * page but never updates state. Always read the token from a fresh GET of
+   * the diagnose page, immediately before the POST that needs it.
    */
-  protected async readHuaweiCsrfToken(): Promise<string | null> {
-    if (typeof document !== 'undefined') {
-      for (const sel of ['#hwonttoken', '[name="onttoken"]']) {
-        const el = document.querySelector(sel);
-        if (el instanceof HTMLInputElement && el.value.trim()) return el.value.trim();
-      }
-    }
+  protected async fetchHuaweiCsrfToken(): Promise<string | null> {
     const raw = await this.huaweiGet(HUAWEI_DIAGNOSE_PAGE_ENDPOINT);
     return this.matchInputValueById(raw, 'hwonttoken');
   }
