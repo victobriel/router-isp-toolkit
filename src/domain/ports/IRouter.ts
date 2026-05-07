@@ -34,6 +34,10 @@ export interface IRouter {
   buttonElementConfig(): ButtonConfig | null;
   isAuthenticated(): boolean;
   ping(ip: string): Promise<PingTestResult | null>;
+  /**
+   * When false, the extension omits “open in router UI” affordances; `goToPage` may still exist but is unsupported.
+   */
+  supportsGoToPage(): boolean;
   goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void;
   reboot(): Promise<void>;
 }

@@ -147,6 +147,10 @@ export abstract class ZteBaseDriver extends BaseRouter {
     await this.clickElementAndWait(this.s.rebootConfirmationButton);
   }
 
+  public override supportsGoToPage(): boolean {
+    return true;
+  }
+
   public goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void {
     void this.navigateToPageKey(page, key, options);
   }

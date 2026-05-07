@@ -55,6 +55,7 @@ interface PopupDataProviderProps {
     onClear: () => void;
     onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
     copyText: () => Promise<{ data: string | null; error?: string }>;
+    supportsGoToPage: boolean;
     goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
     rebootRouter: () => Promise<void>;
     isRouterAuthenticated: boolean | null;
@@ -76,6 +77,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     null,
   );
   const [isRouterAuthenticated, setIsRouterAuthenticated] = useState<boolean | null>(null);
+  const [supportsGoToPageUi, setSupportsGoToPageUi] = useState(false);
   const [lastAuthAdminCredentials, setLastAuthAdminCredentials] = useState<{
     username: string;
     password: string;
@@ -119,13 +121,16 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       const res = await sendToTab<CollectMessage, CollectResponse>(tabId, {
         action: CollectMessageAction.AUTH_STATUS,
       });
-      if (res?.success && res.authenticated) {
-        setIsRouterAuthenticated(res.authenticated);
+      if (res?.success) {
+        setIsRouterAuthenticated(res.authenticated ?? false);
+        setSupportsGoToPageUi(res.supportsGoToPage === true);
         return;
       }
       setIsRouterAuthenticated(false);
+      setSupportsGoToPageUi(false);
     } catch {
       setIsRouterAuthenticated(false);
+      setSupportsGoToPageUi(false);
     } finally {
       void refreshLastAuthAdminCredentials();
     }
@@ -174,6 +179,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
 
   useEffect(() => {
     setIsRouterAuthenticated(null);
+    setSupportsGoToPageUi(false);
     void refreshRouterAuth();
   }, [refreshRouterAuth, tabId]);
 
@@ -667,6 +673,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     onClear,
     onPing,
     copyText,
+    supportsGoToPage: supportsGoToPageUi,
     goToPage,
     rebootRouter,
     isRouterAuthenticated,

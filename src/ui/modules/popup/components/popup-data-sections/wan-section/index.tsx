@@ -14,13 +14,21 @@ import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types'
 interface WanSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanSectionProps) => {
+export const WanSection = ({
+  data,
+  routerPreferencesComparison,
+  supportsGoToPage,
+  goToPage,
+}: WanSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
+
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
 
   const wanData = {
     pppoeUsername: data.pppoeUsername,
@@ -46,31 +54,31 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
       compareMatch: routerPreferencesComparison?.pppoeUsername,
       value: val(wanData.pppoeUsername),
       ableToCopy: true,
-      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PPPOE_USERNAME),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.PPPOE_USERNAME)),
     },
     {
       label: translator.t('popup_label_internet'),
       compareMatch: routerPreferencesComparison?.internetEnabled,
       value: wanData.internetEnabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.INTERNET_STATUS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.INTERNET_STATUS)),
     },
     {
       label: translator.t('popup_label_tr069'),
       compareMatch: routerPreferencesComparison?.tr069Enabled,
       value: wanData.tr069Enabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.TR_069_STATUS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.TR_069_STATUS)),
     },
     {
       label: translator.t('popup_label_link_speed'),
       compareMatch: routerPreferencesComparison?.linkSpeed,
       value: val(wanData.linkSpeed),
-      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.LINK_SPEED),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.LINK_SPEED)),
     },
     {
       label: translator.t('popup_label_ip_version'),
       compareMatch: routerPreferencesComparison?.ipVersion,
       value: val(wanData.ipVersion ?? undefined),
-      handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.IP_VERSION),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.IP_VERSION)),
     },
   ];
   if (data.ipVersion?.includes('6')) {
@@ -79,25 +87,25 @@ export const WanSection = ({ data, routerPreferencesComparison, goToPage }: WanS
         label: translator.t('popup_label_request_pd'),
         compareMatch: routerPreferencesComparison?.requestPdEnabled,
         value: wanData.requestPdEnabled,
-        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.REQUEST_PD_STATUS),
+        handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.REQUEST_PD_STATUS)),
       },
       {
         label: translator.t('popup_label_slaac_status'),
         compareMatch: routerPreferencesComparison?.slaacEnabled,
         value: wanData.slaacEnabled,
-        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.SLAAC_STATUS),
+        handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.SLAAC_STATUS)),
       },
       {
         label: translator.t('popup_label_dhcpv6_status'),
         compareMatch: routerPreferencesComparison?.dhcpv6Enabled,
         value: wanData.dhcpv6Enabled,
-        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.DHCPV6_STATUS),
+        handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.DHCPV6_STATUS)),
       },
       {
         label: translator.t('popup_label_pd_status'),
         compareMatch: routerPreferencesComparison?.pdEnabled,
         value: wanData.pdEnabled,
-        handleGoToPage: () => handleGoToPage(RouterPage.WAN, RouterPageKey.PD_STATUS),
+        handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WAN, RouterPageKey.PD_STATUS)),
       },
     );
   }

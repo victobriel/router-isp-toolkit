@@ -13,13 +13,21 @@ import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types'
 interface DhcpSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
-export const DhcpSection = ({ data, routerPreferencesComparison, goToPage }: DhcpSectionProps) => {
+export const DhcpSection = ({
+  data,
+  routerPreferencesComparison,
+  supportsGoToPage,
+  goToPage,
+}: DhcpSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
+
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
 
   const dhcpData = {
     enabled: data.dhcpEnabled,
@@ -45,61 +53,67 @@ export const DhcpSection = ({ data, routerPreferencesComparison, goToPage }: Dhc
       label: translator.t('popup_label_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpEnabled,
       value: dhcpData.enabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_STATUS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_STATUS)),
     },
     {
       label: translator.t('popup_label_ip_address'),
       compareMatch: routerPreferencesComparison?.dhcpIpAddress,
       value: val(dhcpData.ipAddress),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_IP_ADDRESS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_IP_ADDRESS)),
     },
     {
       label: translator.t('popup_label_subnet_mask'),
       compareMatch: routerPreferencesComparison?.dhcpSubnetMask,
       value: val(dhcpData.subnetMask),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SUBNET_MASK),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SUBNET_MASK)),
     },
     {
       label: translator.t('popup_label_start_ip'),
       compareMatch: routerPreferencesComparison?.dhcpStartIp,
       value: val(dhcpData.startIp),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_START_IP),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_START_IP)),
     },
     {
       label: translator.t('popup_label_end_ip'),
       compareMatch: routerPreferencesComparison?.dhcpEndIp,
       value: val(dhcpData.endIp),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_END_IP),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_END_IP)),
     },
     {
       label: translator.t('popup_label_isp_dns_enabled'),
       compareMatch: routerPreferencesComparison?.dhcpIspDnsEnabled,
       value: dhcpData.ispDnsEnabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_ISP_DNS_STATUS),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_ISP_DNS_STATUS),
+      ),
     },
     {
       label: translator.t('popup_label_primary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpPrimaryDns,
       value: val(dhcpData.primaryDns),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_PRIMARY_DNS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_PRIMARY_DNS)),
     },
     {
       label: translator.t('popup_label_secondary_dns'),
       compareMatch: routerPreferencesComparison?.dhcpSecondaryDns,
       value: val(dhcpData.secondaryDns),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SECONDARY_DNS),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_SECONDARY_DNS),
+      ),
     },
     {
       label: translator.t('popup_label_lease_time_mode'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTimeMode,
       value: val(dhcpData.leaseTimeMode),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME_MODE),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME_MODE),
+      ),
     },
     {
       label: translator.t('popup_label_lease_time'),
       compareMatch: routerPreferencesComparison?.dhcpLeaseTime,
       value: val(dhcpData.leaseTime),
-      handleGoToPage: () => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_LEASE_TIME)),
     },
   ];
 

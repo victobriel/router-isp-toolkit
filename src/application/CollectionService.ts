@@ -29,6 +29,7 @@ export class CollectionService {
       [CollectMessageAction.AUTH_STATUS]: async () => ({
         success: true,
         authenticated: router.isAuthenticated(),
+        supportsGoToPage: router.supportsGoToPage(),
       }),
       [CollectMessageAction.AUTHENTICATE]: async () => {
         if (router.isAuthenticated()) {
@@ -113,7 +114,21 @@ export class CollectionService {
             message: 'Go to page configuration is required',
           };
         }
-        router.goToPage(goToPageConfig.page, goToPageConfig.key, goToPageConfig.options);
+        if (!router.supportsGoToPage()) {
+          return {
+            success: false,
+            message: 'Opening router admin pages is not supported for this device',
+          };
+        }
+        try {
+          router.goToPage(goToPageConfig.page, goToPageConfig.key, goToPageConfig.options);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return {
+            success: false,
+            message,
+          };
+        }
         return {
           success: true,
           message: 'Action called successfully',

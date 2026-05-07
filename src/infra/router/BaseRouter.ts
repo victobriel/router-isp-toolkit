@@ -46,6 +46,9 @@ export abstract class BaseRouter implements IRouter {
   public abstract buttonElementConfig(): ButtonConfig | null;
   public abstract isAuthenticated(): boolean;
   public abstract ping(ip: string): Promise<PingTestResult | null>;
+  public supportsGoToPage(): boolean {
+    return false;
+  }
   public abstract goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void;
   public abstract reboot(): Promise<void>;
   protected abstract goToHomePage(): boolean;

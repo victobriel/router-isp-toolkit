@@ -13,6 +13,7 @@ import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types'
 interface MiscSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
   lastAuthAdminCredentials: { username: string; password: string } | null;
 }
@@ -20,12 +21,15 @@ interface MiscSectionProps {
 export const MiscSection = ({
   data,
   routerPreferencesComparison,
+  supportsGoToPage,
   goToPage,
   lastAuthAdminCredentials,
 }: MiscSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
+
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
 
   const miscData = {
     routerAdminPassword: lastAuthAdminCredentials?.password,
@@ -48,7 +52,9 @@ export const MiscSection = ({
       compareMatch: routerPreferencesComparison?.routerAdminPassword,
       value: val(miscData.routerAdminPassword),
       ableToCopy: true,
-      handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.CHANGE_CREDENTIALS),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.CHANGE_CREDENTIALS),
+      ),
     },
     {
       label: translator.t('popup_label_model'),
@@ -60,27 +66,28 @@ export const MiscSection = ({
       compareMatch: routerPreferencesComparison?.routerVersion,
       value: val(miscData.routerVersion),
       ableToCopy: true,
-      handleGoToPage: () => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.UPDATE),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.MANAGEMENT, RouterPageKey.UPDATE)),
     },
     {
       label: `${translator.t('popup_label_tr069')} ${translator.t('popup_label_url')}`,
       compareMatch: routerPreferencesComparison?.tr069Url,
       value: val(miscData.tr069Url),
       ableToCopy: true,
-      handleGoToPage: () => handleGoToPage(RouterPage.TR_069, RouterPageKey.TR_069_URL),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.TR_069, RouterPageKey.TR_069_URL)),
     },
     {
       label: translator.t('popup_section_upnp'),
       compareMatch: routerPreferencesComparison?.upnpEnabled,
       value: miscData.upnpEnabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.UPnP, RouterPageKey.UPNP_STATUS),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.UPnP, RouterPageKey.UPNP_STATUS)),
     },
     {
       label: translator.t('popup_section_band_steering'),
       compareMatch: routerPreferencesComparison?.bandSteeringEnabled,
       value: miscData.bandSteeringEnabled,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.BAND_STEERING, RouterPageKey.BAND_STEERING_STATUS),
+      ),
     },
   ];
 

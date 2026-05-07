@@ -16,6 +16,8 @@ export interface CollectResponse {
   data?: ExtractionResult;
   pingResult?: PingTestResult;
   authenticated?: boolean;
+  /** Present on successful `auth_status` responses; drives “open in router” UI. */
+  supportsGoToPage?: boolean;
 }
 
 /** Status type for popup UI feedback. */

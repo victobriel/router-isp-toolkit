@@ -10,17 +10,21 @@ import { val } from '@/ui/lib/utils';
 interface OpticalSignalSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
 export const OpticalSignalSection = ({
   data,
   routerPreferencesComparison,
+  supportsGoToPage,
   goToPage,
 }: OpticalSignalSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
+
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
 
   const opticalSignalData = {
     opticalSignal: data.opticalSignal,
@@ -37,8 +41,9 @@ export const OpticalSignalSection = ({
       label: translator.t('popup_label_optical_signal'),
       value: `${val(opticalSignalData.opticalSignal)} dBm`,
       compareMatch: routerPreferencesComparison?.opticalSignal,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.OPTICAL_SIGNAL, RouterPageKey.OPTICAL_SIGNAL_STATUS),
+      ),
     },
   ];
 

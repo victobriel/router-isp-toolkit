@@ -69,6 +69,7 @@ function PopupContent({
   onCollect,
   onPing,
   copyText,
+  supportsGoToPage,
   goToPage,
   onClear,
   rebootRouter,
@@ -87,6 +88,7 @@ function PopupContent({
   onClear: () => void;
   onPing: (ip: string, mode: DiagnosticsMode) => Promise<void>;
   copyText: () => Promise<{ data: string | null; error?: string }>;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
   rebootRouter: () => Promise<void>;
   isRouterAuthenticated: boolean | null;
@@ -337,16 +339,19 @@ function PopupContent({
               <OpticalSignalSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <WanSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <RemoteAccessSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <WlanBandSection
@@ -355,6 +360,7 @@ function PopupContent({
                 ssids={data.wlan24GhzSsids}
                 totalClients={data.topology?.['24ghz']?.totalClients ?? 0}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <WlanBandSection
@@ -364,16 +370,19 @@ function PopupContent({
                 ssidOffset={data.wlan24GhzSsids?.length ?? 0}
                 totalClients={data.topology?.['5ghz']?.totalClients ?? 0}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <DhcpSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
               />
               <MiscSection
                 data={data}
                 routerPreferencesComparison={routerPreferencesComparison}
+                supportsGoToPage={supportsGoToPage}
                 goToPage={goToPage}
                 lastAuthAdminCredentials={lastAuthAdminCredentials}
               />
@@ -430,6 +439,7 @@ export const Popup = () => {
                 onClear,
                 onPing,
                 copyText,
+                supportsGoToPage,
                 goToPage,
                 rebootRouter,
                 isRouterAuthenticated,
@@ -448,6 +458,7 @@ export const Popup = () => {
                   onClear={onClear}
                   onPing={onPing}
                   copyText={copyText}
+                  supportsGoToPage={supportsGoToPage}
                   goToPage={goToPage}
                   rebootRouter={rebootRouter}
                   isRouterAuthenticated={isRouterAuthenticated}

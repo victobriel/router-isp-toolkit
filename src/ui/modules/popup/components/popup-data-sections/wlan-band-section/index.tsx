@@ -30,6 +30,7 @@ interface WlanSsidSliderProps {
       }
     | undefined
   >;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
@@ -38,6 +39,7 @@ export const WlanSsidSlider = ({
   ssids,
   ssidOffset = 0,
   ssidMatches,
+  supportsGoToPage,
   goToPage,
 }: WlanSsidSliderProps) => {
   const [idx, setIdx] = useState(0);
@@ -49,6 +51,8 @@ export const WlanSsidSlider = ({
     void goToPage(page, key, options);
   };
 
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
+
   const ssidIndex = ssidOffset + idx;
   const ssidOptions: GoToPageOptions = { band, ssidIndex };
 
@@ -56,44 +60,50 @@ export const WlanSsidSlider = ({
     {
       label: translator.t('popup_label_enabled'),
       value: ssid.enabled,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_STATUS, ssidOptions),
+      ),
     },
     {
       label: translator.t('popup_label_ssid_name'),
       compareMatch: ssidMatches?.[idx]?.ssidName,
       value: val(ssid.ssidName),
       ableToCopy: true,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_NAME, ssidOptions),
+      ),
     },
     {
       label: translator.t('popup_label_ssid_password'),
       value: val(ssid.ssidPassword),
       ableToCopy: true,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_PASSWORD, ssidOptions),
+      ),
     },
     {
       label: translator.t('popup_label_ssid_hide_mode'),
       compareMatch: ssidMatches?.[idx]?.ssidHideMode,
       value: ssid.ssidHideMode,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS, ssidOptions),
+      ),
     },
     {
       label: translator.t('popup_label_wpa2_security'),
       compareMatch: ssidMatches?.[idx]?.wpa2SecurityType,
       value: val(ssid.wpa2SecurityType),
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_WPA2_SECURITY_TYPE, ssidOptions),
+      ),
     },
     {
       label: translator.t('popup_label_max_clients'),
       compareMatch: ssidMatches?.[idx]?.maxClients,
       value: val(String(ssid.maxClients)),
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_MAX_CLIENTS, ssidOptions),
+      ),
     },
   ];
 
@@ -147,6 +157,7 @@ interface WlanBandSectionProps {
   ssidOffset?: number;
   totalClients: number;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
@@ -157,6 +168,7 @@ export const WlanBandSection = ({
   ssidOffset = 0,
   totalClients,
   routerPreferencesComparison,
+  supportsGoToPage,
   goToPage,
 }: WlanBandSectionProps) => {
   const radioEnabledMatch =
@@ -208,6 +220,8 @@ export const WlanBandSection = ({
     void goToPage(page, key, options);
   };
 
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
+
   const wlanBandData = {
     enabled: config?.enabled,
     channel: config?.channel,
@@ -232,32 +246,37 @@ export const WlanBandSection = ({
       label: translator.t('popup_label_radio'),
       compareMatch: radioEnabledMatch,
       value: wlanBandData.enabled,
-      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_STATUS, { band }),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_STATUS, { band })),
     },
     {
       label: translator.t('popup_label_channel'),
       compareMatch: channelMatch,
       value: val(wlanBandData.channel),
-      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_CHANNEL, { band }),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_CHANNEL, { band }),
+      ),
     },
     {
       label: translator.t('popup_label_mode'),
       compareMatch: modeMatch,
       value: val(wlanBandData.mode),
-      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_MODE, { band }),
+      handleGoToPage: rowGo(() => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_MODE, { band })),
     },
     {
       label: translator.t('popup_label_bandwidth'),
       compareMatch: bandWidthMatch,
       value: val(wlanBandData.bandWidth),
-      handleGoToPage: () => handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_BANDWIDTH, { band }),
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_BANDWIDTH, { band }),
+      ),
     },
     {
       label: translator.t('popup_label_transmitting_power'),
       compareMatch: transmittingPowerMatch,
       value: val(wlanBandData.transmittingPower),
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.WLAN, RouterPageKey.WLAN_TRANSMITTING_POWER, { band }),
+      ),
     },
   ];
 
@@ -299,6 +318,7 @@ export const WlanBandSection = ({
               ssids={ssids}
               ssidOffset={ssidOffset}
               ssidMatches={ssidMatches}
+              supportsGoToPage={supportsGoToPage}
               goToPage={goToPage}
             />
           </>

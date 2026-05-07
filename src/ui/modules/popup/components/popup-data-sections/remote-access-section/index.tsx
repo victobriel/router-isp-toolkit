@@ -12,17 +12,21 @@ import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types'
 interface RemoteAccessSectionProps {
   data: ExtractionResult;
   routerPreferencesComparison: RouterPreferencesComparison | null;
+  supportsGoToPage: boolean;
   goToPage: (page: RouterPage, key: RouterPageKey, options?: GoToPageOptions) => void;
 }
 
 export const RemoteAccessSection = ({
   data,
   routerPreferencesComparison,
+  supportsGoToPage,
   goToPage,
 }: RemoteAccessSectionProps) => {
   const handleGoToPage = (page: RouterPage, key: RouterPageKey) => {
     void goToPage(page, key);
   };
+
+  const rowGo = (fn: () => void): (() => void) | undefined => (supportsGoToPage ? fn : undefined);
 
   const remoteAccessData = {
     ipv4Enabled: data.remoteAccessIpv4Enabled,
@@ -40,15 +44,17 @@ export const RemoteAccessSection = ({
       label: translator.t('popup_label_remote_access_ipv4'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv4Enabled,
       value: remoteAccessData.ipv4Enabled,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV4_STATUS),
+      ),
     },
     {
       label: translator.t('popup_label_remote_access_ipv6'),
       compareMatch: routerPreferencesComparison?.remoteAccessIpv6Enabled,
       value: remoteAccessData.ipv6Enabled,
-      handleGoToPage: () =>
+      handleGoToPage: rowGo(() =>
         handleGoToPage(RouterPage.REMOTE_ACCESS, RouterPageKey.REMOTE_ACCESS_IPV6_STATUS),
+      ),
     },
   ];
 
