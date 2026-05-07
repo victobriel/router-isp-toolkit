@@ -532,6 +532,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
     const wlan5 = data.wlan5GhzConfig;
 
     const values: Record<CopyTextValueKey, string> = {
+      OpticalSignal: asText(data.opticalSignal),
       RouterModel: asText(data.routerModel),
       RouterVersion: asText(data.routerVersion),
       RouterAdminPassword: asText(lastAuthAdminCredentials?.password),

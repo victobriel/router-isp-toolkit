@@ -4,6 +4,10 @@ import { translator } from '@/infra/i18n/I18nService';
 // Keep this in sync with the `values` record inside `copyText`.
 export const COPY_TEXT_VALUE_KEYS = [
   {
+    key: 'OpticalSignal',
+    description: translator.t('popup_label_optical_signal'),
+  },
+  {
     key: 'RouterModel',
     description: translator.t('popup_label_model'),
   },
