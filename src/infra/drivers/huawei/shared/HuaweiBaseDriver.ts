@@ -404,8 +404,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
 
     const isInternet = (e: Record<string, string>) =>
       (e.ServiceList ?? '').toUpperCase().includes('INTERNET');
-    const isRouted = (e: Record<string, string>) =>
-      (e.Mode ?? '').toUpperCase().includes('ROUTED');
+    const isRouted = (e: Record<string, string>) => (e.Mode ?? '').toUpperCase().includes('ROUTED');
     const isEnabled = (e: Record<string, string>) => (e.Enable ?? '') === '1';
 
     const chosen =
@@ -661,9 +660,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
         return;
       }
 
-      const iframeName = `__huawei_form_${Date.now()}_${Math.random()
-        .toString(36)
-        .slice(2, 10)}`;
+      const iframeName = `__huawei_form_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 
       const iframe = document.createElement('iframe');
       iframe.name = iframeName;
