@@ -1,5 +1,5 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ExtractionFilter, RouterPage, RouterPageKey } from '@/application/types';
+import { ExtractionFilter, GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
@@ -86,7 +86,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     throw new Error('Method not implemented.');
   }
 
-  public override goToPage(_page: RouterPage, _key: RouterPageKey): void {
+  public override goToPage(_page: RouterPage, _key: RouterPageKey, _options?: GoToPageOptions): void {
     throw new Error('Method not implemented.');
   }
 

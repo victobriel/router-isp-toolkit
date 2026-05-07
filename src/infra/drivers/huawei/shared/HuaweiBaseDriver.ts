@@ -1,5 +1,11 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ExtractionFilter, RouterPage, RouterPageKey, RouterSelectors } from '@/application/types';
+import {
+  ExtractionFilter,
+  GoToPageOptions,
+  RouterPage,
+  RouterPageKey,
+  RouterSelectors,
+} from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import {
   Credentials,
@@ -219,7 +225,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     throw new Error('Method not implemented.');
   }
 
-  public goToPage(_page: RouterPage, _key: RouterPageKey): void {
+  public goToPage(_page: RouterPage, _key: RouterPageKey, _options?: GoToPageOptions): void {
     throw new Error('Method not implemented.');
   }
 

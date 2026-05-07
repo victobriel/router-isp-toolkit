@@ -13,7 +13,13 @@ import {
 } from '@/infra/drivers/shared/constants';
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import { ExtractionFilter, RouterPage, RouterPageKey, RouterSelectors } from '@/application/types';
+import {
+  ExtractionFilter,
+  GoToPageOptions,
+  RouterPage,
+  RouterPageKey,
+  RouterSelectors,
+} from '@/application/types';
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.
@@ -40,7 +46,7 @@ export abstract class BaseRouter implements IRouter {
   public abstract buttonElementConfig(): ButtonConfig | null;
   public abstract isAuthenticated(): boolean;
   public abstract ping(ip: string): Promise<PingTestResult | null>;
-  public abstract goToPage(page: RouterPage, key: RouterPageKey): void;
+  public abstract goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void;
   public abstract reboot(): Promise<void>;
   protected abstract goToHomePage(): boolean;
 
