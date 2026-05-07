@@ -22,6 +22,7 @@ const HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDevIn
 /** Some builds expose the same `USERDevice` list under a DHCP-specific script name. */
 const HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDhcpInfo.asp';
 const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
+const HUAWEI_LAN_INFO_ENDPOINT = '/html/bbsp/dhcpservercfg/dhcp2.asp';
 
 export {
   HUAWEI_WAN_ENDPOINT,
@@ -40,4 +41,5 @@ export {
   HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
   HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
   HUAWEI_LAN_USER_INFO_ENDPOINT,
+  HUAWEI_LAN_INFO_ENDPOINT,
 };

@@ -25,6 +25,7 @@ import {
   HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
   HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
   HUAWEI_LAN_USER_INFO_ENDPOINT,
+  HUAWEI_LAN_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
 
@@ -880,7 +881,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       | 'dhcpLeaseTimeMode'
     >
   > {
-    const raw = await this.fetch('/html/bbsp/dhcp/dhcp2.asp');
+    const raw = await this.fetch(HUAWEI_LAN_INFO_ENDPOINT);
     if (!raw) {
       return {
         dhcpEnabled: undefined,
