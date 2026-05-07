@@ -19,6 +19,8 @@ const HUAWEI_WLAN5G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?5G';
 const HUAWEI_OPTICAL_INFO_ENDPOINT = '/html/amp/opticinfo/opticinfo.asp';
 /** Scripts included by `mainpage.asp`; `GetLanUserInfo` / `USERDevice` list LAN clients. */
 const HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDevInfo.asp';
+/** Some builds expose the same `USERDevice` list under a DHCP-specific script name. */
+const HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDhcpInfo.asp';
 const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
 
 export {
@@ -36,5 +38,6 @@ export {
   HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
   HUAWEI_OPTICAL_INFO_ENDPOINT,
   HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
+  HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
   HUAWEI_LAN_USER_INFO_ENDPOINT,
 };
