@@ -13,6 +13,8 @@ import {
   HUAWEI_DIAGNOSE_PAGE_ENDPOINT,
   HUAWEI_PING_POLL_ENDPOINT,
   HUAWEI_PING_START_ENDPOINT,
+  HUAWEI_WAN_LIST_ENDPOINT,
+  HUAWEI_WAN_LIST_INFO_ENDPOINT,
 } from './HuaweiCommonDriverConstants';
 
 const REGEX_META = /[.*+?^${}()|[\]\\]/g;
@@ -127,12 +129,19 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
    * which avoids needing an iframe / DOM scrape: cookies are shared with this
    * origin and the CSRF token is harvested either from `document` (when the user
    * is on any Huawei admin page) or from a one-shot GET of the diagnose page.
+   *
+   * Interface selection matters: the firmware's TR-069 IPPingDiagnostics
+   * defaults to `br0` (the LAN bridge) when `x.Interface` is omitted, which
+   * means external IPs and hostnames silently time out (br0 has no WAN egress).
+   * For non-private targets we discover the routed INTERNET WAN from
+   * `wan_list.asp` and pin the test to it; for RFC 1918 / loopback / link-local
+   * targets we leave it unset so the LAN default keeps working.
    */
   public async ping(ip: string): Promise<PingTestResult | null> {
     const token = await this.readHuaweiCsrfToken();
     if (!token) return null;
 
-    const startBody = new URLSearchParams({
+    const params: Record<string, string> = {
       'x.Host': ip,
       'x.DiagnosticsState': 'Requested',
       'x.NumberOfRepetitions': String(HUAWEI_PING_DEFAULT_REPETITIONS),
@@ -141,7 +150,14 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
       'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
       'RUNSTATE_FLAG.value': 'START',
       'x.X_HW_Token': token,
-    }).toString();
+    };
+
+    if (!HuaweiBaseDriver.isPrivateOrLocalIPv4(ip)) {
+      const wanDomain = await this.findHuaweiInternetWanDomain();
+      if (wanDomain) params['x.Interface'] = wanDomain;
+    }
+
+    const startBody = new URLSearchParams(params).toString();
 
     const started = await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, startBody);
     if (started == null) return null;
@@ -336,6 +352,61 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     }
     const raw = await this.huaweiGet(HUAWEI_DIAGNOSE_PAGE_ENDPOINT);
     return this.matchInputValueById(raw, 'hwonttoken');
+  }
+
+  /**
+   * Discover the routed INTERNET WAN's TR-069 `domain` so `ping()` can pin
+   * external probes to the WAN side. Mirrors the WAN selection logic of
+   * `getWanState` in the EG8145V5 driver: prefer routed + INTERNET + enabled,
+   * then routed + INTERNET, then any INTERNET, else `null` (e.g. bridged
+   * mode, or `wan_list*.asp` not exposed by this firmware).
+   */
+  protected async findHuaweiInternetWanDomain(): Promise<string | null> {
+    const [info, list] = await Promise.all([
+      this.huaweiGet(HUAWEI_WAN_LIST_INFO_ENDPOINT),
+      this.huaweiGet(HUAWEI_WAN_LIST_ENDPOINT),
+    ]);
+    if (!info && !list) return null;
+    const buffer = `${info ?? ''}\n${list ?? ''}`;
+
+    const entries = [
+      ...this.parseHuaweiStructCallAll(buffer, 'WanPPP'),
+      ...this.parseHuaweiStructCallAll(buffer, 'WanIP'),
+    ];
+    if (entries.length === 0) return null;
+
+    const isInternet = (e: Record<string, string>) =>
+      (e.ServiceList ?? '').toUpperCase().includes('INTERNET');
+    const isRouted = (e: Record<string, string>) =>
+      (e.Mode ?? '').toUpperCase().includes('ROUTED');
+    const isEnabled = (e: Record<string, string>) => (e.Enable ?? '') === '1';
+
+    const chosen =
+      entries.find((e) => isInternet(e) && isRouted(e) && isEnabled(e)) ??
+      entries.find((e) => isInternet(e) && isRouted(e)) ??
+      entries.find(isInternet) ??
+      null;
+
+    const domain = chosen?.domain?.trim();
+    return domain ? domain : null;
+  }
+
+  /**
+   * RFC 1918 private + loopback + link-local (and `0.0.0.0`). Hostnames are
+   * deliberately treated as non-private because their resolution requires DNS,
+   * which on Huawei ONTs only runs on the WAN side.
+   */
+  private static isPrivateOrLocalIPv4(host: string): boolean {
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host.trim());
+    if (!m) return false;
+    const [a, b] = [Number.parseInt(m[1]!, 10), Number.parseInt(m[2]!, 10)];
+    if (a === 10) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 0) return true;
+    return false;
   }
 
   private async pollHuaweiPingResult(): Promise<{ raw: string; status: string } | null> {
