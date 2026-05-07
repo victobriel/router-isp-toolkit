@@ -219,26 +219,27 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       return t.toLowerCase().includes('dbm') ? t : `${t} dBm`;
     };
 
-    const tx = fmtPower(o.transOpticPower);
+    // const tx = fmtPower(o.transOpticPower);
     const rx = fmtPower(o.revOpticPower);
-    const link = trim(o.LinkStatus);
+    // const link = trim(o.LinkStatus);
     const parts: string[] = [];
 
-    const mode = trim(ontPonMode);
-    if (mode && mode.toLowerCase() !== 'auto') {
-      parts.push(mode.toUpperCase());
-    }
-    if (link) {
-      parts.push(link.toLowerCase() === 'ok' ? 'OK' : link);
-    }
-    if (tx) parts.push(`TX ${tx}`);
-    if (rx) parts.push(`RX ${rx}`);
+    // const mode = trim(ontPonMode);
+    // if (mode && mode.toLowerCase() !== 'auto') {
+    //   parts.push(mode.toUpperCase());
+    // }
+    // if (link) {
+    //   parts.push(link.toLowerCase() === 'ok' ? 'OK' : link);
+    // }
+    // if (tx) parts.push(`TX ${tx}`);
+    // if (rx) parts.push(`RX ${rx}`);
+    if (rx) parts.push(`${rx}`);
 
-    const txWl = trim(o.TxWaveLength);
-    const rxWl = trim(o.RxWaveLength);
-    if (txWl && rxWl && txWl !== '--' && rxWl !== '--') {
-      parts.push(`${txWl}/${rxWl} nm`);
-    }
+    // const txWl = trim(o.TxWaveLength);
+    // const rxWl = trim(o.RxWaveLength);
+    // if (txWl && rxWl && txWl !== '--' && rxWl !== '--') {
+    //   parts.push(`${txWl}/${rxWl} nm`);
+    // }
 
     return parts.join(' · ');
   }
