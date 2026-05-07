@@ -286,10 +286,16 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const parsed = this.parseAllUserDeviceRows(raw);
     const ipv4 = this.dedupeUserDevicesByDomain(
       parsed,
-      (row) => (row.IPv4Enabled ?? '').trim() === '1',
+      (row) => (row.IPv4Enabled ?? '').trim() === '1' && this.isUserDeviceOnline(row),
     );
     if (ipv4.length > 0) return ipv4;
-    return this.dedupeUserDevicesByDomain(parsed, () => true);
+    return this.dedupeUserDevicesByDomain(parsed, (row) => this.isUserDeviceOnline(row));
+  }
+
+  private isUserDeviceOnline(row: Record<string, string>): boolean {
+    const status = (row.DevStatus ?? row.devStatus ?? row.Status ?? row.status ?? '').trim();
+    if (!status) return true;
+    return status.toUpperCase() === 'ONLINE';
   }
 
   private dedupeUserDevicesByDomain(
