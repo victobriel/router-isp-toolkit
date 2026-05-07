@@ -159,7 +159,12 @@
     "message": "Logs",
     "description": "Label of Logs tab."
   },
-
+  "popup_section_optical_signal": {
+    "message": "Optical Signal"
+  },
+  "popup_label_optical_signal": {
+    "message": "Signal"
+  },
   "popup_section_wan": {
     "message": "WAN",
     "description": "WAN section title."
