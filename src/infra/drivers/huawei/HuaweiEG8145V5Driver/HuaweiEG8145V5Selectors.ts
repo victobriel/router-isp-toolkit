@@ -7,6 +7,9 @@ export const HuaweiEG8145V5Selectors = {
   password: '#txt_Password, input[name="txt_Password"]',
   submit: '#loginbutton, input[type="button"]',
 
+  // Home
+  homeTab: '#MainPage',
+
   // UPNP
   advUpnpEnabled: 'input#Enable[type="checkbox"]',
 
