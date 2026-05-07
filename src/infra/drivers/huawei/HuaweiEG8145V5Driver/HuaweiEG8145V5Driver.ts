@@ -42,6 +42,19 @@ const HUAWEI_WLAN_MODE_LABELS: Partial<Record<string, string>> = {
   '11ac': '802.11a/n/ac',
 };
 
+const HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS: Partial<Record<string, string>> = {
+  Basic: 'Open',
+  WPA: 'WPA',
+  '11i': 'WPA2',
+  WPAand11i: 'WPA/WPA2',
+};
+
+const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>> = {
+  AESEncryption: 'AES',
+  TKIPEncryption: 'TKIP',
+  TKIPandAESEncryption: 'TKIP&AES',
+};
+
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
@@ -324,8 +337,15 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
     const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
       const domain = row.domain ?? row.Domain;
+      const authenticationMode = row.BasicAuthenticationMode;
+      const encryptionMode = row.X_HW_WPAand11iEncryptionModes;
 
-      console.log(row);
+      const authModeLabel = authenticationMode
+        ? HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS[authenticationMode]
+        : undefined;
+      const encryptModeLabel = encryptionMode
+        ? HUAWEI_WLAN_ENCRYPTION_MODE_LABELS[encryptionMode]
+        : undefined;
 
       return {
         domain,
@@ -333,7 +353,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         enabled: row.enable ?? row.Enable,
         ssid: row.ssid ?? row.SSID,
         ssidHideMode: !row.wlHide,
-        wpa2SecurityType: row.BasicAuthenticationMode,
+        wpa2SecurityType: [authModeLabel, encryptModeLabel].filter(Boolean).join('-'),
         maxClients: row.DeviceNum,
       };
     });
