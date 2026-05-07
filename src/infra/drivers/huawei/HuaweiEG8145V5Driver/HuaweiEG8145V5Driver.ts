@@ -29,6 +29,11 @@ import {
   HUAWEI_LAN_USER_INFO_ENDPOINT,
   HUAWEI_LAN_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
+import {
+  assignHuaweiContentFrameSrc,
+  focusInHuaweiDocument,
+  runWhenHuaweiIframeReady,
+} from '../shared/huaweiShellNavigation';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
@@ -187,18 +192,13 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * Huawei exposes most settings as standalone ASP pages (same URLs this driver
-   * already uses for extraction). Unlike ZTE, the live admin UI often sits
-   * inside a frame shell while this extension injects only the top document and
-   * {@link DomService} only queries {@link Document#querySelector}; clicking
-   * through nested menus like `ZteBaseDriver` is brittle or impossible without
-   * `all_frames` + a rooted DOM gateway. Loading the ASP that backs each
-   * feature is reliable: it performs a normal same-origin navigation, matches
-   * how the firmware exposes routes, and reuses credentials already on the tab.
-   * Field-level focus (scroll to PPPoE, pick SSID index, etc.) is not applied
-   * here—URLs land the operator on the correct screen; deeper focus would
-   * need per-page element ids in the selector map or script access inside the
-   * content frame.
+   * Prefer loading feature ASPs into the Huawei shell’s same-origin content
+   * {@link HTMLIFrameElement} (see `docs/mainpage.asp`) instead of replacing
+   * the whole tab. When no such iframe exists (e.g. the settings page is already
+   * the top-level document), fall back to a top-level navigation.
+   *
+   * After the iframe loads, scroll/focus a control when we have a stable id from
+   * the captured Huawei HTML under `docs/` (same sources as extraction).
    */
   private navigateEg8145V5Ui(
     page: RouterPage,
@@ -206,14 +206,68 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     options?: GoToPageOptions,
   ): void {
     const path = this.resolveEg8145GoToPath(page, key, options);
-    if (!path || typeof window === 'undefined') return;
+    if (!path || typeof document === 'undefined') return;
+
+    const frame = assignHuaweiContentFrameSrc(document, path);
+    if (frame) {
+      const focusSel = HuaweiEG8145V5Driver.eg8145FocusSelector(key);
+      if (focusSel) {
+        runWhenHuaweiIframeReady(frame, (doc) => focusInHuaweiDocument(doc, focusSel));
+      }
+      return;
+    }
 
     try {
-      const top = window.top ?? window;
-      top.location.assign(path);
+      (window.top ?? window).location.assign(path);
     } catch {
-      // Best-effort only (e.g. rare embedding / policy edge cases).
+      /* noop */
     }
+  }
+
+  /**
+   * Best-effort focus targets derived from vendor HTML samples in `docs/`
+   * (`wan-example.asp`, `dhcp2-example.asp`, `WlanBasic*`, `WlanAdvance*`, …).
+   */
+  private static eg8145FocusSelector(key: RouterPageKey): string | null {
+    const m: Partial<Record<RouterPageKey, string>> = {
+      [RouterPageKey.OPTICAL_SIGNAL_STATUS]: '#amp_optinfo_titletitle',
+      [RouterPageKey.PPPOE_USERNAME]: '#UserName',
+      [RouterPageKey.INTERNET_STATUS]: '#ServiceList',
+      [RouterPageKey.TR_069_STATUS]: '#ServiceList',
+      [RouterPageKey.IP_VERSION]: '#IPv6AddressModeRow',
+      [RouterPageKey.REQUEST_PD_STATUS]: '#IPv6PrefixModeRow',
+      [RouterPageKey.SLAAC_STATUS]: '#IPv6AddressMode2',
+      [RouterPageKey.DHCPV6_STATUS]: '#IPv6AddressMode1',
+      [RouterPageKey.PD_STATUS]: '#IPv6PrefixMode1',
+      [RouterPageKey.LINK_SPEED]: '#IPv4MXU',
+      [RouterPageKey.REMOTE_ACCESS_IPV4_STATUS]: '#portaclwhite',
+      [RouterPageKey.REMOTE_ACCESS_IPV6_STATUS]: '#PortAclConfigList_tbl',
+      [RouterPageKey.DHCP_STATUS]: '#dhcpSrvType',
+      [RouterPageKey.DHCP_IP_ADDRESS]: '#ethIpAddress',
+      [RouterPageKey.DHCP_SUBNET_MASK]: '#ethSubnetMask',
+      [RouterPageKey.DHCP_START_IP]: '#mainstartipaddr',
+      [RouterPageKey.DHCP_END_IP]: '#mainendipaddr',
+      [RouterPageKey.DHCP_ISP_DNS_STATUS]: '#dnsMainPri',
+      [RouterPageKey.DHCP_PRIMARY_DNS]: '#dnsMainPri',
+      [RouterPageKey.DHCP_SECONDARY_DNS]: '#dnsMainSec',
+      [RouterPageKey.DHCP_LEASE_TIME_MODE]: '#maindhcpLeasedTimeFrag',
+      [RouterPageKey.DHCP_LEASE_TIME]: '#MainLeasedTime',
+      [RouterPageKey.TR_069_URL]: 'input#URL[type="text"]',
+      [RouterPageKey.UPNP_STATUS]: 'input#Enable[type="checkbox"]',
+      [RouterPageKey.BAND_STEERING_STATUS]: '#BandSteeringPolicy',
+      [RouterPageKey.WLAN_STATUS]: '#wlEnbl',
+      [RouterPageKey.WLAN_CHANNEL]: '#Channel',
+      [RouterPageKey.WLAN_MODE]: '#X_HW_Standard',
+      [RouterPageKey.WLAN_BANDWIDTH]: '#X_HW_HT20',
+      [RouterPageKey.WLAN_TRANSMITTING_POWER]: '#TransmitPower',
+      [RouterPageKey.WLAN_SSID_STATUS]: '#wlEnable',
+      [RouterPageKey.WLAN_SSID_NAME]: '#wlSsid',
+      [RouterPageKey.WLAN_SSID_PASSWORD]: '#wlWpaPsk',
+      [RouterPageKey.WLAN_SSID_HIDE_MODE_STATUS]: '#wlHide',
+      [RouterPageKey.WLAN_WPA2_SECURITY_TYPE]: '#wlEncryption',
+      [RouterPageKey.WLAN_MAX_CLIENTS]: '#X_HW_AssociateNum',
+    };
+    return m[key] ?? null;
   }
 
   private resolveEg8145GoToPath(
