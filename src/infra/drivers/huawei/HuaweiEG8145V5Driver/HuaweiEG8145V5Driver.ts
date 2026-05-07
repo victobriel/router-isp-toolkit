@@ -337,7 +337,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
     const wlanRows = this.parseHuaweiStructCallAll(allRaw, 'stWlan').map((row) => {
       const domain = row.domain ?? row.Domain;
-      const authenticationMode = row.BasicAuthenticationMode;
+      const authenticationMode = row.BeaconType;
       const encryptionMode = row.X_HW_WPAand11iEncryptionModes;
 
       const authModeLabel = authenticationMode
