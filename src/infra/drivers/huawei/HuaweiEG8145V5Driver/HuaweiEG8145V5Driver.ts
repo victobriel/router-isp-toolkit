@@ -903,12 +903,13 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const parseLeaseTimeMode = (leaseTimeRaw: string | undefined): string | undefined => {
       const leaseTime = Number.parseInt((leaseTimeRaw ?? '').trim(), 10);
       if (!Number.isFinite(leaseTime) || leaseTime <= 0) return undefined;
-      if (leaseTime === -1 || leaseTime === 4294967295) return 'Infinite';
-      if (leaseTime % 604800 === 0) return 'Week';
-      if (leaseTime % 86400 === 0) return 'Day';
-      if (leaseTime % 3600 === 0) return 'Hour';
-      if (leaseTime % 60 === 0) return 'Minute';
-      return undefined;
+      // if (leaseTime === -1 || leaseTime === 4294967295) return 'Infinite';
+      // if (leaseTime % 604800 === 0) return 'Week';
+      // if (leaseTime % 86400 === 0) return 'Day';
+      // if (leaseTime % 3600 === 0) return 'Hour';
+      // if (leaseTime % 60 === 0) return 'Minute';
+      // return undefined;
+      return leaseTime.toString();
     };
 
     const parseDns = (
