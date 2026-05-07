@@ -92,7 +92,8 @@
   },
   "popup_tab_reports": { "message": "Relatório" },
   "popup_tab_logs": { "message": "Logs" },
-
+  "popup_section_optical_signal": { "message": "Sinal Óptico" },
+  "popup_label_optical_signal": { "message": "Sinal" },
   "popup_section_wan": { "message": "WAN" },
   "popup_section_remote_access": { "message": "Acesso remoto" },
   "popup_section_band_steering": { "message": "Band Steering" },
