@@ -128,18 +128,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       wan: async () => this.getWanState(),
       remoteAccess: async () => this.getRemoteAccessState(),
       wlan: async () => this.getWlanState(),
-      lan: async () => {
-        return {
-          lan: undefined,
-          dhcpIpAddress: undefined,
-          dhcpSubnetMask: undefined,
-          dhcpStartIp: undefined,
-          dhcpEndIp: undefined,
-          dhcpPrimaryDns: undefined,
-          dhcpSecondaryDns: undefined,
-          dhcpLeaseTimeMode: undefined,
-        };
-      },
+      lan: async () => this.getLanState(),
       upnp: async () => this.getUpnpState(),
       tr069: async () => this.getTr069State(),
       routerInfo: async () => this.getRouterInfoState(),
@@ -295,7 +284,10 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
    */
   private collectUserDeviceRows(raw: string): Record<string, string>[] {
     const parsed = this.parseAllUserDeviceRows(raw);
-    const ipv4 = this.dedupeUserDevicesByDomain(parsed, (row) => (row.IPv4Enabled ?? '').trim() === '1');
+    const ipv4 = this.dedupeUserDevicesByDomain(
+      parsed,
+      (row) => (row.IPv4Enabled ?? '').trim() === '1',
+    );
     if (ipv4.length > 0) return ipv4;
     return this.dedupeUserDevicesByDomain(parsed, () => true);
   }
@@ -469,8 +461,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       while (pos < raw.length && /\s/.test(raw[pos]!)) pos++;
       if (pos >= raw.length) return null;
       if (raw[pos] === ')') return strings;
-      const atNull =
-        raw.startsWith('null', pos) && !/[A-Za-z0-9_$]/.test(raw[pos + 4] ?? '');
+      const atNull = raw.startsWith('null', pos) && !/[A-Za-z0-9_$]/.test(raw[pos + 4] ?? '');
       if (atNull) {
         strings.push('');
         pos += 4;
@@ -549,13 +540,16 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     return null;
   }
 
-  private formatOpticalSignalSummary(o: Record<string, string>, ontPonMode: string | null): string {
+  private formatOpticalSignalSummary(
+    o: Record<string, string>,
+    _ontPonMode: string | null,
+  ): string {
     const trim = (s: string | null | undefined) => (s ?? '').trim();
 
     const fmtPower = (v: string | undefined): string | null => {
       const t = trim(v);
       if (!t || t === '--') return null;
-      return t.toLowerCase().includes('dbm') ? t : `${t} dBm`;
+      return t.toLowerCase().includes('dbm') ? t : t;
     };
 
     // const tx = fmtPower(o.transOpticPower);
@@ -864,6 +858,84 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     return {
       remoteAccessIpv4Enabled: aclEnabled && hasHttpRule,
       remoteAccessIpv6Enabled: undefined,
+    };
+  }
+
+  private async getLanState(): Promise<
+    Pick<
+      ExtractionResult,
+      | 'dhcpEnabled'
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns'
+      | 'dhcpLeaseTimeMode'
+    >
+  > {
+    const raw = await this.fetch('/html/bbsp/dhcp/dhcp2.asp');
+    if (!raw) {
+      return {
+        dhcpEnabled: undefined,
+        dhcpIpAddress: undefined,
+        dhcpSubnetMask: undefined,
+        dhcpStartIp: undefined,
+        dhcpEndIp: undefined,
+        dhcpPrimaryDns: undefined,
+        dhcpSecondaryDns: undefined,
+        dhcpLeaseTimeMode: undefined,
+      };
+    }
+
+    const lanHostInfo = this.parseHuaweiStructCallAll(raw, 'stipaddr').find((row) =>
+      row.domain?.includes('.IPInterface.1'),
+    );
+    const dhcpMain = this.parseHuaweiStructCallAll(raw, 'dhcpmainst')[0];
+
+    const parseLeaseTimeMode = (leaseTimeRaw: string | undefined): string | undefined => {
+      const leaseTime = Number.parseInt((leaseTimeRaw ?? '').trim(), 10);
+      if (!Number.isFinite(leaseTime) || leaseTime <= 0) return undefined;
+      if (leaseTime === -1 || leaseTime === 4294967295) return 'Infinite';
+      if (leaseTime % 604800 === 0) return 'Week';
+      if (leaseTime % 86400 === 0) return 'Day';
+      if (leaseTime % 3600 === 0) return 'Hour';
+      if (leaseTime % 60 === 0) return 'Minute';
+      return undefined;
+    };
+
+    const parseDns = (
+      primaryRaw: string | undefined,
+      secondaryRaw: string | undefined,
+      mergedRaw: string | undefined,
+    ): { primary: string | undefined; secondary: string | undefined } => {
+      const merged = (mergedRaw ?? '')
+        .split(',')
+        .map((v) => v.trim())
+        .filter(Boolean);
+      const primary = (primaryRaw ?? '').trim() || merged[0];
+      const secondary = (secondaryRaw ?? '').trim() || merged[1];
+      return {
+        primary: primary || undefined,
+        secondary: secondary || undefined,
+      };
+    };
+
+    const dns = parseDns(
+      dhcpMain?.MainPriDNS,
+      dhcpMain?.MainSecDNS,
+      dhcpMain?.MainDNS ?? dhcpMain?.DNSServers,
+    );
+
+    return {
+      dhcpEnabled: dhcpMain?.enable === '1',
+      dhcpIpAddress: lanHostInfo?.ipaddr?.trim() || undefined,
+      dhcpSubnetMask: lanHostInfo?.subnetmask?.trim() || undefined,
+      dhcpStartIp: dhcpMain?.startip?.trim() || undefined,
+      dhcpEndIp: dhcpMain?.endip?.trim() || undefined,
+      dhcpPrimaryDns: dns.primary,
+      dhcpSecondaryDns: dns.secondary,
+      dhcpLeaseTimeMode: parseLeaseTimeMode(dhcpMain?.leasetime),
     };
   }
 

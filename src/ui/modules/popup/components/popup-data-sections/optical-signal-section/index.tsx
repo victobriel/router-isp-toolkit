@@ -35,7 +35,7 @@ export const OpticalSignalSection = ({
   const rows: PopupDataRowProps[] = [
     {
       label: translator.t('popup_label_optical_signal'),
-      value: val(opticalSignalData.opticalSignal),
+      value: `${val(opticalSignalData.opticalSignal)} dBm`,
       compareMatch: routerPreferencesComparison?.opticalSignal,
       handleGoToPage: () =>
         handleGoToPage(RouterPage.OPTICAL_SIGNAL, RouterPageKey.OPTICAL_SIGNAL_STATUS),
