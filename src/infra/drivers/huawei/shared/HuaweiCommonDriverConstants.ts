@@ -17,6 +17,9 @@ const HUAWEI_WLAN5G_ENDPOINT = '/html/amp/wlanbasic/WlanBasic.asp?5G';
 const HUAWEI_WLAN24G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?2G';
 const HUAWEI_WLAN5G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?5G';
 const HUAWEI_OPTICAL_INFO_ENDPOINT = '/html/amp/opticinfo/opticinfo.asp';
+/** Scripts included by `mainpage.asp`; `GetLanUserInfo` / `USERDevice` list LAN clients. */
+const HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDevInfo.asp';
+const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
 
 export {
   HUAWEI_WAN_ENDPOINT,
@@ -32,4 +35,6 @@ export {
   HUAWEI_WLAN24G_ADVANCED_ENDPOINT,
   HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
   HUAWEI_OPTICAL_INFO_ENDPOINT,
+  HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
+  HUAWEI_LAN_USER_INFO_ENDPOINT,
 };

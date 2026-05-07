@@ -22,7 +22,10 @@ import {
   HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
   HUAWEI_WLAN5G_ENDPOINT,
   HUAWEI_OPTICAL_INFO_ENDPOINT,
+  HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
+  HUAWEI_LAN_USER_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
+import type { TopologyClient } from '@/infra/drivers/shared/types';
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
 const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {
@@ -96,11 +99,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
       opticalSignal: async () => this.getOpticalSignalState(),
-      topology: async () => {
-        return {
-          topology: undefined,
-        };
-      },
+      topology: async () => this.getTopologyState(),
       wan: async () => this.getWanState(),
       remoteAccess: async () => this.getRemoteAccessState(),
       wlan: async () => this.getWlanState(),
@@ -208,6 +207,128 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       record[keys[i]] = values[i];
     }
     return record;
+  }
+
+  /**
+   * LAN / Wi-Fi client topology from the same scripts as `mainpage.asp`:
+   * {@link HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT} + {@link HUAWEI_LAN_USER_INFO_ENDPOINT}.
+   * `SetDeviceNum` splits `UserDevinfo` by `PortType` ETH vs WIFI; Wi-Fi band uses
+   * `WLANConfiguration` index (same rule as {@link getWlanState}).
+   */
+  private async getTopologyState(): Promise<Pick<ExtractionResult, 'topology'>> {
+    const [getLanUserDev, lanUserInfo] = await Promise.all([
+      this.fetch(HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT),
+      this.fetch(HUAWEI_LAN_USER_INFO_ENDPOINT),
+    ]);
+    const raw = [getLanUserDev, lanUserInfo].filter((s): s is string => !!s).join('\n');
+    if (!raw) return { topology: undefined };
+
+    const topology = this.parseTopologyFromLanUserScripts(raw);
+    return { topology: topology ?? undefined };
+  }
+
+  private parseTopologyFromLanUserScripts(raw: string): ExtractionResult['topology'] | null {
+    const rows = this.parseHuaweiStructCallAll(raw, 'USERDevice');
+    if (rows.length === 0) return null;
+
+    const cable: TopologyClient[] = [];
+    const clients24: TopologyClient[] = [];
+    const clients5: TopologyClient[] = [];
+
+    for (const row of rows) {
+      const client = this.huaweiUserDeviceRowToTopologyClient(row);
+      if (!client) continue;
+
+      const portType = (row.PortType ?? row.portType ?? '').toUpperCase();
+      if (portType === 'ETH') {
+        cable.push(client);
+      } else if (portType === 'WIFI') {
+        const domain = row.domain ?? row.Domain ?? '';
+        const wlanIdx = HuaweiEG8145V5Driver.parseHuaweiWlanConfigurationIndex(domain);
+        if (wlanIdx != null && wlanIdx >= 5) clients5.push(client);
+        else clients24.push(client);
+      }
+    }
+
+    if (cable.length === 0 && clients24.length === 0 && clients5.length === 0) return null;
+
+    return {
+      '24ghz': { clients: clients24, totalClients: clients24.length },
+      '5ghz': { clients: clients5, totalClients: clients5.length },
+      cable: { clients: cable, totalClients: cable.length },
+    };
+  }
+
+  private huaweiUserDeviceRowToTopologyClient(row: Record<string, string>): TopologyClient | null {
+    const macRaw =
+      row.PhysAddress ??
+      row.MACAddress ??
+      row.MacAddress ??
+      row.physAddress ??
+      row.mac ??
+      '';
+    const mac = HuaweiEG8145V5Driver.normalizeMac(macRaw);
+    if (!mac || !HuaweiEG8145V5Driver.COLON_MAC.test(mac)) return null;
+
+    const ip =
+      row.IPAddress?.trim() ||
+      row.IPAddr?.trim() ||
+      row.ipAddress?.trim() ||
+      row.IP?.trim() ||
+      row.ip?.trim() ||
+      '';
+
+    const host =
+      row.HostName?.trim() ||
+      row.hostname?.trim() ||
+      row.Alias?.trim() ||
+      row.DeviceName?.trim() ||
+      row.DevName?.trim() ||
+      '';
+
+    const portType = (row.PortType ?? row.portType ?? '').toUpperCase();
+    const rssiText =
+      row.RSSI?.trim() ||
+      row.Rssi?.trim() ||
+      row.rssi?.trim() ||
+      row.Signal?.trim() ||
+      row.signal?.trim() ||
+      '';
+    let signal = 0;
+    if (portType === 'WIFI' && rssiText) {
+      const m = rssiText.match(/-?\d+/);
+      if (m) signal = Number.parseInt(m[0], 10) || 0;
+    }
+
+    return {
+      name: host || mac,
+      ip,
+      mac,
+      signal,
+    };
+  }
+
+  private static readonly COLON_MAC = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
+
+  private static normalizeMac(s: string): string {
+    const t = s.replace(/-/g, ':').trim();
+    if (HuaweiEG8145V5Driver.COLON_MAC.test(t)) return t.toLowerCase();
+    const compact = t.replace(/:/g, '');
+    if (compact.length === 12 && /^[0-9A-Fa-f]{12}$/i.test(compact)) {
+      return compact
+        .toLowerCase()
+        .match(/.{1,2}/g)!
+        .join(':');
+    }
+    return t.toLowerCase();
+  }
+
+  /** Same index convention as {@link getWlanState} (`WLANConfiguration.N`). */
+  private static parseHuaweiWlanConfigurationIndex(domain: string): number | null {
+    const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
+    if (!match) return null;
+    const index = Number.parseInt(match[1], 10);
+    return Number.isNaN(index) ? null : index;
   }
 
   private formatOpticalSignalSummary(o: Record<string, string>, ontPonMode: string | null): string {
