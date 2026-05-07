@@ -138,20 +138,23 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
    * targets we leave it unset so the LAN default keeps working.
    */
   public async ping(ip: string): Promise<PingTestResult | null> {
+    // Build params in the same order webSubmitForm.addParameter calls them in
+    // OnApply, in case the firmware's parser is sensitive to ordering.
     const params: Record<string, string> = {
       'x.Host': ip,
       'x.DiagnosticsState': 'Requested',
       'x.NumberOfRepetitions': String(HUAWEI_PING_DEFAULT_REPETITIONS),
+      'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
       'x.DataBlockSize': String(HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE),
       'x.Timeout': String(HUAWEI_PING_DEFAULT_TIMEOUT_MS),
-      'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
-      'RUNSTATE_FLAG.value': 'START',
     };
 
     if (!HuaweiBaseDriver.isPrivateOrLocalIPv4(ip)) {
       const wanDomain = await this.findHuaweiInternetWanDomain();
       if (wanDomain) params['x.Interface'] = wanDomain;
     }
+
+    params['RUNSTATE_FLAG.value'] = 'START';
 
     // Token must be fetched *just before* the POST: the firmware rotates
     // onttoken on every accepted CGI write, so any cached value (DOM, prior
@@ -163,14 +166,22 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     if (!token) return null;
     params['x.X_HW_Token'] = token;
 
-    const startBody = new URLSearchParams(params).toString();
-
-    const started = await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, startBody);
+    const started = await this.submitHuaweiCgiForm(HUAWEI_PING_START_ENDPOINT, params);
     if (started == null) return null;
 
-    // complex.cgi's response is the diagnose page rendered with the rotated
-    // token already inlined, so we get the next token for free — no extra GET
-    // needed for the cancel path.
+    // Verify the firmware actually accepted the new target. complex.cgi's
+    // response is the diagnose page with the rotated state inlined as a
+    // `new PingResultClass(domain, DiagnosticsState, Interface, Host, …)`
+    // call. If `Host` doesn't match what we asked for, our POST was dropped
+    // (typical causes: stale token, CSRF/Sec-Fetch gating, or the previous
+    // test still latched). Returning null here is strictly better than
+    // polling and reporting the previous target's cached result as if it
+    // were ours.
+    const newState = this.parseHuaweiStructCall(started, 'PingResultClass');
+    if (!newState || (newState.Host ?? '') !== ip) return null;
+
+    // complex.cgi's response also carries the rotated token — capture it for
+    // the cancel path so we don't have to do another GET.
     const tokenAfterStart = this.matchInputValueById(started, 'hwonttoken') ?? token;
 
     const deadline =
@@ -191,13 +202,13 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     }
 
     if (status === 'Requested') {
-      const stopBody = new URLSearchParams({
+      const stopParams: Record<string, string> = {
         'x.Host': ip,
         // Firmware misspelling — must be sent as-is to be accepted.
         'RUNSTATE_FLAG.value': 'TERMIANL',
         'x.X_HW_Token': tokenAfterStart,
-      }).toString();
-      await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, stopBody);
+      };
+      await this.submitHuaweiCgiForm(HUAWEI_PING_START_ENDPOINT, stopParams);
     }
 
     if (!raw) return null;
@@ -616,5 +627,118 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Submit a `complex.cgi` form via a hidden iframe-targeted form, byte-for-byte
+   * the same way `webSubmitForm.submit()` does on `diagnosecommon.asp`.
+   *
+   * Why not `fetch`: some Huawei builds gate state-mutating CGIs on
+   * `Sec-Fetch-Mode: navigate`, which `fetch` cannot produce — XHR submits land
+   * with `Sec-Fetch-Mode: cors` and get silently dropped (response is the
+   * unchanged diagnose page, polling keeps replaying the previous test). A
+   * real form submit into a same-origin iframe target produces a proper
+   * navigation, including the headers the firmware expects.
+   *
+   * The iframe is sandboxed without `allow-scripts` so the response page's
+   * inline scripts (auto-pollers, `LoadFrame`, `setInterval` registrations)
+   * do not run inside the hidden iframe; we still get full `outerHTML` access
+   * via `allow-same-origin`. Form parameter order matches `OnApply` exactly.
+   */
+  private submitHuaweiCgiForm(
+    action: string,
+    params: Record<string, string>,
+  ): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (typeof document === 'undefined' || !document.body) {
+        resolve(null);
+        return;
+      }
+
+      const iframeName = `__huawei_form_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 10)}`;
+
+      const iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.setAttribute('sandbox', 'allow-forms allow-same-origin');
+      iframe.style.display = 'none';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = action;
+      form.target = iframeName;
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.style.display = 'none';
+
+      for (const [key, value] of Object.entries(params)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        try {
+          form.remove();
+        } catch {
+          /* noop */
+        }
+        try {
+          iframe.remove();
+        } catch {
+          /* noop */
+        }
+      };
+      const finish = (html: string | null) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(html);
+      };
+
+      iframe.addEventListener('load', () => {
+        if (settled) return;
+
+        // Some browsers fire `load` for the implicit about:blank document
+        // before the form's navigation completes; we want only the response.
+        let url = '';
+        try {
+          url = iframe.contentWindow?.location?.href ?? '';
+        } catch {
+          /* same-origin allowed by sandbox; defensive */
+        }
+        if (!url || url === 'about:blank') return;
+
+        let html: string | null = null;
+        try {
+          html = iframe.contentDocument?.documentElement?.outerHTML ?? null;
+        } catch {
+          html = null;
+        }
+        finish(html);
+      });
+
+      timer = setTimeout(() => finish(null), 30_000);
+
+      try {
+        form.submit();
+      } catch {
+        finish(null);
+      }
+    });
   }
 }
