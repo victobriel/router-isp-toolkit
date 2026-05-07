@@ -1,11 +1,7 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ExtractionFilter, RouterPage, RouterPageKey } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import {
-  ExtractionResult,
-  ExtractionResultSchema,
-  PingTestResult,
-} from '@/domain/schemas/validation';
+import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
 import { HuaweiK562E10Selectors } from './huaweiK562E-10Selectors';
 import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
@@ -84,10 +80,6 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       this.domService.getHTMLElement('#functioncontent', HTMLElement) != null ||
       this.domService.getHTMLElement('#name_MainPage', HTMLElement) != null;
     return !onLoginPage && hasTopFrame;
-  }
-
-  public override ping(_ip: string): Promise<PingTestResult | null> {
-    throw new Error('Method not implemented.');
   }
 
   public override reboot(): Promise<void> {

@@ -24,6 +24,19 @@ const HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDhcp
 const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
 const HUAWEI_LAN_INFO_ENDPOINT = '/html/bbsp/dhcpservercfg/dhcp2.asp';
 
+/**
+ * Diagnostics endpoints used by `ping()`. The same `complex.cgi` action +
+ * `GetPingResult.asp` poll loop is what `diagnosecommon.asp` itself uses
+ * (see `OnApply()` / `GetPingResult()` in `docs/diagnosecommon-example.asp`).
+ */
+const HUAWEI_DIAGNOSE_PAGE_ENDPOINT = '/html/bbsp/maintenance/diagnosecommon.asp';
+const HUAWEI_PING_START_ENDPOINT =
+  '/html/bbsp/maintenance/complex.cgi' +
+  '?x=InternetGatewayDevice.IPPingDiagnostics' +
+  '&RUNSTATE_FLAG=Ping' +
+  '&RequestFile=html/bbsp/maintenance/diagnosecommon.asp';
+const HUAWEI_PING_POLL_ENDPOINT = '/html/bbsp/maintenance/GetPingResult.asp';
+
 export {
   HUAWEI_WAN_ENDPOINT,
   HUAWEI_WAN_LIST_INFO_ENDPOINT,
@@ -42,4 +55,7 @@ export {
   HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
   HUAWEI_LAN_USER_INFO_ENDPOINT,
   HUAWEI_LAN_INFO_ENDPOINT,
+  HUAWEI_DIAGNOSE_PAGE_ENDPOINT,
+  HUAWEI_PING_START_ENDPOINT,
+  HUAWEI_PING_POLL_ENDPOINT,
 };

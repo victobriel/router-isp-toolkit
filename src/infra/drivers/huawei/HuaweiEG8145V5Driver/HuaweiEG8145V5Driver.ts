@@ -3,11 +3,7 @@ import { ITopologySectionParser } from '../../shared/TopologySectionParser';
 import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
 import { HuaweiEG8145V5Selectors } from './HuaweiEG8145V5Selectors';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import {
-  ExtractionResult,
-  ExtractionResultSchema,
-  PingTestResult,
-} from '@/domain/schemas/validation';
+import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ExtractionFilter, RouterPage, RouterPageKey } from '@/application/types';
 import {
   HUAWEI_INDEX_ENDPOINT,
@@ -174,10 +170,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const $homeTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
     const onLoginPage = this.isLoginPage();
     return !onLoginPage && !!$homeTab;
-  }
-
-  public override ping(ip: string): Promise<PingTestResult | null> {
-    throw new Error('Method not implemented.');
   }
 
   public override reboot(): Promise<void> {

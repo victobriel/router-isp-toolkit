@@ -4,8 +4,25 @@ import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 import { BaseRouter } from '@/infra/router/BaseRouter';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
+import {
+  HUAWEI_DIAGNOSE_PAGE_ENDPOINT,
+  HUAWEI_PING_POLL_ENDPOINT,
+  HUAWEI_PING_START_ENDPOINT,
+} from './HuaweiCommonDriverConstants';
 
 const REGEX_META = /[.*+?^${}()|[\]\\]/g;
+
+/** Mirrors `splitobj` in `diagnosecommon.asp` — separates ping body from status. */
+const HUAWEI_PING_RESULT_DELIMITER = '[@#@]';
+const HUAWEI_PING_DEFAULT_REPETITIONS = 4;
+const HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE = 56;
+const HUAWEI_PING_DEFAULT_TIMEOUT_MS = 10_000;
+const HUAWEI_PING_DEFAULT_DSCP = 0;
+const HUAWEI_PING_POLL_INTERVAL_MS = 1_000;
+const HUAWEI_PING_POLL_GRACE_MS = 5_000;
+
+/** Match a leading single- or double-quoted JS string literal (with `\xNN` escapes). */
+const HUAWEI_LEADING_JS_STRING = /^\s*"((?:\\.|[^"\\])*)"|^\s*'((?:\\.|[^'\\])*)'/;
 
 function escapeRegExp(s: string): string {
   return s.replace(REGEX_META, '\\$&');
@@ -85,8 +102,63 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     return !onLoginPage && !!$homeTab;
   }
 
-  public ping(_ip: string): Promise<PingTestResult | null> {
-    throw new Error('Method not implemented.');
+  /**
+   * Drives the IPPingDiagnostics flow at `/html/bbsp/maintenance/diagnosecommon.asp`.
+   *
+   * The page itself uses a hidden form POST to `complex.cgi?...&RUNSTATE_FLAG=Ping`
+   * to start the test and then polls `GetPingResult.asp` for a string of shape
+   * `<raw ping output>[@#@]<Status>`. We do exactly the same from the extension,
+   * which avoids needing an iframe / DOM scrape: cookies are shared with this
+   * origin and the CSRF token is harvested either from `document` (when the user
+   * is on any Huawei admin page) or from a one-shot GET of the diagnose page.
+   */
+  public async ping(ip: string): Promise<PingTestResult | null> {
+    const token = await this.readHuaweiCsrfToken();
+    if (!token) return null;
+
+    const startBody = new URLSearchParams({
+      'x.Host': ip,
+      'x.DiagnosticsState': 'Requested',
+      'x.NumberOfRepetitions': String(HUAWEI_PING_DEFAULT_REPETITIONS),
+      'x.DataBlockSize': String(HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE),
+      'x.Timeout': String(HUAWEI_PING_DEFAULT_TIMEOUT_MS),
+      'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
+      'RUNSTATE_FLAG.value': 'START',
+      'x.X_HW_Token': token,
+    }).toString();
+
+    const started = await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, startBody);
+    if (started == null) return null;
+
+    const deadline =
+      Date.now() +
+      HUAWEI_PING_DEFAULT_REPETITIONS * HUAWEI_PING_DEFAULT_TIMEOUT_MS +
+      HUAWEI_PING_POLL_GRACE_MS;
+
+    let raw = '';
+    let status = 'Requested';
+
+    while (Date.now() < deadline) {
+      await this.delay(HUAWEI_PING_POLL_INTERVAL_MS);
+      const polled = await this.pollHuaweiPingResult();
+      if (!polled) continue;
+      raw = polled.raw;
+      status = polled.status;
+      if (status !== 'Requested') break;
+    }
+
+    if (status === 'Requested') {
+      const stopBody = new URLSearchParams({
+        'x.Host': ip,
+        // Firmware misspelling — must be sent as-is to be accepted.
+        'RUNSTATE_FLAG.value': 'TERMIANL',
+        'x.X_HW_Token': token,
+      }).toString();
+      await this.huaweiPostForm(HUAWEI_PING_START_ENDPOINT, stopBody);
+    }
+
+    if (!raw) return null;
+    return this.parsePingTestResult(raw, ip);
   }
 
   public reboot(): Promise<void> {
@@ -231,5 +303,85 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     for (const match of raw.matchAll(re)) last = match as RegExpExecArray;
     if (!last) return null;
     return this.unescapeHuaweiHex(last[1] ?? last[2]);
+  }
+
+  /**
+   * Read the Huawei CSRF token (`onttoken`). Tries the live document first
+   * because the hidden input is rendered on essentially every Huawei admin
+   * page; falls back to a one-shot GET of the diagnose page so `ping()` still
+   * works when invoked from contexts without DOM access.
+   */
+  protected async readHuaweiCsrfToken(): Promise<string | null> {
+    if (typeof document !== 'undefined') {
+      for (const sel of ['#hwonttoken', '[name="onttoken"]']) {
+        const el = document.querySelector(sel);
+        if (el instanceof HTMLInputElement && el.value.trim()) return el.value.trim();
+      }
+    }
+    const raw = await this.huaweiGet(HUAWEI_DIAGNOSE_PAGE_ENDPOINT);
+    return this.matchInputValueById(raw, 'hwonttoken');
+  }
+
+  /**
+   * One ping-poll round-trip. The firmware sometimes prefixes the response
+   * with `\n" + ` (see the `data.substr(8)` trick in `GetPingResult` of the
+   * diagnose page); strip it before treating the body as a JS string literal.
+   */
+  private async pollHuaweiPingResult(): Promise<{ raw: string; status: string } | null> {
+    const body = await this.huaweiPostForm(HUAWEI_PING_POLL_ENDPOINT, '');
+    if (body == null) return null;
+
+    const trimmed = body.startsWith('\n" + ') ? body.slice(5) : body;
+    const decoded = this.decodeHuaweiJsString(trimmed);
+    if (decoded == null) return null;
+
+    const idx = decoded.indexOf(HUAWEI_PING_RESULT_DELIMITER);
+    if (idx < 0) return { raw: decoded, status: 'Requested' };
+
+    const raw = decoded.slice(0, idx);
+    const tail = decoded.slice(idx + HUAWEI_PING_RESULT_DELIMITER.length).trim();
+    const status = tail.split(/\s+/)[0] ?? '';
+    return { raw, status };
+  }
+
+  /**
+   * Decode `"…"` / `'…'` JS string literal at the start of a response without
+   * `eval` (blocked by MV3 CSP and unsafe in any case). Honors `\xNN` escapes
+   * via the existing `unescapeHuaweiHex` helper.
+   */
+  private decodeHuaweiJsString(src: string): string | null {
+    const match = HUAWEI_LEADING_JS_STRING.exec(src);
+    if (!match) return null;
+    return this.unescapeHuaweiHex(match[1] ?? match[2] ?? '');
+  }
+
+  private async huaweiGet(path: string): Promise<string | null> {
+    try {
+      const response = await fetch(path, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (!response.ok) return null;
+      return await response.text();
+    } catch {
+      return null;
+    }
+  }
+
+  private async huaweiPostForm(path: string, body: string): Promise<string | null> {
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body,
+      });
+      if (!response.ok) return null;
+      return await response.text();
+    } catch {
+      return null;
+    }
   }
 }
