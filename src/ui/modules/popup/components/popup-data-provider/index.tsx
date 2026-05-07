@@ -192,6 +192,8 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         routerPrefsForModel.routerAdminPassword,
       ),
 
+      opticalSignal: regexMatch(data.opticalSignal, routerPrefsForModel.opticalSignal),
+
       // WAN / overall features
       internetEnabled: boolMatch(data.internetEnabled, routerPrefsForModel.internetEnabled),
       tr069Enabled: boolMatch(data.tr069Enabled, routerPrefsForModel.tr069Enabled),

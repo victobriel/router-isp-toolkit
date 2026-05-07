@@ -303,6 +303,8 @@ export abstract class ZteBaseDriver extends BaseRouter {
       this.waitForElement(this.s.ipMode),
     ]);
 
+    await this.waitForInputPopulated(this.s.pppoeUsername).catch(() => {});
+
     const pppoeUsername = this.domService.getElementValue(this.s.pppoeUsername) ?? undefined;
 
     const internetEnabled = this.domService.getHTMLElement(
