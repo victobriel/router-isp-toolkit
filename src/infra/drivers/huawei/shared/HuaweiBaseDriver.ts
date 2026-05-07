@@ -1,7 +1,12 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ExtractionFilter, RouterPage, RouterPageKey, RouterSelectors } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
+import {
+  Credentials,
+  ExtractionResult,
+  PingTestResult,
+  PingTestResultSchema,
+} from '@/domain/schemas/validation';
 import { BaseRouter } from '@/infra/router/BaseRouter';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
 import {
@@ -21,8 +26,19 @@ const HUAWEI_PING_DEFAULT_DSCP = 0;
 const HUAWEI_PING_POLL_INTERVAL_MS = 1_000;
 const HUAWEI_PING_POLL_GRACE_MS = 5_000;
 
-/** Match a leading single- or double-quoted JS string literal (with `\xNN` escapes). */
-const HUAWEI_LEADING_JS_STRING = /^\s*"((?:\\.|[^"\\])*)"|^\s*'((?:\\.|[^'\\])*)'/;
+/** BusyBox `ping` reply line: `64 bytes from 1.2.3.4: seq=0 ttl=64 time=12.345 ms`. */
+const HUAWEI_PING_REPLY_LINE =
+  /^(\d+)\s+bytes\s+from\s+\S+?:\s+seq=(\d+)\s+ttl=(\d+)\s+time=([\d.]+)\s*ms/i;
+
+/** BusyBox stats: `2 packets transmitted, 2 packets received, 0% packet loss`. */
+const HUAWEI_PING_STATS_LINE =
+  /(\d+)\s+packets\s+transmitted,\s*(\d+)\s+(?:packets\s+)?received(?:[^,]*)?,\s*(\d+)%\s*packet\s*loss/i;
+
+/** BusyBox RTT: `round-trip min/avg/max = 1.234/2.345/3.456 ms`. */
+const HUAWEI_PING_RTT_LINE = /min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i;
+
+/** `PING 1.2.3.4 (1.2.3.4): 56 data bytes`. */
+const HUAWEI_PING_HEADER_LINE = /^PING\s+\S+\s+\(\S+\):\s+(\d+)\s+data\s+bytes/i;
 
 function escapeRegExp(s: string): string {
   return s.replace(REGEX_META, '\\$&');
@@ -158,7 +174,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     }
 
     if (!raw) return null;
-    return this.parsePingTestResult(raw, ip);
+    return this.parseHuaweiPingResult(raw, ip);
   }
 
   public reboot(): Promise<void> {
@@ -322,17 +338,11 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     return this.matchInputValueById(raw, 'hwonttoken');
   }
 
-  /**
-   * One ping-poll round-trip. The firmware sometimes prefixes the response
-   * with `\n" + ` (see the `data.substr(8)` trick in `GetPingResult` of the
-   * diagnose page); strip it before treating the body as a JS string literal.
-   */
   private async pollHuaweiPingResult(): Promise<{ raw: string; status: string } | null> {
     const body = await this.huaweiPostForm(HUAWEI_PING_POLL_ENDPOINT, '');
     if (body == null) return null;
 
-    const trimmed = body.startsWith('\n" + ') ? body.slice(5) : body;
-    const decoded = this.decodeHuaweiJsString(trimmed);
+    const decoded = this.decodeHuaweiPingExpression(body);
     if (decoded == null) return null;
 
     const idx = decoded.indexOf(HUAWEI_PING_RESULT_DELIMITER);
@@ -345,14 +355,156 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   /**
-   * Decode `"…"` / `'…'` JS string literal at the start of a response without
-   * `eval` (blocked by MV3 CSP and unsafe in any case). Honors `\xNN` escapes
-   * via the existing `unescapeHuaweiHex` helper.
+   * Decode the JS expression returned by `GetPingResult.asp`. The body is a
+   * concatenation of one or more single- or double-quoted string literals
+   * separated by `+` and whitespace, e.g.
+   *
+   *     "PING 1.2.3.4 ...\n" +
+   *     "64 bytes from 1.2.3.4: ... ms\n"
+   *     + "[@#@]Complete";
+   *
+   * The original page does `eval(data)`; we walk literals manually because MV3
+   * extensions cannot `eval`. Supports `\xNN`, `\uNNNN`, and the standard
+   * single-char escapes (`\n`, `\r`, `\t`, `\\`, `\"`, `\'`, …). Any leading
+   * non-quote bytes are skipped so the `data.substr(8)` workaround inside
+   * `GetPingResult` (firmware occasionally emits `\n\n" + ` style preambles)
+   * isn't needed.
    */
-  private decodeHuaweiJsString(src: string): string | null {
-    const match = HUAWEI_LEADING_JS_STRING.exec(src);
-    if (!match) return null;
-    return this.unescapeHuaweiHex(match[1] ?? match[2] ?? '');
+  private decodeHuaweiPingExpression(src: string): string | null {
+    let pos = 0;
+    while (pos < src.length && src[pos] !== '"' && src[pos] !== "'") pos++;
+
+    const parts: string[] = [];
+    while (pos < src.length) {
+      if (parts.length > 0) {
+        while (pos < src.length && /[\s+;]/.test(src[pos]!)) pos++;
+        if (pos >= src.length) break;
+      }
+
+      const quote = src[pos];
+      if (quote !== '"' && quote !== "'") {
+        return parts.length > 0 ? parts.join('') : null;
+      }
+
+      let i = pos + 1;
+      let chunk = '';
+      let closed = false;
+      while (i < src.length) {
+        const c = src[i]!;
+        if (c === '\\') {
+          if (i + 1 >= src.length) return null;
+          chunk += HuaweiBaseDriver.decodeJsEscape(src, i);
+          i += src[i + 1] === 'x' ? 4 : src[i + 1] === 'u' ? 6 : 2;
+        } else if (c === quote) {
+          closed = true;
+          break;
+        } else {
+          chunk += c;
+          i++;
+        }
+      }
+      if (!closed) return null;
+      parts.push(chunk);
+      pos = i + 1;
+    }
+
+    return parts.length > 0 ? parts.join('') : null;
+  }
+
+  /** Decode a single `\…` escape starting at `src[i]` (which must be `\`). */
+  private static decodeJsEscape(src: string, i: number): string {
+    const next = src[i + 1]!;
+    if (next === 'x') {
+      const hex = src.slice(i + 2, i + 4);
+      if (!/^[0-9a-fA-F]{2}$/.test(hex)) return next;
+      return String.fromCharCode(Number.parseInt(hex, 16));
+    }
+    if (next === 'u') {
+      const hex = src.slice(i + 2, i + 6);
+      if (!/^[0-9a-fA-F]{4}$/.test(hex)) return next;
+      return String.fromCharCode(Number.parseInt(hex, 16));
+    }
+    switch (next) {
+      case 'n':
+        return '\n';
+      case 'r':
+        return '\r';
+      case 't':
+        return '\t';
+      case 'b':
+        return '\b';
+      case 'f':
+        return '\f';
+      case 'v':
+        return '\v';
+      case '0':
+        return '\0';
+      default:
+        return next;
+    }
+  }
+
+  /**
+   * Parse Huawei/BusyBox-style ping output into `PingTestResult`. Differs from
+   * `BaseRouter.parsePingTestResult` (which targets ZTE/Windows-style replies):
+   *
+   *     PING 1.2.3.4 (1.2.3.4): 56 data bytes
+   *     64 bytes from 1.2.3.4: seq=0 ttl=64 time=12.345 ms
+   *     ...
+   *     --- 1.2.3.4 ping statistics ---
+   *     2 packets transmitted, 2 packets received, 0% packet loss
+   *     round-trip min/avg/max = 12.345/13.456/14.567 ms
+   *
+   * Mid-test buffers (status `Requested`) lack the trailing stats/RTT block, so
+   * those fields are intentionally optional and left undefined when absent.
+   */
+  protected parseHuaweiPingResult(raw: string, ip: string): PingTestResult | null {
+    const lines = raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    let bytes: number | undefined;
+    let ttl: number | undefined;
+    const times: number[] = [];
+    const sequences: number[] = [];
+
+    for (const line of lines) {
+      const headerMatch = HUAWEI_PING_HEADER_LINE.exec(line);
+      if (headerMatch) {
+        bytes = Number.parseInt(headerMatch[1]!, 10);
+        continue;
+      }
+      const replyMatch = HUAWEI_PING_REPLY_LINE.exec(line);
+      if (replyMatch) {
+        bytes = Number.parseInt(replyMatch[1]!, 10);
+        sequences.push(Number.parseInt(replyMatch[2]!, 10));
+        ttl = Number.parseInt(replyMatch[3]!, 10);
+        times.push(Number.parseFloat(replyMatch[4]!));
+      }
+    }
+
+    const statsLine = lines.find((line) => HUAWEI_PING_STATS_LINE.test(line));
+    const statsMatch = statsLine ? HUAWEI_PING_STATS_LINE.exec(statsLine) : null;
+    const transmitted = statsMatch ? Number.parseInt(statsMatch[1]!, 10) : undefined;
+    const received = statsMatch ? Number.parseInt(statsMatch[2]!, 10) : undefined;
+    const loss = statsMatch ? Number.parseInt(statsMatch[3]!, 10) : undefined;
+
+    const rttLine = lines.find((line) => HUAWEI_PING_RTT_LINE.test(line));
+    const rttMatch = rttLine ? HUAWEI_PING_RTT_LINE.exec(rttLine) : null;
+    const min = rttMatch ? Number.parseFloat(rttMatch[1]!) : undefined;
+    const avg = rttMatch ? Number.parseFloat(rttMatch[2]!) : undefined;
+    const max = rttMatch ? Number.parseFloat(rttMatch[3]!) : undefined;
+
+    return PingTestResultSchema.parse({
+      ip,
+      bytes,
+      time: times.length > 0 ? times : undefined,
+      sequence: sequences.length > 0 ? sequences : undefined,
+      ttl,
+      packets: { transmitted, received, loss, min, avg, max },
+      message: raw,
+    });
   }
 
   private async huaweiGet(path: string): Promise<string | null> {
