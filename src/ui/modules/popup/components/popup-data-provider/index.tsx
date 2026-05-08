@@ -219,6 +219,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       tr069Url: regexMatch(data.tr069Url, routerPrefsForModel.tr069Url),
       pppoeUsername: regexMatch(data.pppoeUsername, routerPrefsForModel.pppoeUsername),
       ipVersion: regexMatch(data.ipVersion, routerPrefsForModel.ipVersion),
+      ipAcquisitionMode: regexMatch(
+        data.ipAcquisitionMode,
+        routerPrefsForModel.ipAcquisitionMode,
+      ),
 
       // DHCP
       dhcpEnabled: boolMatch(data.dhcpEnabled, routerPrefsForModel.dhcpEnabled),
@@ -550,6 +554,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       TR069Status: boolText(data.tr069Enabled),
       PPPoEUsername: asText(data.pppoeUsername),
       IpVersion: asText(data.ipVersion),
+      IpAcquisitionMode: asText(data.ipAcquisitionMode),
       LinkMode: asText(data.linkSpeed),
       RequestPdStatus: boolText(data.requestPdEnabled),
       SlaacStatus: boolText(data.slaacEnabled),

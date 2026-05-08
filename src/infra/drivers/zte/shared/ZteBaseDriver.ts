@@ -282,6 +282,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | 'tr069Enabled'
       | 'pppoeUsername'
       | 'ipVersion'
+      | 'ipAcquisitionMode'
       | 'requestPdEnabled'
       | 'slaacEnabled'
       | 'dhcpv6Enabled'
@@ -335,6 +336,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       tr069Enabled,
       pppoeUsername,
       ipVersion,
+      ipAcquisitionMode: undefined,
       requestPdEnabled,
       slaacEnabled,
       dhcpv6Enabled,
@@ -860,6 +862,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       case RouterPageKey.INTERNET_STATUS:
       case RouterPageKey.TR_069_STATUS:
       case RouterPageKey.IP_VERSION:
+      case RouterPageKey.IPV6_IP_ACQUISITION_MODE:
       case RouterPageKey.REQUEST_PD_STATUS:
       case RouterPageKey.SLAAC_STATUS:
       case RouterPageKey.DHCPV6_STATUS:
@@ -951,6 +954,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       | RouterPageKey.INTERNET_STATUS
       | RouterPageKey.TR_069_STATUS
       | RouterPageKey.IP_VERSION
+      | RouterPageKey.IPV6_IP_ACQUISITION_MODE
       | RouterPageKey.REQUEST_PD_STATUS
       | RouterPageKey.SLAAC_STATUS
       | RouterPageKey.DHCPV6_STATUS
@@ -961,6 +965,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       [RouterPageKey.INTERNET_STATUS]: this.s.serviceListInternet,
       [RouterPageKey.TR_069_STATUS]: this.s.serviceListTr069,
       [RouterPageKey.IP_VERSION]: this.s.ipMode,
+      [RouterPageKey.IPV6_IP_ACQUISITION_MODE]: this.s.ipv6IpAcquisitionMode,
       [RouterPageKey.REQUEST_PD_STATUS]: this.s.requestPd,
       [RouterPageKey.SLAAC_STATUS]: this.s.slaac,
       [RouterPageKey.DHCPV6_STATUS]: this.s.dhcpv6,
@@ -972,6 +977,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
       [RouterPageKey.INTERNET_STATUS]: DomTargetAction.FOCUS,
       [RouterPageKey.TR_069_STATUS]: DomTargetAction.FOCUS,
       [RouterPageKey.IP_VERSION]: DomTargetAction.FOCUS,
+      [RouterPageKey.IPV6_IP_ACQUISITION_MODE]: DomTargetAction.FOCUS,
       [RouterPageKey.REQUEST_PD_STATUS]: DomTargetAction.FOCUS,
       [RouterPageKey.SLAAC_STATUS]: DomTargetAction.FOCUS,
       [RouterPageKey.DHCPV6_STATUS]: DomTargetAction.FOCUS,

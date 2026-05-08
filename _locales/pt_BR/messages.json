@@ -204,6 +204,7 @@
 
   "popup_label_ethernet_mode": { "message": "Modo" },
   "popup_label_ip_version": { "message": "Versão IP" },
+  "popup_label_ip_acquisition_mode": { "message": "Modo de obtenção de IP IPv6" },
   "popup_label_dhcpv6_status": { "message": "DHCPv6" },
   "popup_label_dhcpv6_status_settings": { "message": "Status do DHCPv6 (ativo/inativo)" },
   "popup_label_pd_status": { "message": "PD" },

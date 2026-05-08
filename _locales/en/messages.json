@@ -320,6 +320,7 @@
 
   "popup_label_ethernet_mode": { "message": "Mode" },
   "popup_label_ip_version": { "message": "IP Version" },
+  "popup_label_ip_acquisition_mode": { "message": "IPv6 IP acquisition mode" },
   "popup_label_dhcpv6_status": { "message": "DHCPv6" },
   "popup_label_dhcpv6_status_settings": { "message": "DHCPv6 status (enabled/disabled)" },
   "popup_label_pd_status": { "message": "PD" },

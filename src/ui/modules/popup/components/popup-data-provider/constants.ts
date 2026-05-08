@@ -36,6 +36,10 @@ export const COPY_TEXT_VALUE_KEYS = [
     description: translator.t('popup_label_ip_version'),
   },
   {
+    key: 'IpAcquisitionMode',
+    description: translator.t('popup_label_ip_acquisition_mode'),
+  },
+  {
     key: 'LinkMode',
     description: translator.t('popup_label_link_mode'),
   },

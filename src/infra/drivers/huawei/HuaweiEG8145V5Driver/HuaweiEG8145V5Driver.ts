@@ -114,6 +114,22 @@ const HUAWEI_ST_OPTIC_INFO_KEYS_16 = [
 /** Same literal pattern as {@link HuaweiBaseDriver}'s `parseHuaweiStructCall`. */
 const HUAWEI_JS_STRING_LITERAL = /"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g;
 
+/**
+ * `wan.asp` IP acquisition radios — `value` on `#IPv6AddressMode1`…`4` → visible label
+ * (`docs/wan-example.asp`).
+ */
+const HUAWEI_IPV6_ADDRESS_MODE_LABEL: Record<string, string> = {
+  DHCPV6: 'DHCPv6',
+  AUTOCONFIGURED: 'Automatic',
+  STATIC: 'Static',
+  NONE: 'None',
+};
+
+function huaweiIpv6AddressModeLabel(raw: string): string | undefined {
+  const key = raw.trim().toUpperCase();
+  return HUAWEI_IPV6_ADDRESS_MODE_LABEL[key];
+}
+
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
@@ -578,6 +594,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       | 'internetEnabled'
       | 'pppoeUsername'
       | 'ipVersion'
+      | 'ipAcquisitionMode'
       | 'requestPdEnabled'
       | 'slaacEnabled'
       | 'dhcpv6Enabled'
@@ -589,6 +606,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       internetEnabled: undefined,
       pppoeUsername: undefined,
       ipVersion: undefined,
+      ipAcquisitionMode: undefined,
       requestPdEnabled: undefined,
       slaacEnabled: undefined,
       dhcpv6Enabled: undefined,
@@ -657,6 +675,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     let slaacEnabled: boolean | undefined;
     let pdEnabled: boolean | undefined;
     let requestPdEnabled: boolean | undefined;
+    let ipAcquisitionMode: string | undefined;
 
     if (data.IPv6Enable !== '1') {
       dhcpv6Enabled = false;
@@ -675,9 +694,17 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       }
 
       let prefixItem: Record<string, string> | undefined;
+      let addressItem: Record<string, string> | undefined;
       if (addressAcquire && data.domain) {
         const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
         prefixItem = prefixItems.find(
+          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+        );
+        const addressItems = [
+          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquireIPItem'),
+          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquirePPPItem'),
+        ];
+        addressItem = addressItems.find(
           (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
         );
         const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
@@ -689,6 +716,15 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           prefixOrigin === 'ROUTERADVERTISEMENT';
       }
 
+      // wan.asp `#IPv6AddressMode1`…`4` — map `d.IPv6AddressMode` / acquire `_Origin` to UI labels.
+      const ipv6AddressModeRaw =
+        (data.IPv6AddressMode?.trim() || '') || (addressItem?._Origin?.trim() || '');
+      if (ipv6AddressModeRaw !== '') {
+        const label = huaweiIpv6AddressModeLabel(ipv6AddressModeRaw);
+        if (label !== undefined) {
+          ipAcquisitionMode = label;
+        }
+      }
       // wan.asp `#IPv6PrefixMode1` → `PrefixDelegation` / DHCPv6-PD (`wan_list` ← PrefixAcquireItem).
       const ipv6PrefixModeRaw =
         (data.IPv6PrefixMode?.trim() || '') || (prefixItem?._Origin?.trim() || '');
@@ -702,6 +738,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       internetEnabled,
       pppoeUsername,
       ipVersion,
+      ipAcquisitionMode,
       requestPdEnabled,
       slaacEnabled,
       dhcpv6Enabled,

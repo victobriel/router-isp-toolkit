@@ -47,6 +47,12 @@ export function OtherAccordionItem({ localPrefs, setLocalPrefs }: Props) {
             onChange={(v) => setLocalPrefs((p) => ({ ...p, ipVersion: v }))}
             dataField="ipVersion"
           />
+          <TextPref
+            label={translator.t('popup_label_ip_acquisition_mode')}
+            value={localPrefs.ipAcquisitionMode ?? ''}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, ipAcquisitionMode: v }))}
+            dataField="ipAcquisitionMode"
+          />
         </div>
         <div className="flex flex-col gap-3">
           <BoolSelectPref

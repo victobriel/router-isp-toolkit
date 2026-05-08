@@ -20,6 +20,7 @@ export type RouterPreferencesComparison = {
   tr069Url?: boolean;
   pppoeUsername?: boolean;
   ipVersion?: boolean;
+  ipAcquisitionMode?: boolean;
 
   // DHCP
   dhcpEnabled?: boolean;

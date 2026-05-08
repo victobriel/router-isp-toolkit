@@ -29,6 +29,7 @@ const extractionRouterFields = routerStateShape({
   linkSpeed: z.string(),
   pppoeUsername: z.string(),
   ipVersion: z.string(),
+  ipAcquisitionMode: z.string(),
   tr069Url: z.string(),
   wlan24GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),
   wlan5GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),

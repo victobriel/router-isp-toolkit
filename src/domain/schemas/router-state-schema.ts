@@ -46,6 +46,7 @@ export function routerStateShape<
   TPppoe extends z.ZodType,
   TLinkSpeed extends z.ZodType,
   TIpVersion extends z.ZodType,
+  TIpAcquisitionMode extends z.ZodType,
   TTr069 extends z.ZodType,
   TWlan24Ssids extends z.ZodType,
   TWlan5Ssids extends z.ZodType,
@@ -63,6 +64,7 @@ export function routerStateShape<
   pppoeUsername: TPppoe;
   linkSpeed: TLinkSpeed;
   ipVersion: TIpVersion;
+  ipAcquisitionMode: TIpAcquisitionMode;
   tr069Url: TTr069;
   wlan24GhzSsids: TWlan24Ssids;
   wlan5GhzSsids: TWlan5Ssids;
@@ -100,6 +102,7 @@ export function routerStateShape<
     routerAdminPassword: params.routerAdminPassword,
     pppoeUsername: params.pppoeUsername,
     ipVersion: params.ipVersion,
+    ipAcquisitionMode: params.ipAcquisitionMode,
     tr069Url: params.tr069Url,
 
     wlan24GhzConfig: params.wlanConfig,

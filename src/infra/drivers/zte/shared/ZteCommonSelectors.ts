@@ -30,6 +30,8 @@ export const ZteCommonSelectors = {
   serviceListTr069: '#Servlist_TR069\\:0',
   pppoeUsername: '#UserName\\:0, [id="UserName:0"], [name="UserName:0"], input[name*="UserName"]',
   ipMode: '#IpMode\\:0, [id="IpMode:0"], [name="IpMode:0"], select[name*="IpMode"]',
+  /** Huawei `wan.asp` — ZTE may omit (go-to-page best-effort). */
+  ipv6IpAcquisitionMode: '#IPv6AddressMode2',
   requestPd: '#IsPD1\\:0',
   slaac: '#IsSLAAC\\:0',
   dhcpv6: '#IsGUA\\:0',

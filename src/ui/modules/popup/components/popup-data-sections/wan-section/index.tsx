@@ -36,6 +36,7 @@ export const WanSection = ({
     tr069Enabled: data.tr069Enabled,
     linkSpeed: data.linkSpeed,
     ipVersion: data.ipVersion,
+    ipAcquisitionMode: data.ipAcquisitionMode,
     requestPdEnabled: data.requestPdEnabled,
     slaacEnabled: data.slaacEnabled,
     dhcpv6Enabled: data.dhcpv6Enabled,
@@ -83,6 +84,14 @@ export const WanSection = ({
   ];
   if (data.ipVersion?.includes('6')) {
     rows.push(
+      {
+        label: translator.t('popup_label_ip_acquisition_mode'),
+        compareMatch: routerPreferencesComparison?.ipAcquisitionMode,
+        value: val(wanData.ipAcquisitionMode),
+        handleGoToPage: rowGo(() =>
+          handleGoToPage(RouterPage.WAN, RouterPageKey.IPV6_IP_ACQUISITION_MODE),
+        ),
+      },
       {
         label: translator.t('popup_label_request_pd'),
         compareMatch: routerPreferencesComparison?.requestPdEnabled,
