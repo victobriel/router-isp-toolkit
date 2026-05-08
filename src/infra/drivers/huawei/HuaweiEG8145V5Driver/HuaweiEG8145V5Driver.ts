@@ -656,10 +656,12 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     let dhcpv6Enabled: boolean | undefined;
     let slaacEnabled: boolean | undefined;
     let pdEnabled: boolean | undefined;
+    let requestPdEnabled: boolean | undefined;
 
     if (data.IPv6Enable !== '1') {
       dhcpv6Enabled = false;
       pdEnabled = false;
+      requestPdEnabled = false;
     } else {
       const lanAddressRaw = await this.fetch(HUAWEI_IPV6_INFO_ENDPOINT);
       const raConfig = this.parseHuaweiStructCall(lanAddressRaw, 'RaConfigInfoClass');
@@ -672,9 +674,10 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         dhcpv6Enabled = otherConfigFlag === '1';
       }
 
+      let prefixItem: Record<string, string> | undefined;
       if (addressAcquire && data.domain) {
         const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
-        const prefixItem = prefixItems.find(
+        prefixItem = prefixItems.find(
           (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
         );
         const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
@@ -685,13 +688,21 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
           prefixOrigin === 'AUTOCONFIGURED' ||
           prefixOrigin === 'ROUTERADVERTISEMENT';
       }
+
+      // wan.asp `#IPv6PrefixMode1` → `PrefixDelegation` / DHCPv6-PD (`wan_list` ← PrefixAcquireItem).
+      const ipv6PrefixModeRaw =
+        (data.IPv6PrefixMode?.trim() || '') || (prefixItem?._Origin?.trim() || '');
+      if (ipv6PrefixModeRaw !== '') {
+        const u = ipv6PrefixModeRaw.toUpperCase();
+        requestPdEnabled = u === 'PREFIXDELEGATION' || u === 'DHCPV6-PD';
+      }
     }
 
     return {
       internetEnabled,
       pppoeUsername,
       ipVersion,
-      requestPdEnabled: undefined,
+      requestPdEnabled,
       slaacEnabled,
       dhcpv6Enabled,
       pdEnabled,
@@ -860,6 +871,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     Pick<
       ExtractionResult,
       | 'dhcpEnabled'
+      | 'dhcpRelayStatus'
       | 'dhcpIpAddress'
       | 'dhcpSubnetMask'
       | 'dhcpStartIp'
@@ -873,6 +885,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     if (!raw) {
       return {
         dhcpEnabled: undefined,
+        dhcpRelayStatus: undefined,
         dhcpIpAddress: undefined,
         dhcpSubnetMask: undefined,
         dhcpStartIp: undefined,
@@ -925,6 +938,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
     return {
       dhcpEnabled: dhcpMain?.enable === '1',
+      dhcpRelayStatus: dhcpMain?.l2relayenable === '1',
       dhcpIpAddress: lanHostInfo?.ipaddr?.trim() || undefined,
       dhcpSubnetMask: lanHostInfo?.subnetmask?.trim() || undefined,
       dhcpStartIp: dhcpMain?.startip?.trim() || undefined,

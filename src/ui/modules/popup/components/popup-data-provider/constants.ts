@@ -128,6 +128,10 @@ export const COPY_TEXT_VALUE_KEYS = [
     description: translator.t('popup_label_dhcp_status'),
   },
   {
+    key: 'DhcpRelayStatus',
+    description: translator.t('popup_label_dhcp_l2_relay_status'),
+  },
+  {
     key: 'DhcpIpAddress',
     description: translator.t('popup_label_dhcp_ip_address'),
   },

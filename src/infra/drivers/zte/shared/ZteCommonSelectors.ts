@@ -119,6 +119,8 @@ export const ZteCommonSelectors = {
   lanContainer: '#lanConfig',
   dhcpServerContainer: '#DHCPBasicCfgBar',
   dhcpEnabled: '#ServerEnable1',
+  /** Huawei-style id when present; ZTE may omit (go-to-page best-effort). */
+  dhcpL2Relay: '#dhcpL2relay',
   dhcpIpAddressField1: "input[id^='sub_IPAddr0:DHCPBasicCfg']",
   dhcpIpAddressField2: "input[id^='sub_IPAddr1:DHCPBasicCfg']",
   dhcpIpAddressField3: "input[id^='sub_IPAddr2:DHCPBasicCfg']",

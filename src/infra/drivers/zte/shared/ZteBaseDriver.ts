@@ -466,6 +466,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     Pick<
       ExtractionResult,
       | 'dhcpEnabled'
+      | 'dhcpRelayStatus'
       | 'dhcpIpAddress'
       | 'dhcpSubnetMask'
       | 'dhcpStartIp'
@@ -534,6 +535,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
     return {
       dhcpEnabled,
+      dhcpRelayStatus: undefined,
       dhcpIpAddress,
       dhcpSubnetMask,
       dhcpStartIp,
@@ -884,6 +886,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
           targetSelector: this.s.ipv6RemoteAccessToggle,
         };
       case RouterPageKey.DHCP_STATUS:
+      case RouterPageKey.DHCP_L2_RELAY_STATUS:
       case RouterPageKey.DHCP_IP_ADDRESS:
       case RouterPageKey.DHCP_SUBNET_MASK:
       case RouterPageKey.DHCP_START_IP:
@@ -985,6 +988,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
   private planDhcpField(
     key:
       | RouterPageKey.DHCP_STATUS
+      | RouterPageKey.DHCP_L2_RELAY_STATUS
       | RouterPageKey.DHCP_IP_ADDRESS
       | RouterPageKey.DHCP_SUBNET_MASK
       | RouterPageKey.DHCP_START_IP
@@ -997,6 +1001,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
   ): GoToPagePlan {
     const targetByKey = {
       [RouterPageKey.DHCP_STATUS]: this.s.dhcpEnabled,
+      [RouterPageKey.DHCP_L2_RELAY_STATUS]: this.s.dhcpL2Relay,
       [RouterPageKey.DHCP_IP_ADDRESS]: this.s.dhcpIpAddressField1,
       [RouterPageKey.DHCP_SUBNET_MASK]: this.s.dhcpSubnetMaskField1,
       [RouterPageKey.DHCP_START_IP]: this.s.dhcpStartIpField1,
@@ -1010,6 +1015,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
     const targetActionByKey = {
       [RouterPageKey.DHCP_STATUS]: DomTargetAction.FOCUS,
+      [RouterPageKey.DHCP_L2_RELAY_STATUS]: DomTargetAction.FOCUS,
       [RouterPageKey.DHCP_IP_ADDRESS]: DomTargetAction.FOCUS,
       [RouterPageKey.DHCP_SUBNET_MASK]: DomTargetAction.FOCUS,
       [RouterPageKey.DHCP_START_IP]: DomTargetAction.FOCUS,

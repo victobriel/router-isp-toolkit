@@ -261,6 +261,7 @@
     "message": "Total de clientes — Wi-Fi e Ethernet (quantidade)"
   },
   "popup_label_dhcp_status": { "message": "Status do servidor DHCP" },
+  "popup_label_dhcp_l2_relay_status": { "message": "DHCP relay" },
   "popup_label_dhcp_ip_address": { "message": "Endereço IP da LAN (DHCP)" },
   "popup_label_dhcp_subnet_mask": { "message": "Máscara de sub-rede (DHCP)" },
   "popup_label_dhcp_start_ip": { "message": "IP inicial do pool DHCP" },

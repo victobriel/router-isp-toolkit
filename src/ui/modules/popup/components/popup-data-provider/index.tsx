@@ -222,6 +222,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
 
       // DHCP
       dhcpEnabled: boolMatch(data.dhcpEnabled, routerPrefsForModel.dhcpEnabled),
+      dhcpRelayStatus: boolMatch(data.dhcpRelayStatus, routerPrefsForModel.dhcpRelayStatus),
       dhcpIpAddress: regexMatch(data.dhcpIpAddress, routerPrefsForModel.dhcpIpAddress),
       dhcpSubnetMask: regexMatch(data.dhcpSubnetMask, routerPrefsForModel.dhcpSubnetMask),
       dhcpStartIp: regexMatch(data.dhcpStartIp, routerPrefsForModel.dhcpStartIp),
@@ -577,6 +578,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
         ),
       ),
       DhcpStatus: boolText(data.dhcpEnabled),
+      DhcpRelayStatus: boolText(data.dhcpRelayStatus),
       DhcpIpAddress: asText(data.dhcpIpAddress),
       DhcpSubnetMask: asText(data.dhcpSubnetMask),
       DhcpStartIp: asText(data.dhcpStartIp),

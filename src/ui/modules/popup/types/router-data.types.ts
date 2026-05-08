@@ -23,6 +23,7 @@ export type RouterPreferencesComparison = {
 
   // DHCP
   dhcpEnabled?: boolean;
+  dhcpRelayStatus?: boolean;
   dhcpIpAddress?: boolean;
   dhcpSubnetMask?: boolean;
   dhcpStartIp?: boolean;

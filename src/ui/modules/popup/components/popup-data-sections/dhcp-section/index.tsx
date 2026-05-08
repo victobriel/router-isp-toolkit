@@ -31,6 +31,7 @@ export const DhcpSection = ({
 
   const dhcpData = {
     enabled: data.dhcpEnabled,
+    dhcpRelayStatus: data.dhcpRelayStatus,
     ipAddress: data.dhcpIpAddress,
     subnetMask: data.dhcpSubnetMask,
     startIp: data.dhcpStartIp,
@@ -54,6 +55,14 @@ export const DhcpSection = ({
       compareMatch: routerPreferencesComparison?.dhcpEnabled,
       value: dhcpData.enabled,
       handleGoToPage: rowGo(() => handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_STATUS)),
+    },
+    {
+      label: translator.t('popup_label_dhcp_l2_relay_status'),
+      compareMatch: routerPreferencesComparison?.dhcpRelayStatus,
+      value: dhcpData.dhcpRelayStatus,
+      handleGoToPage: rowGo(() =>
+        handleGoToPage(RouterPage.DHCP, RouterPageKey.DHCP_L2_RELAY_STATUS),
+      ),
     },
     {
       label: translator.t('popup_label_ip_address'),

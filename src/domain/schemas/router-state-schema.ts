@@ -90,6 +90,7 @@ export function routerStateShape<
     remoteAccessIpv4Enabled: z.boolean(),
     remoteAccessIpv6Enabled: z.boolean(),
     dhcpEnabled: z.boolean(),
+    dhcpRelayStatus: z.boolean(),
     dhcpIspDnsEnabled: z.boolean(),
     routerVersion: z.string(),
     dhcpLeaseTime: z.string(),

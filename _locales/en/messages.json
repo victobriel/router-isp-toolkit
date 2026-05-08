@@ -373,6 +373,7 @@
     "message": "Total clients — Wi-Fi and Ethernet (count)"
   },
   "popup_label_dhcp_status": { "message": "DHCP server status" },
+  "popup_label_dhcp_l2_relay_status": { "message": "DHCP Relay" },
   "popup_label_dhcp_ip_address": { "message": "DHCP LAN IP address" },
   "popup_label_dhcp_subnet_mask": { "message": "DHCP subnet mask" },
   "popup_label_dhcp_start_ip": { "message": "DHCP pool start IP" },

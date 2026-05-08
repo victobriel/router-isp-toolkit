@@ -152,6 +152,7 @@ export enum RouterPageKey {
 
   // DHCP
   DHCP_STATUS = 'dhcp_status',
+  DHCP_L2_RELAY_STATUS = 'dhcp_l2_relay_status',
   DHCP_IP_ADDRESS = 'dhcp_ip_address',
   DHCP_SUBNET_MASK = 'dhcp_subnet_mask',
   DHCP_START_IP = 'dhcp_start_ip',

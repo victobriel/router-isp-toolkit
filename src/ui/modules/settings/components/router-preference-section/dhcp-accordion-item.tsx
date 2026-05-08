@@ -23,6 +23,12 @@ export function DhcpAccordionItem({ localPrefs, setLocalPrefs }: Props) {
             onChange={(v) => setLocalPrefs((p) => ({ ...p, dhcpEnabled: v }))}
             dataField="dhcpEnabled"
           />
+          <BoolSelectPref
+            label={translator.t('popup_label_dhcp_l2_relay_status')}
+            value={localPrefs.dhcpRelayStatus}
+            onChange={(v) => setLocalPrefs((p) => ({ ...p, dhcpRelayStatus: v }))}
+            dataField="dhcpRelayStatus"
+          />
           <TextPref
             label={translator.t('settings_pref_dhcp_ip_address')}
             value={localPrefs.dhcpIpAddress ?? ''}
