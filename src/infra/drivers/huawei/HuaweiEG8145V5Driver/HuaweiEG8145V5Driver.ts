@@ -1019,12 +1019,14 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   > {
     const raw = await this.fetch(HUAWEI_DEVICE_INFO_ENDPOINT);
     if (!raw) return { routerModel: undefined, routerVersion: undefined };
-    const routerModel = this.matchHuaweiTdTextById(raw, 'td1_2');
-    const routerVersion = this.matchHuaweiTdTextById(raw, 'td5_2');
-    return {
-      routerModel: routerModel ?? undefined,
-      routerVersion: routerVersion ?? undefined,
-    };
+    // Firmware usually leaves `#td1_2` / `#td5_2` empty in the raw ASP and fills them
+    // from `deviceInfo` in on-page script (`deviceinfo.asp`); values are in `new stDeviceInfo(...)`.
+    const fromJs = this.parseHuaweiStructCall(raw, 'stDeviceInfo');
+    const routerModel =
+      (fromJs?.ModelName?.trim() || this.matchHuaweiTdTextById(raw, 'td1_2')) ?? undefined;
+    const routerVersion =
+      (fromJs?.SoftwareVersion?.trim() || this.matchHuaweiTdTextById(raw, 'td5_2')) ?? undefined;
+    return { routerModel, routerVersion };
   }
 
   private async fetch(path: string): Promise<string | null> {
