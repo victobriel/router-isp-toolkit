@@ -22,6 +22,7 @@ import {
   HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
   HUAWEI_LAN_USER_INFO_ENDPOINT,
   HUAWEI_LAN_INFO_ENDPOINT,
+  HUAWEI_IPV6_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
 
@@ -650,40 +651,40 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     else if (data.IPv4Enable === '1') ipVersion = 'IPv4';
     else if (data.IPv6Enable === '1') ipVersion = 'IPv6';
 
-    // IPv6 acquisition modes — match wan.asp's #IPv6AddressMode1 (DHCPv6) and
-    // #IPv6PrefixMode1 (PrefixDelegation) radios. The actual values are patched
-    // onto each WanList entry by GetIPv6AddressAcquireInfo / GetIPv6PrefixAcquireInfo
-    // in wan_list.asp, sourced from wanaddressacquire.asp.
+    // LAN IPv6 — `lanaddress.asp`: `#AssignType1`/`#AssignType2` → `ManagedFlag`;
+    // `#OtherType1`/`#OtherType2` → `OtherConfigFlag` (Other Information Assignment).
     let dhcpv6Enabled: boolean | undefined;
+    let slaacEnabled: boolean | undefined;
     let pdEnabled: boolean | undefined;
 
     if (data.IPv6Enable !== '1') {
       dhcpv6Enabled = false;
       pdEnabled = false;
-    } else if (addressAcquire && data.domain) {
-      const addressItems = [
-        ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquireIPItem'),
-        ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquirePPPItem'),
-      ];
-      const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
+    } else {
+      const lanAddressRaw = await this.fetch(HUAWEI_IPV6_INFO_ENDPOINT);
+      const raConfig = this.parseHuaweiStructCall(lanAddressRaw, 'RaConfigInfoClass');
+      const managedFlag = raConfig?.ManagedFlag;
+      if (managedFlag === '1' || managedFlag === '0') {
+        slaacEnabled = managedFlag === '0';
+      }
+      const otherConfigFlag = raConfig?.OtherConfigFlag;
+      if (otherConfigFlag === '1' || otherConfigFlag === '0') {
+        dhcpv6Enabled = otherConfigFlag === '1';
+      }
 
-      const addressItem = addressItems.find(
-        (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
-      );
-      const prefixItem = prefixItems.find(
-        (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
-      );
-
-      const addressOrigin = (addressItem?._Origin ?? '').toUpperCase();
-      const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
-
-      dhcpv6Enabled = addressOrigin === 'DHCPV6';
-      // PrefixAcquireItem coerces AutoConfigured / RouterAdvertisement to
-      // PrefixDelegation, so they should also count as PD-enabled.
-      pdEnabled =
-        prefixOrigin === 'PREFIXDELEGATION' ||
-        prefixOrigin === 'AUTOCONFIGURED' ||
-        prefixOrigin === 'ROUTERADVERTISEMENT';
+      if (addressAcquire && data.domain) {
+        const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
+        const prefixItem = prefixItems.find(
+          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+        );
+        const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
+        // PrefixAcquireItem coerces AutoConfigured / RouterAdvertisement to
+        // PrefixDelegation, so they should also count as PD-enabled.
+        pdEnabled =
+          prefixOrigin === 'PREFIXDELEGATION' ||
+          prefixOrigin === 'AUTOCONFIGURED' ||
+          prefixOrigin === 'ROUTERADVERTISEMENT';
+      }
     }
 
     return {
@@ -691,7 +692,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       pppoeUsername,
       ipVersion,
       requestPdEnabled: undefined,
-      slaacEnabled: undefined,
+      slaacEnabled,
       dhcpv6Enabled,
       pdEnabled,
       linkSpeed: undefined,

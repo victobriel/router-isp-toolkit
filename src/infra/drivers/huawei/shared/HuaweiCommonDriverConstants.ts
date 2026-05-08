@@ -23,6 +23,7 @@ const HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDevIn
 const HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDhcpInfo.asp';
 const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
 const HUAWEI_LAN_INFO_ENDPOINT = '/html/bbsp/dhcpservercfg/dhcp2.asp';
+const HUAWEI_IPV6_INFO_ENDPOINT = '/html/bbsp/lanaddress/lanaddress.asp';
 
 /**
  * Diagnostics endpoints used by `ping()`. The same `complex.cgi` action +
@@ -58,4 +59,5 @@ export {
   HUAWEI_DIAGNOSE_PAGE_ENDPOINT,
   HUAWEI_PING_START_ENDPOINT,
   HUAWEI_PING_POLL_ENDPOINT,
+  HUAWEI_IPV6_INFO_ENDPOINT,
 };
