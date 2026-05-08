@@ -224,6 +224,9 @@
   "popup_label_router_password": { "message": "Senha do roteador (atual)" },
   "popup_label_model": { "message": "Modelo do roteador" },
   "popup_label_version": { "message": "Versão do roteador" },
+  "popup_label_collected_at": {
+    "message": "Quando este snapshot foi coletado (data/hora ISO 8601 da extração)"
+  },
   "popup_label_url": { "message": "URL" },
 
   "popup_label_tr069_url": { "message": "URL TR-069" },
@@ -262,7 +265,7 @@
     "message": "Total de clientes — Wi-Fi e Ethernet (quantidade)"
   },
   "popup_label_dhcp_status": { "message": "Status do servidor DHCP" },
-  "popup_label_dhcp_l2_relay_status": { "message": "DHCP relay" },
+  "popup_label_dhcp_l2_relay_status": { "message": "DHCP Relay" },
   "popup_label_dhcp_ip_address": { "message": "Endereço IP da LAN (DHCP)" },
   "popup_label_dhcp_subnet_mask": { "message": "Máscara de sub-rede (DHCP)" },
   "popup_label_dhcp_start_ip": { "message": "IP inicial do pool DHCP" },

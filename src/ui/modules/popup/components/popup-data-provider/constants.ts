@@ -16,6 +16,10 @@ export const COPY_TEXT_VALUE_KEYS = [
     description: translator.t('popup_label_version'),
   },
   {
+    key: 'CollectedAt',
+    description: translator.t('popup_label_collected_at'),
+  },
+  {
     key: 'TR069Url',
     description: translator.t('popup_label_tr069_url'),
   },

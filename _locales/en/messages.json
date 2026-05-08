@@ -336,6 +336,9 @@
   "popup_label_router_password": { "message": "Router password (current)" },
   "popup_label_model": { "message": "Router Model" },
   "popup_label_version": { "message": "Router Version" },
+  "popup_label_collected_at": {
+    "message": "When this snapshot was collected (ISO 8601 timestamp from extraction)"
+  },
   "popup_label_url": { "message": "URL" },
 
   "popup_label_tr069_url": { "message": "TR-069 URL" },

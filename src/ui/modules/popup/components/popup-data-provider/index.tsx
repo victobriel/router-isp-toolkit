@@ -548,6 +548,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       OpticalSignal: asText(data.opticalSignal),
       RouterModel: asText(data.routerModel),
       RouterVersion: asText(data.routerVersion),
+      CollectedAt: asText(data.timestamp),
       RouterAdminPassword: asText(lastAuthAdminCredentials?.password),
       TR069Url: asText(data.tr069Url),
       InternetStatus: boolText(data.internetEnabled),
