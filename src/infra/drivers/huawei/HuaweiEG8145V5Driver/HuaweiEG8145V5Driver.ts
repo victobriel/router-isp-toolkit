@@ -718,7 +718,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
       // wan.asp `#IPv6AddressMode1`…`4` — map `d.IPv6AddressMode` / acquire `_Origin` to UI labels.
       const ipv6AddressModeRaw =
-        (data.IPv6AddressMode?.trim() || '') || (addressItem?._Origin?.trim() || '');
+        data.IPv6AddressMode?.trim() || '' || addressItem?._Origin?.trim() || '';
       if (ipv6AddressModeRaw !== '') {
         const label = huaweiIpv6AddressModeLabel(ipv6AddressModeRaw);
         if (label !== undefined) {
@@ -727,7 +727,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       }
       // wan.asp `#IPv6PrefixMode1` → `PrefixDelegation` / DHCPv6-PD (`wan_list` ← PrefixAcquireItem).
       const ipv6PrefixModeRaw =
-        (data.IPv6PrefixMode?.trim() || '') || (prefixItem?._Origin?.trim() || '');
+        data.IPv6PrefixMode?.trim() || '' || prefixItem?._Origin?.trim() || '';
       if (ipv6PrefixModeRaw !== '') {
         const u = ipv6PrefixModeRaw.toUpperCase();
         requestPdEnabled = u === 'PREFIXDELEGATION' || u === 'DHCPV6-PD';
@@ -750,7 +750,11 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private async getWlanState(): Promise<
     Pick<
       ExtractionResult,
-      'wlan24GhzConfig' | 'wlan5GhzConfig' | 'wlan24GhzSsids' | 'wlan5GhzSsids'
+      | 'wlan24GhzConfig'
+      | 'wlan5GhzConfig'
+      | 'wlan24GhzSsids'
+      | 'wlan5GhzSsids'
+      | 'bandSteeringEnabled'
     >
   > {
     const [wlanBasic2g, wlanBasic5g, wlanAdvance2g, wlanAdvance5g] = await Promise.all([
@@ -770,8 +774,18 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         wlan5GhzConfig: undefined,
         wlan24GhzSsids: undefined,
         wlan5GhzSsids: undefined,
+        bandSteeringEnabled: undefined,
       };
     }
+
+    /** `#BandSteeringPolicy` / `bindfield="y.BandSteeringPolicy"` — value from `new stXHWGlobalConfig(…)` on wlan advance pages. */
+    const bandSteeringPolicy =
+      this.parseHuaweiStructCall(wlanAdvance5g, 'stXHWGlobalConfig')?.BandSteeringPolicy ??
+      this.parseHuaweiStructCall(wlanAdvance2g, 'stXHWGlobalConfig')?.BandSteeringPolicy;
+    const bandSteeringEnabled =
+      bandSteeringPolicy === undefined || bandSteeringPolicy === ''
+        ? undefined
+        : bandSteeringPolicy === '1';
 
     const parseWlanIndex = (domain: string | undefined): number | null => {
       if (!domain) return null;
@@ -877,6 +891,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       wlan5GhzConfig: findBandConfig(is5gIndex),
       wlan24GhzSsids: buildSsids(is2gIndex),
       wlan5GhzSsids: buildSsids(is5gIndex),
+      bandSteeringEnabled,
     };
   }
 
