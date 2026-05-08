@@ -778,14 +778,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       };
     }
 
-    /** `#BandSteeringPolicy` / `bindfield="y.BandSteeringPolicy"` — value from `new stXHWGlobalConfig(…)` on wlan advance pages. */
-    const bandSteeringPolicy =
-      this.parseHuaweiStructCall(wlanAdvance5g, 'stXHWGlobalConfig')?.BandSteeringPolicy ??
-      this.parseHuaweiStructCall(wlanAdvance2g, 'stXHWGlobalConfig')?.BandSteeringPolicy;
-    const bandSteeringEnabled =
-      bandSteeringPolicy === undefined || bandSteeringPolicy === ''
-        ? undefined
-        : bandSteeringPolicy === '1';
+    const bandSteeringEnabled = this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(
+      wlanAdvance5g,
+    );
 
     const parseWlanIndex = (domain: string | undefined): number | null => {
       if (!domain) return null;

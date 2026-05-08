@@ -253,6 +253,63 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   /**
+   * Reads checked / value hints for `#id` on Huawei WLAN pages (e.g. `#BandSteeringPolicy`
+   * on `WlanAdvance.asp?5G`). Returns `null` when the tag is missing or markup does not
+   * encode the state (typical when Huawei relies on `new stXHWGlobalConfig(...)` instead).
+   */
+  protected matchHuaweiCheckboxCheckedById(raw: string | null, id: string): boolean | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    const tag = new RegExp(`<input\\b(?=[^>]*\\bid=["']${escapedId}["'])[^>]*>`, 'i').exec(
+      raw,
+    )?.[0];
+    if (!tag) return null;
+
+    if (/checked\s*=\s*["']?(?:false|off|0|no)["']?/i.test(tag)) return false;
+    if (/checked\s*=\s*["']?(?:true|on|1|checked|yes)["']?/i.test(tag)) return true;
+    if (/(?<![-\\w])checked(?=[\s/>])/i.test(tag)) return true;
+
+    const valueAttr = INPUT_VALUE_ATTR.exec(tag)?.[1]?.trim();
+    if (valueAttr === '1' || /^on$/i.test(valueAttr || '')) return true;
+    if (valueAttr === '0' || /^off$/i.test(valueAttr || '')) return false;
+
+    return null;
+  }
+
+  /**
+   * First `new stXHWGlobalConfig(domain, policy)` on the page (`BandSteeringPolicy`).
+   * Handles multiline calls (`WlanBasic.asp`-style) and a numeric `policy` (`1` / `0`)
+   * without quotes — {@link parseHuaweiStructCall} only reads string literals and misses those.
+   */
+  protected parseHuaweiBandSteeringPolicyFromStXHWGlobalConfig(raw: string | null): string | null {
+    if (!raw) return null;
+    const re =
+      /new\s+stXHWGlobalConfig\s*\(\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)')\s*,\s*(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|(\d+))\s*,?\s*\)/gi;
+    for (const m of raw.matchAll(re)) {
+      const policy = m[3] ?? m[4] ?? m[5];
+      if (policy === undefined) continue;
+      return m[5] !== undefined ? m[5] : this.unescapeHuaweiHex(m[3] ?? m[4] ?? '');
+    }
+    return null;
+  }
+
+  /**
+   * Band steering from **5 GHz advanced only** (`WlanAdvance.asp?5G`): prefers
+   * `#BandSteeringPolicy` markup from {@link matchHuaweiCheckboxCheckedById}, then the first
+   * `new stXHWGlobalConfig(..., policy)` on that same response when the checkbox omits `checked`.
+   */
+  protected extractHuaweiBandSteeringEnabledFromWlanAdvance5g(
+    wlanAdvance5gRaw: string | null,
+  ): boolean | undefined {
+    if (!wlanAdvance5gRaw) return undefined;
+    const fromInput = this.matchHuaweiCheckboxCheckedById(wlanAdvance5gRaw, 'BandSteeringPolicy');
+    if (fromInput !== null) return fromInput;
+    const policy = this.parseHuaweiBandSteeringPolicyFromStXHWGlobalConfig(wlanAdvance5gRaw);
+    if (policy === null || policy === '') return undefined;
+    return policy === '1';
+  }
+
+  /**
    * Reads `value` from raw HTML for the first `#id` segment in a comma-separated selector list
    * (e.g. `#URL, input[type="text"]` tries `URL` only).
    */
