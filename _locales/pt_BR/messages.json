@@ -92,8 +92,8 @@
   },
   "popup_tab_reports": { "message": "Relatório" },
   "popup_tab_logs": { "message": "Logs" },
-  "popup_section_optical_signal": { "message": "Sinal Óptico" },
-  "popup_label_optical_signal": { "message": "Sinal" },
+  "popup_section_optical_signal": { "message": "Informação óptica" },
+  "popup_label_optical_signal": { "message": "RX Optical Power" },
   "popup_section_wan": { "message": "WAN" },
   "popup_section_remote_access": { "message": "Acesso remoto" },
   "popup_section_band_steering": { "message": "Band Steering" },
@@ -497,10 +497,10 @@
     "message": "Selecione pelo menos uma seção de extração"
   },
   "settings_extraction_filter_option_optical_signal": {
-    "message": "Sinal óptico"
+    "message": "Informação Óptica"
   },
   "settings_extraction_filter_hint_optical_signal": {
-    "message": "O sinal óptico não está disponível em todos os roteadores."
+    "message": "A Informação Óptica não está disponível em todos os roteadores."
   },
   "settings_extraction_filter_option_topology": {
     "message": "Topologia"
@@ -560,9 +560,9 @@
     "message": "Selecione um modelo acima antes de editar as preferências."
   },
   "settings_prefs_optical_signal_title": {
-    "message": "Sinal óptico"
+    "message": "Informação Óptica"
   },
-  "settings_pref_optical_signal": { "message": "Sinal óptico" },
+  "settings_pref_optical_signal": { "message": "RX Optical Power" },
   "settings_prefs_credentials_title": {
     "message": "Credenciais"
   },
@@ -738,7 +738,7 @@
   "popup_aria_next_ssid": { "message": "Próximo SSID" },
 
   "popup_label_mac": { "message": "MAC" },
-  "popup_label_signal": { "message": "Sinal" },
+  "popup_label_signal": { "message": "RX Optical Power" },
 
   "popup_topology_empty_title": { "message": "Nenhum dado de topologia disponível." },
   "popup_topology_empty_desc": {

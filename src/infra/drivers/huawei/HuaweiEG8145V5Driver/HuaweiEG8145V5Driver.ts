@@ -23,6 +23,7 @@ import {
   HUAWEI_LAN_USER_INFO_ENDPOINT,
   HUAWEI_LAN_INFO_ENDPOINT,
   HUAWEI_IPV6_INFO_ENDPOINT,
+  HUAWEI_DEVICE_INFO_ENDPOINT,
 } from '../shared/HuaweiCommonDriverConstants';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
 
@@ -778,9 +779,8 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       };
     }
 
-    const bandSteeringEnabled = this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(
-      wlanAdvance5g,
-    );
+    const bandSteeringEnabled =
+      this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(wlanAdvance5g);
 
     const parseWlanIndex = (domain: string | undefined): number | null => {
       if (!domain) return null;
@@ -1018,12 +1018,13 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private async getRouterInfoState(): Promise<
     Pick<ExtractionResult, 'routerModel' | 'routerVersion'>
   > {
-    const raw = await this.fetch(HUAWEI_INDEX_ENDPOINT);
+    const raw = await this.fetch(HUAWEI_DEVICE_INFO_ENDPOINT);
     if (!raw) return { routerModel: undefined, routerVersion: undefined };
-    const productName = this.matchHuaweiScriptVar(raw, 'ProductName');
+    const routerModel = this.matchHuaweiTdTextById(raw, 'td1_2');
+    const routerVersion = this.matchHuaweiTdTextById(raw, 'td5_2');
     return {
-      routerModel: productName ?? undefined,
-      routerVersion: undefined,
+      routerModel: routerModel ?? undefined,
+      routerVersion: routerVersion ?? undefined,
     };
   }
 

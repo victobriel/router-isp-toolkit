@@ -253,6 +253,23 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   /**
+   * Visible text inside `<td id="…">…</td>` on Huawei table pages (e.g. `deviceinfo.asp`
+   * `#td1_2` device type, `#td5_2` software version). `id` may appear in any attribute order.
+   */
+  protected matchHuaweiTdTextById(raw: string | null, id: string): string | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    const m = new RegExp(
+      `<td\\b(?=[^>]*\\bid=["']${escapedId}["'])[^>]*>([\\s\\S]*?)<\\/td>`,
+      'i',
+    ).exec(raw);
+    if (!m) return null;
+    const inner = m[1].replace(/<[^>]+>/g, '').trim();
+    if (!inner) return null;
+    return this.unescapeHuaweiHex(inner);
+  }
+
+  /**
    * Reads checked / value hints for `#id` on Huawei WLAN pages (e.g. `#BandSteeringPolicy`
    * on `WlanAdvance.asp?5G`). Returns `null` when the tag is missing or markup does not
    * encode the state (typical when Huawei relies on `new stXHWGlobalConfig(...)` instead).

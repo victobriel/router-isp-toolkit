@@ -160,10 +160,10 @@
     "description": "Label of Logs tab."
   },
   "popup_section_optical_signal": {
-    "message": "Optical Signal"
+    "message": "Optical Information"
   },
   "popup_label_optical_signal": {
-    "message": "Signal"
+    "message": "RX Optical Power"
   },
   "popup_section_wan": {
     "message": "WAN",
@@ -598,10 +598,10 @@
     "message": "Select at least one extraction section"
   },
   "settings_extraction_filter_option_optical_signal": {
-    "message": "Optical signal"
+    "message": "Optical Information"
   },
   "settings_extraction_filter_hint_optical_signal": {
-    "message": "The optical signal is not available on all routers."
+    "message": "The Optical Information is not available on all routers."
   },
   "settings_extraction_filter_option_topology": {
     "message": "Topology"
@@ -661,9 +661,9 @@
     "message": "Select a router model above before editing preferences."
   },
   "settings_prefs_optical_signal_title": {
-    "message": "Optical signal"
+    "message": "Optical Information"
   },
-  "settings_pref_optical_signal": { "message": "Optical signal" },
+  "settings_pref_optical_signal": { "message": "RX Optical Power" },
   "settings_prefs_credentials_title": {
     "message": "Credentials"
   },
@@ -839,7 +839,7 @@
   "popup_aria_next_ssid": { "message": "Next SSID" },
 
   "popup_label_mac": { "message": "MAC" },
-  "popup_label_signal": { "message": "Signal" },
+  "popup_label_signal": { "message": "RX Optical Power" },
 
   "popup_topology_empty_title": { "message": "No topology data available." },
   "popup_topology_empty_desc": {

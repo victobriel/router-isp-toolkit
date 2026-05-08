@@ -11,7 +11,7 @@ const HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT = '/html/bbsp/common/wanaddressacquire
 const HUAWEI_UPNP_ENDPOINT = '/html/bbsp/upnp/upnp.asp';
 const HUAWEI_TR069_ENDPOINT = '/html/ssmp/tr069/tr069.asp';
 const HUAWEI_ACCESS_CONTROL_ENDPOINT = '/html/bbsp/portacl/newacl.asp';
-const HUAWEI_INDEX_ENDPOINT = '/index.asp';
+// const HUAWEI_INDEX_ENDPOINT = '/index.asp';
 const HUAWEI_WLAN24G_ENDPOINT = '/html/amp/wlanbasic/WlanBasic.asp?2G';
 const HUAWEI_WLAN5G_ENDPOINT = '/html/amp/wlanbasic/WlanBasic.asp?5G';
 const HUAWEI_WLAN24G_ADVANCED_ENDPOINT = '/html/amp/wlanadv/WlanAdvance.asp?2G';
@@ -24,6 +24,7 @@ const HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT = '/html/bbsp/common/GetLanUserDhcp
 const HUAWEI_LAN_USER_INFO_ENDPOINT = '/html/bbsp/common/lanuserinfo.asp';
 const HUAWEI_LAN_INFO_ENDPOINT = '/html/bbsp/dhcpservercfg/dhcp2.asp';
 const HUAWEI_IPV6_INFO_ENDPOINT = '/html/bbsp/lanaddress/lanaddress.asp';
+const HUAWEI_DEVICE_INFO_ENDPOINT = '/html/ssmp/deviceinfo/deviceinfo.asp';
 
 /**
  * Diagnostics endpoints used by `ping()`. The same `complex.cgi` action +
@@ -60,4 +61,5 @@ export {
   HUAWEI_PING_START_ENDPOINT,
   HUAWEI_PING_POLL_ENDPOINT,
   HUAWEI_IPV6_INFO_ENDPOINT,
+  HUAWEI_DEVICE_INFO_ENDPOINT,
 };
