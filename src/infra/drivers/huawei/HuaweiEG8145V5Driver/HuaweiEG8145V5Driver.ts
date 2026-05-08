@@ -6,7 +6,6 @@ import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ExtractionFilter } from '@/application/types';
 import {
-  HUAWEI_INDEX_ENDPOINT,
   HUAWEI_TR069_ENDPOINT,
   HUAWEI_UPNP_ENDPOINT,
   HUAWEI_ACCESS_CONTROL_ENDPOINT,
