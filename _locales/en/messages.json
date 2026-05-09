@@ -485,7 +485,10 @@
     "message": "Router page is redirecting after login. Retrying collection..."
   },
   "popup_error_router_comm": {
-    "message": "Failed to communicate with the router page. Make sure it is open and reachable, then try again"
+    "message": "Failed to reboot the router. Please try again"
+  },
+  "popup_status_rebooted_ok": {
+    "message": "Router rebooted successfully"
   },
   "popup_log_retry_attempt": {
     "message": "Retrying collection ($attempt$/$max$) while waiting for the router page to finish loading...",

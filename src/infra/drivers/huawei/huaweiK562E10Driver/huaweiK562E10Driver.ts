@@ -86,8 +86,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     return !onLoginPage && hasTopFrame;
   }
 
-  public override reboot(): Promise<void> {
-    throw new Error('Method not implemented.');
+  public override async reboot(): Promise<{ success: boolean; message?: string }> {
+    return { success: false, message: 'Method not implemented.' };
   }
 
   /**

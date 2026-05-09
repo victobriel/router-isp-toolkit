@@ -135,7 +135,13 @@ export class CollectionService {
         };
       },
       [CollectMessageAction.REBOOT]: async () => {
-        await router.reboot();
+        const { success, message } = await router.reboot();
+        if (!success) {
+          return {
+            success: false,
+            message: 'Router reboot failed',
+          };
+        }
         return {
           success: true,
           message: 'Router rebooted successfully',

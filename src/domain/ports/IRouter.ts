@@ -39,5 +39,5 @@ export interface IRouter {
    */
   supportsGoToPage(): boolean;
   goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void;
-  reboot(): Promise<void>;
+  reboot(): Promise<{ success: boolean; message?: string }>;
 }

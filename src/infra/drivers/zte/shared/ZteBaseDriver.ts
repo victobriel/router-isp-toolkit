@@ -135,7 +135,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
     return result ? this.parsePingTestResult(result, ip) : null;
   }
 
-  public async reboot(): Promise<void> {
+  public async reboot(): Promise<{ success: boolean; message?: string }> {
     await this.stepByStepNavigate([
       this.s.managementTab,
       this.s.managementContainer,
@@ -145,6 +145,8 @@ export abstract class ZteBaseDriver extends BaseRouter {
     await this.waitForElement(this.s.rebootConfirmationButton);
 
     await this.clickElementAndWait(this.s.rebootConfirmationButton);
+
+    return { success: true };
   }
 
   public override supportsGoToPage(): boolean {

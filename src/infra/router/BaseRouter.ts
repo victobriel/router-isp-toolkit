@@ -50,7 +50,7 @@ export abstract class BaseRouter implements IRouter {
     return false;
   }
   public abstract goToPage(page: RouterPage, key: RouterPageKey, options?: GoToPageOptions): void;
-  public abstract reboot(): Promise<void>;
+  public abstract reboot(): Promise<{ success: boolean; message?: string }>;
   protected abstract goToHomePage(): boolean;
 
   public get model(): string {

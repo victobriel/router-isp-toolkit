@@ -234,18 +234,20 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
    * The promise resolves once the iframe load fires (response received) or
    * the helper's safety timeout elapses.
    */
-  public override async reboot(): Promise<void> {
+  public override async reboot(): Promise<{ success: boolean; message?: string }> {
     const token = await this.fetchHuaweiCsrfToken(ENDPOINT.MAIN_PAGE);
     if (!token) {
-      throw new Error(
-        'HuaweiEG8145V5Driver.reboot: missing onttoken on mainpage.asp ' +
-          '(session expired or device unreachable)',
-      );
+      return {
+        success: false,
+        message: 'Missing onttoken on mainpage.asp (session expired or device unreachable)',
+      };
     }
 
     await this.submitCgiForm(ENDPOINT.RESET_BOARD, {
       'x.X_HW_Token': token,
     });
+
+    return { success: true };
   }
 
   private async getOpticalSignalState(): Promise<Pick<ExtractionResult, 'opticalSignal'>> {

@@ -663,13 +663,18 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       return;
     }
 
-    await sendToTab<CollectMessage, CollectResponse>(tabId, {
+    const response = await sendToTab<CollectMessage, CollectResponse>(tabId, {
       action: CollectMessageAction.REBOOT,
-    }).catch((error) => {
-      console.error('error rebooting router', error);
-      setStatus(PopupStatusType.ERR, translator.t('popup_error_router_comm'));
-      addLog(error instanceof Error ? error.message : String(error), PopupStatusType.ERR);
     });
+
+    if (!response?.success && response.message) {
+      setStatus(PopupStatusType.ERR, response.message);
+      addLog(response.message, PopupStatusType.ERR);
+      return;
+    }
+
+    setStatus(PopupStatusType.OK, translator.t('popup_status_rebooted_ok'));
+    addLog(translator.t('popup_status_rebooted_ok'), PopupStatusType.OK);
   }, [refreshRouterAuth, isRouterAuthenticated, sendToTab, tabId, setStatus, addLog]);
 
   return children({

@@ -13,6 +13,7 @@ import { z } from 'zod';
 export interface CollectResponse {
   success: boolean;
   message?: string;
+  error?: string;
   data?: ExtractionResult;
   pingResult?: PingTestResult;
   authenticated?: boolean;

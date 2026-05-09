@@ -382,7 +382,10 @@
     "message": "A página do roteador está redirecionando após o login. Tentando coletar novamente..."
   },
   "popup_error_router_comm": {
-    "message": "Falha ao se comunicar com a página do roteador. Verifique se ela está aberta e acessível e tente novamente"
+    "message": "Falha ao reiniciar o roteador. Tente novamente"
+  },
+  "popup_status_rebooted_ok": {
+    "message": "Roteador reiniciado com sucesso"
   },
   "popup_log_retry_attempt": {
     "message": "Tentando coletar novamente ($attempt$/$max$) enquanto aguarda a página do roteador terminar de carregar...",

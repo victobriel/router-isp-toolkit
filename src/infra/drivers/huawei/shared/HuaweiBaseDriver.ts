@@ -89,8 +89,8 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     return !onLoginPage && !!$homeTab;
   }
 
-  public reboot(): Promise<void> {
-    throw new Error('Method not implemented.');
+  public async reboot(): Promise<{ success: boolean; message?: string }> {
+    return { success: false, message: 'Method not implemented.' };
   }
 
   public goToPage(_page: RouterPage, _key: RouterPageKey, _options?: GoToPageOptions): void {
