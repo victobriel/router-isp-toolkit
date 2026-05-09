@@ -4,7 +4,10 @@ import { translator } from '@/infra/i18n/I18nService';
 import { Collapsible } from '@/ui/components/ui/collapsible';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 import { Signal } from 'lucide-react';
-import { PopupDataRow, PopupDataRowProps } from '../popup-data-row';
+import {
+  PopupDataRow,
+  PopupDataRowProps,
+} from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
 import { val } from '@/ui/lib/utils';
 
 interface OpticalSignalSectionProps {

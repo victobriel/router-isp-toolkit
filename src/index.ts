@@ -12,9 +12,9 @@ import { DomService } from '@/infra/dom/DomService';
 import { RouterFactoryAdapter } from '@/infra/router/RouterFactoryAdapter';
 
 import { SessionStorageService } from '@/infra/storage/SessionStorageService';
-import { StorageService } from './infra/storage/StorageService';
-import { ChromeTabMessenger } from './infra/tabs/ChromeTabMessenger';
-import { TopologySectionParser } from './infra/drivers/shared/TopologySectionParser';
+import { StorageService } from '@/infra/storage/StorageService';
+import { ChromeTabMessenger } from '@/infra/tabs/ChromeTabMessenger';
+import { TopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 export type CompositionServices = {
   storage: IStorage;

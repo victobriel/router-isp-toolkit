@@ -17,7 +17,7 @@ import {
   DISABLED_VALUE,
   WLAN_TRANSMITTING_POWER_OPTIONS,
   WLAN_TRANSMITTING_POWER_VALUE_SET,
-} from './constants';
+} from '@/ui/modules/settings/components/router-preference-section/constants';
 
 export function asTextFieldValue(v: unknown): string {
   return typeof v === 'string' ? v : '';

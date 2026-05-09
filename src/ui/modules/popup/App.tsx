@@ -55,7 +55,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/ui/components/ui/tooltip';
-import { OpticalSignalSection } from './components/popup-data-sections/optical-signal-section';
+import { OpticalSignalSection } from '@/ui/modules/popup/components/popup-data-sections/optical-signal-section';
 
 function PopupContent({
   tabId,

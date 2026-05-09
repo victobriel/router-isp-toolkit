@@ -3,7 +3,7 @@ import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IRouter } from '@/domain/ports/IRouter';
 
 import { RouterFactory } from '@/infra/router/RouterFactory';
-import { ITopologySectionParser } from '../drivers/shared/TopologySectionParser';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 /**
  * Thin adapter to expose the infra router factory behind an application port.

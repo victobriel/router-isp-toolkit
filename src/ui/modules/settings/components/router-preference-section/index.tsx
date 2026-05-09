@@ -12,13 +12,13 @@ import {
 import { Accordion } from '@/ui/components/ui/accordion';
 import { Save } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { UNSELECTED_MODEL_VALUE } from './constants';
-import { DhcpAccordionItem } from './dhcp-accordion-item';
-import { OtherAccordionItem } from './other-accordion-item';
-import { WlanBandAccordionItem } from './wlan-band-accordion-item';
+import { UNSELECTED_MODEL_VALUE } from '@/ui/modules/settings/components/router-preference-section/constants';
+import { DhcpAccordionItem } from '@/ui/modules/settings/components/router-preference-section/dhcp-accordion-item';
+import { OtherAccordionItem } from '@/ui/modules/settings/components/router-preference-section/other-accordion-item';
+import { WlanBandAccordionItem } from '@/ui/modules/settings/components/router-preference-section/wlan-band-accordion-item';
 import { Band } from '@/ui/types';
-import { CredentialsAccordionItem } from './credentials-accordion-item';
-import { OpticalSignalAccordionItem } from './optical-signal-accordion-item';
+import { CredentialsAccordionItem } from '@/ui/modules/settings/components/router-preference-section/credentials-accordion-item';
+import { OpticalSignalAccordionItem } from '@/ui/modules/settings/components/router-preference-section/optical-signal-accordion-item';
 
 export interface RouterPreferenceSectionProps {
   bookmarkEntries: Array<[string, ModelBookmarks]>;

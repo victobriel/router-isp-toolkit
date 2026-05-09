@@ -6,7 +6,7 @@ import {
 } from '@/infra/drivers/zte/ZteE2320Driver/constants';
 import type { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ZteE2320Selectors } from './ZteE2320Selectors';
+import { ZteE2320Selectors } from '@/infra/drivers/zte/ZteE2320Driver/ZteE2320Selectors';
 
 export class ZteE2320Driver extends ZteBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {

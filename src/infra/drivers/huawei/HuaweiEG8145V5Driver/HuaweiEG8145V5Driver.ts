@@ -1,12 +1,12 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ITopologySectionParser } from '../../shared/TopologySectionParser';
-import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
-import { HuaweiEG8145V5Selectors } from './HuaweiEG8145V5Selectors';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
+import { HuaweiEG8145V5Selectors } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Selectors';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ExtractionFilter } from '@/application/types';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
-import { ENDPOINT } from './contants';
+import { ENDPOINT } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/contants';
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
 const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {

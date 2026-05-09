@@ -29,7 +29,10 @@ import type { RouterPreferencesStore } from '@/application/types';
 import { formatTime } from '@/ui/lib/utils';
 import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { translator } from '@/infra/i18n/I18nService';
-import { CopyTextValueKey, LogEntry } from './types';
+import {
+  CopyTextValueKey,
+  LogEntry,
+} from '@/ui/modules/popup/components/popup-data-provider/types';
 import {
   arrayMatch,
   boolMatch,
@@ -37,7 +40,7 @@ import {
   regexMatch,
   textMatch,
   translateAuthError,
-} from './utils';
+} from '@/ui/modules/popup/components/popup-data-provider/utils';
 import { DiagnosticsMode } from '@/ui/types';
 import { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
 
@@ -219,10 +222,7 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
       tr069Url: regexMatch(data.tr069Url, routerPrefsForModel.tr069Url),
       pppoeUsername: regexMatch(data.pppoeUsername, routerPrefsForModel.pppoeUsername),
       ipVersion: regexMatch(data.ipVersion, routerPrefsForModel.ipVersion),
-      ipAcquisitionMode: regexMatch(
-        data.ipAcquisitionMode,
-        routerPrefsForModel.ipAcquisitionMode,
-      ),
+      ipAcquisitionMode: regexMatch(data.ipAcquisitionMode, routerPrefsForModel.ipAcquisitionMode),
 
       // DHCP
       dhcpEnabled: boolMatch(data.dhcpEnabled, routerPrefsForModel.dhcpEnabled),

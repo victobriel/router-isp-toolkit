@@ -1,5 +1,5 @@
 import { translator } from '@/infra/i18n/I18nService';
-import { EXPECTED_ERRORS } from './constants';
+import { EXPECTED_ERRORS } from '@/ui/modules/popup/components/popup-data-provider/constants';
 
 export const translateAuthError = (msg: string | undefined): string => {
   if (!msg) return msg ?? '';

@@ -2,10 +2,10 @@ import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ExtractionFilter } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
-import { ITopologySectionParser } from '../../shared/TopologySectionParser';
-import { HuaweiK562E10Selectors } from './huaweiK562E10Selectors';
-import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
-import { ENDPOINT } from './contants';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
+import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
+import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {

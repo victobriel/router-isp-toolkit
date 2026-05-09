@@ -1,5 +1,5 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/ui/components/ui/accordion';
-import { TextPref } from './pref-fields';
+import { TextPref } from '@/ui/modules/settings/components/router-preference-section/pref-fields';
 import { translator } from '@/infra/i18n/I18nService';
 import { Dispatch, SetStateAction } from 'react';
 import { RouterPreferencesStore } from '@/application/types';

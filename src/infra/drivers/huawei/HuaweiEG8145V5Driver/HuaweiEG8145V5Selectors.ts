@@ -1,4 +1,4 @@
-import { HuaweiCommonSelectors } from '../shared/HuaweiCommonSelectors';
+import { HuaweiCommonSelectors } from '@/infra/drivers/huawei/shared/HuaweiCommonSelectors';
 
 export const HuaweiEG8145V5Selectors = {
   ...HuaweiCommonSelectors,

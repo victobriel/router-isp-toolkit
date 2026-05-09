@@ -1,5 +1,5 @@
 import { PopupStatusType } from '@/application/types';
-import { COPY_TEXT_VALUE_KEYS } from './constants';
+import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
 
 export interface LogEntry {
   msg: string;

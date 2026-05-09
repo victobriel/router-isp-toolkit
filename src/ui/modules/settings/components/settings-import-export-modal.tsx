@@ -3,7 +3,7 @@ import { Download, Upload } from 'lucide-react';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
 import { Input } from '@/ui/components/ui/input';
-import type { SettingsConfigSectionKey } from '../utils/settings-import-export';
+import type { SettingsConfigSectionKey } from '@/ui/modules/settings/utils/settings-import-export';
 
 const SECTION_KEYS: SettingsConfigSectionKey[] = [
   'bookmarks',

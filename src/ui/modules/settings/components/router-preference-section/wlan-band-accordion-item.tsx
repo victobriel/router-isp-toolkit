@@ -7,7 +7,7 @@ import {
   WLAN5_80MHZ_CHANNELS,
   WLAN5_BAND_WIDTH,
   WLAN_TRANSMITTING_POWER_OPTIONS,
-} from './constants';
+} from '@/ui/modules/settings/components/router-preference-section/constants';
 import {
   BoolSelectPref,
   SelectPref,
@@ -16,7 +16,7 @@ import {
   asTextFieldValue,
   wlanTransmittingPowerSelectToStored,
   wlanTransmittingPowerToSelectValue,
-} from './pref-fields';
+} from '@/ui/modules/settings/components/router-preference-section/pref-fields';
 import { SetStateAction, Dispatch, useMemo } from 'react';
 import { Band } from '@/ui/types';
 

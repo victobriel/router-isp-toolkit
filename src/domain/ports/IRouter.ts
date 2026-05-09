@@ -1,5 +1,5 @@
 import type { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
-import type { ButtonConfig } from './IRouter.types';
+import type { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionFilter, GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 
 /**

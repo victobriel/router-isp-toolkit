@@ -31,6 +31,18 @@ module.exports = {
     'prettier/prettier': 'warn',
     'react/react-in-jsx-scope': 'off',
     'react/prop-types': 'off',
+    'no-restricted-imports': [
+      'error',
+      {
+        patterns: [
+          {
+            group: ['./**', '../**'],
+            message:
+              'Use the @/ path alias for imports under src/ (see tsconfig paths and webpack resolve.alias).',
+          },
+        ],
+      },
+    ],
   },
   ignorePatterns: ['dist', 'node_modules'],
   overrides: [

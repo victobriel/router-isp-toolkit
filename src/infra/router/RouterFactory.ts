@@ -5,9 +5,9 @@ import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionPa
 import { ZteH198Driver } from '@/infra/drivers/zte/ZteH198Driver/ZteH198Driver';
 import { ZteH199Driver } from '@/infra/drivers/zte/ZteH199Driver/ZteH199Driver';
 import { ZteH3601Driver } from '@/infra/drivers/zte/ZteH3601Driver/ZteH3601Driver';
-import { HuaweiEG8145V5Driver } from '../drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Driver';
-import { ZteE2320Driver } from '../drivers/zte/ZteE2320Driver/ZteE2320Driver';
-import { HuaweiK562E10Driver } from '../drivers/huawei/huaweiK562E10Driver/huaweiK562E10Driver';
+import { HuaweiEG8145V5Driver } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Driver';
+import { ZteE2320Driver } from '@/infra/drivers/zte/ZteE2320Driver/ZteE2320Driver';
+import { HuaweiK562E10Driver } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Driver';
 
 type RouterDriverConstructor = new (
   topologyParser: ITopologySectionParser,
