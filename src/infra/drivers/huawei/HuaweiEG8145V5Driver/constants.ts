@@ -33,6 +33,25 @@ export const ENDPOINT = {
     '&RUNSTATE_FLAG=Ping' +
     '&RequestFile=html/bbsp/maintenance/diagnosecommon.asp',
   GET_PING_RESULT: '/html/bbsp/maintenance/GetPingResult.asp',
+
+  /**
+   * Used by `HuaweiEG8145V5Driver.reboot()` — same flow as the firmware's own
+   * `ResetONT()` in `mainpage.asp` (`docs/HuaweiEG8145V5/mainpage.asp:754`):
+   * a hidden-form POST to `set.cgi` with the TR-069 `ResetBoard` action and a
+   * fresh `onttoken` from `mainpage.asp`. The path `/CustomApp/mainpage.asp`
+   * is implied by mainpage's relative iframe srcs (e.g. `../html/ssmp/...`
+   * resolving to `/html/ssmp/...`) — `set.cgi` lives next to it.
+   *
+   * `RequestFile` is firmware-internal (where set.cgi redirects on success);
+   * we mirror the original `../CustomApp/mainpage.asp` byte-for-byte so the
+   * firmware accepts it without surprises (we don't actually consume the
+   * redirected response — the box is rebooting).
+   */
+  MAIN_PAGE: '/CustomApp/mainpage.asp',
+  RESET_BOARD:
+    '/CustomApp/set.cgi' +
+    '?x=InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ResetBoard' +
+    '&RequestFile=../CustomApp/mainpage.asp',
 };
 
 /**

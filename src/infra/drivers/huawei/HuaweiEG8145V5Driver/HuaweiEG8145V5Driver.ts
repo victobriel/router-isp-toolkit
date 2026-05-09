@@ -157,7 +157,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     if (!token) return null;
     params['x.X_HW_Token'] = token;
 
-    const started = await this.submitPingCgiForm(ENDPOINT.PING_DIAGNOSE, params);
+    const started = await this.submitCgiForm(ENDPOINT.PING_DIAGNOSE, params);
     if (started == null) return null;
 
     // Verify the firmware actually accepted the new target. complex.cgi's
@@ -199,15 +199,53 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
         'RUNSTATE_FLAG.value': 'TERMIANL',
         'x.X_HW_Token': tokenAfterStart,
       };
-      await this.submitPingCgiForm(ENDPOINT.PING_DIAGNOSE, stopParams);
+      await this.submitCgiForm(ENDPOINT.PING_DIAGNOSE, stopParams);
     }
 
     if (!raw) return null;
     return this.parseBusyBoxPingOutput(raw, ip);
   }
 
-  public override reboot(): Promise<void> {
-    throw new Error('Method not implemented.');
+  /**
+   * Reboot via TR-069 `InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ResetBoard`,
+   * the exact action the firmware's own `ResetONT()` runs from `mainpage.asp`
+   * (`docs/HuaweiEG8145V5/mainpage.asp:754`):
+   *
+   *     POST /CustomApp/set.cgi?x=…ResetBoard&RequestFile=../CustomApp/mainpage.asp
+   *     x.X_HW_Token=<onttoken>
+   *
+   * Two firmware quirks that bite us here are the same two that bit `ping()`:
+   *
+   * 1. **`onttoken` rotates on every accepted CGI write.** A token read from
+   *    the live DOM (or a prior CGI response) is already stale and would be
+   *    silently dropped — the firmware would 200 a redirect to mainpage but
+   *    never reboot. We GET `mainpage.asp` immediately before the POST and
+   *    pull the fresh `#hwonttoken` (see {@link fetchHuaweiCsrfToken}).
+   *
+   * 2. **`set.cgi` is gated on `Sec-Fetch-Mode: navigate`** on some builds.
+   *    A `fetch()` POST lands as `Sec-Fetch-Mode: cors` and gets discarded
+   *    without applying the action. We submit through {@link submitCgiForm}'s
+   *    hidden, sandboxed-iframe form so the request rides a real navigation.
+   *
+   * After the firmware accepts the POST, the connection is typically torn
+   * down mid-response when the reboot starts; `submitCgiForm` already treats
+   * that as a normal (timeout) outcome, so we don't inspect its return value
+   * — anything past the token check means the request reached the firmware.
+   * The promise resolves once the iframe load fires (response received) or
+   * the helper's safety timeout elapses.
+   */
+  public override async reboot(): Promise<void> {
+    const token = await this.fetchHuaweiCsrfToken(ENDPOINT.MAIN_PAGE);
+    if (!token) {
+      throw new Error(
+        'HuaweiEG8145V5Driver.reboot: missing onttoken on mainpage.asp ' +
+          '(session expired or device unreachable)',
+      );
+    }
+
+    await this.submitCgiForm(ENDPOINT.RESET_BOARD, {
+      'x.X_HW_Token': token,
+    });
   }
 
   private async getOpticalSignalState(): Promise<Pick<ExtractionResult, 'opticalSignal'>> {
@@ -908,19 +946,27 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * Fetch a fresh Huawei CSRF token (`onttoken`) from `diagnosecommon.asp`.
+   * Fetch a fresh Huawei CSRF token (`onttoken`) by GETting any page that
+   * embeds the standard `<input id="hwonttoken">` (e.g. `diagnosecommon.asp`,
+   * `mainpage.asp`).
    *
    * Why no DOM shortcut: the firmware rotates `onttoken` on every accepted
-   * `complex.cgi` write, so the value embedded in the live page (or in the
-   * response of the previous CGI POST) goes stale immediately after use.
-   * Reading the DOM-cached token across calls causes the next CGI POST to be
-   * silently dropped — the firmware returns 200 with a redirect-to-diagnose
-   * page but never updates state. Always read the token from a fresh GET of
-   * the diagnose page, immediately before the POST that needs it.
+   * state-mutating CGI write (`complex.cgi`, `set.cgi`, …), so the value
+   * embedded in the live page — or in the response of the previous CGI POST —
+   * goes stale immediately after use. Reading a DOM-cached token across calls
+   * causes the next CGI POST to be silently dropped: the firmware returns 200
+   * with a redirect to the originating page but never applies the action.
+   * Always read the token from a fresh GET, immediately before the POST that
+   * needs it.
    */
-  private async fetchDiagnosePageCsrfToken(): Promise<string | null> {
-    const raw = await this.fetch(ENDPOINT.DIAGNOSE_COMMON);
+  private async fetchHuaweiCsrfToken(path: string): Promise<string | null> {
+    const raw = await this.fetch(path);
     return this.matchInputValueById(raw, 'hwonttoken');
+  }
+
+  /** {@link fetchHuaweiCsrfToken} pinned to the diagnose page (used by `ping()`). */
+  private fetchDiagnosePageCsrfToken(): Promise<string | null> {
+    return this.fetchHuaweiCsrfToken(ENDPOINT.DIAGNOSE_COMMON);
   }
 
   /**
@@ -1120,25 +1166,32 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * Submit a `complex.cgi` form via a hidden iframe-targeted form, byte-for-byte
-   * the same way `webSubmitForm.submit()` does on `diagnosecommon.asp`.
+   * Submit a Huawei CGI form (`complex.cgi`, `set.cgi`, …) via a hidden
+   * iframe-targeted form, byte-for-byte the same way `webSubmitForm.submit()`
+   * does on the firmware's own pages — `diagnosecommon.asp` for ping
+   * (`OnApply` / `STOP`), `mainpage.asp` for reboot (`ResetONT`), etc.
    *
    * Why not `fetch`: some Huawei builds gate state-mutating CGIs on
    * `Sec-Fetch-Mode: navigate`, which `fetch` cannot produce — XHR submits land
-   * with `Sec-Fetch-Mode: cors` and get silently dropped (response is the
-   * unchanged diagnose page, polling keeps replaying the previous test). A
-   * real form submit into a same-origin iframe target produces a proper
-   * navigation, including the headers the firmware expects.
+   * with `Sec-Fetch-Mode: cors` and get silently dropped (for ping, the
+   * response is the unchanged diagnose page and polling keeps replaying the
+   * previous test; for reboot, the box simply ignores the request). A real
+   * form submit into a same-origin iframe target produces a proper navigation,
+   * including the headers the firmware expects.
    *
    * The iframe is sandboxed without `allow-scripts` so the response page's
    * inline scripts (auto-pollers, `LoadFrame`, `setInterval` registrations)
    * do not run inside the hidden iframe; we still get full `outerHTML` access
-   * via `allow-same-origin`. Form parameter order matches `OnApply` exactly.
+   * via `allow-same-origin`. Form parameter order is preserved as given so
+   * callers can mirror firmware-side ordering when the parser is sensitive to
+   * it (`OnApply()` style).
+   *
+   * Resolves with the response page's `outerHTML` once the iframe load fires,
+   * or `null` if the submission cannot start, throws synchronously, or the
+   * 30 s safety timeout elapses (e.g. reboot tearing down the connection
+   * mid-response — that is a normal outcome for `RESET_BOARD`).
    */
-  private submitPingCgiForm(
-    action: string,
-    params: Record<string, string>,
-  ): Promise<string | null> {
+  private submitCgiForm(action: string, params: Record<string, string>): Promise<string | null> {
     return new Promise((resolve) => {
       if (typeof document === 'undefined' || !document.body) {
         resolve(null);
