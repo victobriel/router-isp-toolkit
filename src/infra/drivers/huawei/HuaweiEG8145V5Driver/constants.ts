@@ -20,9 +20,11 @@ export const ENDPOINT = {
   LAN_ADDRESS: '/html/bbsp/lanaddress/lanaddress.asp',
   DEVICE_INFO: '/html/ssmp/deviceinfo/deviceinfo.asp',
   /**
-   * Diagnostics endpoints used by `ping()`. The same `complex.cgi` action +
-   * `GetPingResult.asp` poll loop is what `diagnosecommon.asp` itself uses
-   * (see `OnApply()` / `GetPingResult()` in `docs/diagnosecommon-example.asp`).
+   * Diagnostics endpoints used by `HuaweiEG8145V5Driver.ping()` (the IP ping
+   * implementation that previously lived on `HuaweiBaseDriver` for this firmware
+   * only). The same `complex.cgi` action + `GetPingResult.asp` poll loop is what
+   * `diagnosecommon.asp` itself uses (see `OnApply()` / `GetPingResult()` in
+   * `docs/diagnosecommon-example.asp`).
    */
   DIAGNOSE_COMMON: '/html/bbsp/maintenance/diagnosecommon.asp',
   PING_DIAGNOSE:
@@ -32,6 +34,38 @@ export const ENDPOINT = {
     '&RequestFile=html/bbsp/maintenance/diagnosecommon.asp',
   GET_PING_RESULT: '/html/bbsp/maintenance/GetPingResult.asp',
 };
+
+/**
+ * IP ping diagnostics for this model: TR-069 IPPingDiagnostics wired like
+ * `diagnosecommon.asp` (`OnApply` / `GetPingResult`). These values support
+ * `HuaweiEG8145V5Driver.ping()`; URLs are `ENDPOINT.DIAGNOSE_COMMON`,
+ * `ENDPOINT.PING_DIAGNOSE`, and `ENDPOINT.GET_PING_RESULT` above.
+ * (Implementation lives on the driver, not `HuaweiBaseDriver`.)
+ */
+
+/** Mirrors `splitobj` in `diagnosecommon.asp` — separates ping body from status. */
+export const HUAWEI_PING_RESULT_DELIMITER = '[@#@]';
+
+export const HUAWEI_PING_DEFAULT_REPETITIONS = 4;
+export const HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE = 56;
+export const HUAWEI_PING_DEFAULT_TIMEOUT_MS = 10_000;
+export const HUAWEI_PING_DEFAULT_DSCP = 0;
+export const HUAWEI_PING_POLL_INTERVAL_MS = 1_000;
+export const HUAWEI_PING_POLL_GRACE_MS = 5_000;
+
+/** BusyBox `ping` reply line: `64 bytes from 1.2.3.4: seq=0 ttl=64 time=12.345 ms`. */
+export const HUAWEI_PING_REPLY_LINE =
+  /^(\d+)\s+bytes\s+from\s+\S+?:\s+seq=(\d+)\s+ttl=(\d+)\s+time=([\d.]+)\s*ms/i;
+
+/** BusyBox stats: `2 packets transmitted, 2 packets received, 0% packet loss`. */
+export const HUAWEI_PING_STATS_LINE =
+  /(\d+)\s+packets\s+transmitted,\s*(\d+)\s+(?:packets\s+)?received(?:[^,]*)?,\s*(\d+)%\s*packet\s*loss/i;
+
+/** BusyBox RTT: `round-trip min/avg/max = 1.234/2.345/3.456 ms`. */
+export const HUAWEI_PING_RTT_LINE = /min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\d.]+)/i;
+
+/** `PING 1.2.3.4 (1.2.3.4): 56 data bytes`. */
+export const HUAWEI_PING_HEADER_LINE = /^PING\s+\S+\s+\(\S+\):\s+(\d+)\s+data\s+bytes/i;
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
 export const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {

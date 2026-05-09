@@ -158,6 +158,57 @@ export function tryReadHuaweiCsrfTokenFromDocument(): string | null {
   return null;
 }
 
+/**
+ * RFC 1918 private + loopback + link-local (and `0.0.0.0`). Hostnames are
+ * deliberately treated as non-private because their resolution requires DNS,
+ * which on Huawei ONTs only runs on the WAN side.
+ */
+export function isPrivateOrLocalIPv4(host: string): boolean {
+  const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host.trim());
+  if (!m) return false;
+  const [a, b] = [Number.parseInt(m[1]!, 10), Number.parseInt(m[2]!, 10)];
+  if (a === 10) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 127) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 0) return true;
+  return false;
+}
+
+/** Decode a single `\…` escape starting at `src[i]` (which must be `\`). */
+export function decodeJsEscape(src: string, i: number): string {
+  const next = src[i + 1]!;
+  if (next === 'x') {
+    const hex = src.slice(i + 2, i + 4);
+    if (!/^[0-9a-fA-F]{2}$/.test(hex)) return next;
+    return String.fromCharCode(Number.parseInt(hex, 16));
+  }
+  if (next === 'u') {
+    const hex = src.slice(i + 2, i + 6);
+    if (!/^[0-9a-fA-F]{4}$/.test(hex)) return next;
+    return String.fromCharCode(Number.parseInt(hex, 16));
+  }
+  switch (next) {
+    case 'n':
+      return '\n';
+    case 'r':
+      return '\r';
+    case 't':
+      return '\t';
+    case 'b':
+      return '\b';
+    case 'f':
+      return '\f';
+    case 'v':
+      return '\v';
+    case '0':
+      return '\0';
+    default:
+      return next;
+  }
+}
+
 export async function fetchWithMethod(
   path: string,
   method: 'GET' | 'POST',

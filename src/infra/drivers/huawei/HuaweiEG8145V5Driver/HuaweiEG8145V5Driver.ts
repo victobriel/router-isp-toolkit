@@ -3,13 +3,29 @@ import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionPa
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
 import { HuaweiEG8145V5Selectors } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Selectors';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
+import {
+  ExtractionResult,
+  ExtractionResultSchema,
+  PingTestResult,
+  PingTestResultSchema,
+} from '@/domain/schemas/validation';
 import { ExtractionFilter } from '@/application/types';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
 import {
   ENDPOINT,
   HUAWEI_COLON_MAC,
   HUAWEI_JS_STRING_LITERAL,
+  HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE,
+  HUAWEI_PING_DEFAULT_DSCP,
+  HUAWEI_PING_DEFAULT_REPETITIONS,
+  HUAWEI_PING_DEFAULT_TIMEOUT_MS,
+  HUAWEI_PING_HEADER_LINE,
+  HUAWEI_PING_POLL_GRACE_MS,
+  HUAWEI_PING_POLL_INTERVAL_MS,
+  HUAWEI_PING_REPLY_LINE,
+  HUAWEI_PING_RESULT_DELIMITER,
+  HUAWEI_PING_RTT_LINE,
+  HUAWEI_PING_STATS_LINE,
   HUAWEI_ST_OPTIC_INFO_KEYS_12,
   HUAWEI_ST_OPTIC_INFO_KEYS_16,
   HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS,
@@ -18,8 +34,10 @@ import {
   HUAWEI_WLAN_MODE_LABELS,
 } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
 import {
+  decodeJsEscape,
   fetchWithMethod,
   huaweiIpv6AddressModeLabel,
+  isPrivateOrLocalIPv4,
   normalizeMac,
   parseHuaweiWlanConfigurationIndex,
   parseUserDeviceRowsPositional,
@@ -27,6 +45,10 @@ import {
   tryReadHuaweiCsrfTokenFromDocument,
 } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 
+/**
+ * HUAWEI EG8145V5 ONT: WAN/WLAN/LAN/topology extraction and IP ping diagnostics
+ * (`ping()`), using shared {@link HuaweiBaseDriver} HTML parsers where applicable.
+ */
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
     super('HUAWEI EG8145V5', HuaweiEG8145V5Selectors, topologyParser, domService);
@@ -84,6 +106,104 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const $homeTab = this.domService.getHTMLElement(this.s.homeTab, HTMLElement);
     const onLoginPage = this.isLoginPage();
     return !onLoginPage && !!$homeTab;
+  }
+
+  /**
+   * Drives the IPPingDiagnostics flow at `/html/bbsp/maintenance/diagnosecommon.asp`.
+   *
+   * The page itself uses a hidden form POST to `complex.cgi?...&RUNSTATE_FLAG=Ping`
+   * to start the test and then polls `GetPingResult.asp` for a string of shape
+   * `<raw ping output>[@#@]<Status>`. We do exactly the same from the extension,
+   * which avoids needing an iframe / DOM scrape: cookies are shared with this
+   * origin like a normal navigation. The stock UI can read `onttoken` from the
+   * live diagnose page DOM; **this implementation always performs a fresh GET of
+   * `diagnosecommon.asp` immediately before each state-changing POST** because the
+   * firmware rotates the token on every accepted `complex.cgi` write and cached
+   * values would drop the next request (see `fetchDiagnosePageCsrfToken`).
+   *
+   * Interface selection matters: the firmware's TR-069 IPPingDiagnostics
+   * defaults to `br0` (the LAN bridge) when `x.Interface` is omitted, which
+   * means external IPs and hostnames silently time out (br0 has no WAN egress).
+   * For non-private targets we discover the routed INTERNET WAN from
+   * `wan_list.asp` and pin the test to it; for RFC 1918 / loopback / link-local
+   * targets we leave it unset so the LAN default keeps working.
+   */
+  public override async ping(ip: string): Promise<PingTestResult | null> {
+    // Build params in the same order webSubmitForm.addParameter calls them in
+    // OnApply, in case the firmware's parser is sensitive to ordering.
+    const params: Record<string, string> = {
+      'x.Host': ip,
+      'x.DiagnosticsState': 'Requested',
+      'x.NumberOfRepetitions': String(HUAWEI_PING_DEFAULT_REPETITIONS),
+      'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
+      'x.DataBlockSize': String(HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE),
+      'x.Timeout': String(HUAWEI_PING_DEFAULT_TIMEOUT_MS),
+    };
+
+    if (!isPrivateOrLocalIPv4(ip)) {
+      const wanDomain = await this.findInternetWanDomainForPing();
+      if (wanDomain) params['x.Interface'] = wanDomain;
+    }
+
+    params['RUNSTATE_FLAG.value'] = 'START';
+
+    // Token must be fetched *just before* the POST: the firmware rotates
+    // onttoken on every accepted CGI write, so any cached value (DOM, prior
+    // response, previous ping invocation) is already stale and will be
+    // silently rejected. Without this, a second ping() call leaves the
+    // firmware's PingResult buffer untouched and `GetPingResult.asp` keeps
+    // replaying the previous target's output.
+    const token = await this.fetchDiagnosePageCsrfToken();
+    if (!token) return null;
+    params['x.X_HW_Token'] = token;
+
+    const started = await this.submitPingCgiForm(ENDPOINT.PING_DIAGNOSE, params);
+    if (started == null) return null;
+
+    // Verify the firmware actually accepted the new target. complex.cgi's
+    // response is the diagnose page with the rotated state inlined as a
+    // `new PingResultClass(domain, DiagnosticsState, Interface, Host, …)`
+    // call. If `Host` doesn't match what we asked for, our POST was dropped
+    // (typical causes: stale token, CSRF/Sec-Fetch gating, or the previous
+    // test still latched). Returning null here is strictly better than
+    // polling and reporting the previous target's cached result as if it
+    // were ours.
+    const newState = this.parseHuaweiStructCall(started, 'PingResultClass');
+    if (!newState || (newState.Host ?? '') !== ip) return null;
+
+    // complex.cgi's response also carries the rotated token — capture it for
+    // the cancel path so we don't have to do another GET.
+    const tokenAfterStart = this.matchInputValueById(started, 'hwonttoken') ?? token;
+
+    const deadline =
+      Date.now() +
+      HUAWEI_PING_DEFAULT_REPETITIONS * HUAWEI_PING_DEFAULT_TIMEOUT_MS +
+      HUAWEI_PING_POLL_GRACE_MS;
+
+    let raw = '';
+    let status = 'Requested';
+
+    while (Date.now() < deadline) {
+      await this.delay(HUAWEI_PING_POLL_INTERVAL_MS);
+      const polled = await this.pollPingResult();
+      if (!polled) continue;
+      raw = polled.raw;
+      status = polled.status;
+      if (status !== 'Requested') break;
+    }
+
+    if (status === 'Requested') {
+      const stopParams: Record<string, string> = {
+        'x.Host': ip,
+        // Firmware misspelling — must be sent as-is to be accepted.
+        'RUNSTATE_FLAG.value': 'TERMIANL',
+        'x.X_HW_Token': tokenAfterStart,
+      };
+      await this.submitPingCgiForm(ENDPOINT.PING_DIAGNOSE, stopParams);
+    }
+
+    if (!raw) return null;
+    return this.parseBusyBoxPingOutput(raw, ip);
   }
 
   public override reboot(): Promise<void> {
@@ -785,5 +905,328 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const get = await fetchWithMethod(path, 'GET');
     if (get && /new\s+USERDevice\s*\(/i.test(get)) return get;
     return post ?? get;
+  }
+
+  /**
+   * Fetch a fresh Huawei CSRF token (`onttoken`) from `diagnosecommon.asp`.
+   *
+   * Why no DOM shortcut: the firmware rotates `onttoken` on every accepted
+   * `complex.cgi` write, so the value embedded in the live page (or in the
+   * response of the previous CGI POST) goes stale immediately after use.
+   * Reading the DOM-cached token across calls causes the next CGI POST to be
+   * silently dropped — the firmware returns 200 with a redirect-to-diagnose
+   * page but never updates state. Always read the token from a fresh GET of
+   * the diagnose page, immediately before the POST that needs it.
+   */
+  private async fetchDiagnosePageCsrfToken(): Promise<string | null> {
+    const raw = await this.fetch(ENDPOINT.DIAGNOSE_COMMON);
+    return this.matchInputValueById(raw, 'hwonttoken');
+  }
+
+  /**
+   * Discover the routed INTERNET WAN's TR-069 `domain` so `ping()` can pin
+   * external probes to the WAN side. Mirrors the WAN selection logic of
+   * `getWanState` in this driver: prefer routed + INTERNET + enabled,
+   * then routed + INTERNET, then any INTERNET, else `null` (e.g. bridged
+   * mode, or `wan_list*.asp` not exposed by this firmware).
+   */
+  private async findInternetWanDomainForPing(): Promise<string | null> {
+    const [info, list] = await Promise.all([
+      this.fetch(ENDPOINT.WAN_LIST_INFO),
+      this.fetch(ENDPOINT.WAN_LIST),
+    ]);
+    if (!info && !list) return null;
+    const buffer = `${info ?? ''}\n${list ?? ''}`;
+
+    const entries = [
+      ...this.parseHuaweiStructCallAll(buffer, 'WanPPP'),
+      ...this.parseHuaweiStructCallAll(buffer, 'WanIP'),
+    ];
+    if (entries.length === 0) return null;
+
+    const isInternet = (e: Record<string, string>) =>
+      (e.ServiceList ?? '').toUpperCase().includes('INTERNET');
+    const isRouted = (e: Record<string, string>) => (e.Mode ?? '').toUpperCase().includes('ROUTED');
+    const isEnabled = (e: Record<string, string>) => (e.Enable ?? '') === '1';
+
+    const chosen =
+      entries.find((e) => isInternet(e) && isRouted(e) && isEnabled(e)) ??
+      entries.find((e) => isInternet(e) && isRouted(e)) ??
+      entries.find(isInternet) ??
+      null;
+
+    const domain = chosen?.domain?.trim();
+    return domain ? domain : null;
+  }
+
+  /**
+   * Poll `GetPingResult.asp` and split firmware output into raw ping text and
+   * trailing status (after the `[@#@]` delimiter, see `HUAWEI_PING_RESULT_DELIMITER`).
+   */
+  private async pollPingResult(): Promise<{ raw: string; status: string } | null> {
+    const body = await this.postPingForm(ENDPOINT.GET_PING_RESULT, '');
+    if (body == null) return null;
+
+    const decoded = this.decodeGetPingResultExpression(body);
+    if (decoded == null) return null;
+
+    const idx = decoded.indexOf(HUAWEI_PING_RESULT_DELIMITER);
+    if (idx < 0) return { raw: decoded, status: 'Requested' };
+
+    const raw = decoded.slice(0, idx);
+    const tail = decoded.slice(idx + HUAWEI_PING_RESULT_DELIMITER.length).trim();
+    const status = tail.split(/\s+/)[0] ?? '';
+    return { raw, status };
+  }
+
+  /**
+   * Decode the JS expression returned by `GetPingResult.asp`. The body is a
+   * concatenation of one or more single- or double-quoted string literals
+   * separated by `+` and whitespace, e.g.
+   *
+   *     "PING 1.2.3.4 ...\n" +
+   *     "64 bytes from 1.2.3.4: ... ms\n"
+   *     + "[@#@]Complete";
+   *
+   * The original page does `eval(data)`; we walk literals manually because MV3
+   * extensions cannot `eval`. Supports `\xNN`, `\uNNNN`, and the standard
+   * single-char escapes (`\n`, `\r`, `\t`, `\\`, `\"`, `\'`, …). Any leading
+   * non-quote bytes are skipped so the `data.substr(8)` workaround inside
+   * `GetPingResult` (firmware occasionally emits `\n\n" + ` style preambles)
+   * isn't needed.
+   */
+  private decodeGetPingResultExpression(src: string): string | null {
+    let pos = 0;
+    while (pos < src.length && src[pos] !== '"' && src[pos] !== "'") pos++;
+
+    const parts: string[] = [];
+    while (pos < src.length) {
+      if (parts.length > 0) {
+        while (pos < src.length && /[\s+;]/.test(src[pos]!)) pos++;
+        if (pos >= src.length) break;
+      }
+
+      const quote = src[pos];
+      if (quote !== '"' && quote !== "'") {
+        return parts.length > 0 ? parts.join('') : null;
+      }
+
+      let i = pos + 1;
+      let chunk = '';
+      let closed = false;
+      while (i < src.length) {
+        const c = src[i]!;
+        if (c === '\\') {
+          if (i + 1 >= src.length) return null;
+          chunk += decodeJsEscape(src, i);
+          i += src[i + 1] === 'x' ? 4 : src[i + 1] === 'u' ? 6 : 2;
+        } else if (c === quote) {
+          closed = true;
+          break;
+        } else {
+          chunk += c;
+          i++;
+        }
+      }
+      if (!closed) return null;
+      parts.push(chunk);
+      pos = i + 1;
+    }
+
+    return parts.length > 0 ? parts.join('') : null;
+  }
+
+  /**
+   * Parse Huawei/BusyBox-style ping output into `PingTestResult`. Differs from
+   * `BaseRouter.parsePingTestResult` (which targets ZTE/Windows-style replies):
+   *
+   *     PING 1.2.3.4 (1.2.3.4): 56 data bytes
+   *     64 bytes from 1.2.3.4: seq=0 ttl=64 time=12.345 ms
+   *     ...
+   *     --- 1.2.3.4 ping statistics ---
+   *     2 packets transmitted, 2 packets received, 0% packet loss
+   *     round-trip min/avg/max = 12.345/13.456/14.567 ms
+   *
+   * Mid-test buffers (status `Requested`) lack the trailing stats/RTT block, so
+   * those fields are intentionally optional and left undefined when absent.
+   */
+  private parseBusyBoxPingOutput(raw: string, ip: string): PingTestResult | null {
+    const lines = raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    let bytes: number | undefined;
+    let ttl: number | undefined;
+    const times: number[] = [];
+    const sequences: number[] = [];
+
+    for (const line of lines) {
+      const headerMatch = HUAWEI_PING_HEADER_LINE.exec(line);
+      if (headerMatch) {
+        bytes = Number.parseInt(headerMatch[1]!, 10);
+        continue;
+      }
+      const replyMatch = HUAWEI_PING_REPLY_LINE.exec(line);
+      if (replyMatch) {
+        bytes = Number.parseInt(replyMatch[1]!, 10);
+        sequences.push(Number.parseInt(replyMatch[2]!, 10));
+        ttl = Number.parseInt(replyMatch[3]!, 10);
+        times.push(Number.parseFloat(replyMatch[4]!));
+      }
+    }
+
+    const statsLine = lines.find((line) => HUAWEI_PING_STATS_LINE.test(line));
+    const statsMatch = statsLine ? HUAWEI_PING_STATS_LINE.exec(statsLine) : null;
+    const transmitted = statsMatch ? Number.parseInt(statsMatch[1]!, 10) : undefined;
+    const received = statsMatch ? Number.parseInt(statsMatch[2]!, 10) : undefined;
+    const loss = statsMatch ? Number.parseInt(statsMatch[3]!, 10) : undefined;
+
+    const rttLine = lines.find((line) => HUAWEI_PING_RTT_LINE.test(line));
+    const rttMatch = rttLine ? HUAWEI_PING_RTT_LINE.exec(rttLine) : null;
+    const min = rttMatch ? Number.parseFloat(rttMatch[1]!) : undefined;
+    const avg = rttMatch ? Number.parseFloat(rttMatch[2]!) : undefined;
+    const max = rttMatch ? Number.parseFloat(rttMatch[3]!) : undefined;
+
+    return PingTestResultSchema.parse({
+      ip,
+      bytes,
+      time: times.length > 0 ? times : undefined,
+      sequence: sequences.length > 0 ? sequences : undefined,
+      ttl,
+      packets: { transmitted, received, loss, min, avg, max },
+      message: raw,
+    });
+  }
+
+  /**
+   * POST `application/x-www-form-urlencoded` to a diagnostics path (used for
+   * `GetPingResult.asp` polling; distinct from iframe-based `complex.cgi`).
+   */
+  private async postPingForm(path: string, body: string): Promise<string | null> {
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body,
+      });
+      if (!response.ok) return null;
+      return await response.text();
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Submit a `complex.cgi` form via a hidden iframe-targeted form, byte-for-byte
+   * the same way `webSubmitForm.submit()` does on `diagnosecommon.asp`.
+   *
+   * Why not `fetch`: some Huawei builds gate state-mutating CGIs on
+   * `Sec-Fetch-Mode: navigate`, which `fetch` cannot produce — XHR submits land
+   * with `Sec-Fetch-Mode: cors` and get silently dropped (response is the
+   * unchanged diagnose page, polling keeps replaying the previous test). A
+   * real form submit into a same-origin iframe target produces a proper
+   * navigation, including the headers the firmware expects.
+   *
+   * The iframe is sandboxed without `allow-scripts` so the response page's
+   * inline scripts (auto-pollers, `LoadFrame`, `setInterval` registrations)
+   * do not run inside the hidden iframe; we still get full `outerHTML` access
+   * via `allow-same-origin`. Form parameter order matches `OnApply` exactly.
+   */
+  private submitPingCgiForm(
+    action: string,
+    params: Record<string, string>,
+  ): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (typeof document === 'undefined' || !document.body) {
+        resolve(null);
+        return;
+      }
+
+      const iframeName = `__huawei_form_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+      const iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.setAttribute('sandbox', 'allow-forms allow-same-origin');
+      iframe.style.display = 'none';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = action;
+      form.target = iframeName;
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.style.display = 'none';
+
+      for (const [key, value] of Object.entries(params)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        try {
+          form.remove();
+        } catch {
+          /* noop */
+        }
+        try {
+          iframe.remove();
+        } catch {
+          /* noop */
+        }
+      };
+      const finish = (html: string | null) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(html);
+      };
+
+      iframe.addEventListener('load', () => {
+        if (settled) return;
+
+        // Some browsers fire `load` for the implicit about:blank document
+        // before the form's navigation completes; we want only the response.
+        let url = '';
+        try {
+          url = iframe.contentWindow?.location?.href ?? '';
+        } catch {
+          /* same-origin allowed by sandbox; defensive */
+        }
+        if (!url || url === 'about:blank') return;
+
+        let html: string | null = null;
+        try {
+          html = iframe.contentDocument?.documentElement?.outerHTML ?? null;
+        } catch {
+          html = null;
+        }
+        finish(html);
+      });
+
+      timer = setTimeout(() => finish(null), 30_000);
+
+      try {
+        form.submit();
+      } catch {
+        finish(null);
+      }
+    });
   }
 }

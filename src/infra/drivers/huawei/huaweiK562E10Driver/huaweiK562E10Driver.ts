@@ -1,7 +1,11 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
 import { ExtractionFilter } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
-import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
+import {
+  ExtractionResult,
+  ExtractionResultSchema,
+  type PingTestResult,
+} from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
@@ -84,6 +88,15 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
   public override reboot(): Promise<void> {
     throw new Error('Method not implemented.');
+  }
+
+  /**
+   * This model’s admin UI does not reuse the EG8145V5 `diagnosecommon.asp` /
+   * `complex.cgi` IPPingDiagnostics path. Returning `null` lets the app show an
+   * unsupported / failed ping state instead of calling the wrong endpoints.
+   */
+  public override async ping(_ip: string): Promise<PingTestResult | null> {
+    return null;
   }
 
   private async getTr069Url(): Promise<string | undefined> {
