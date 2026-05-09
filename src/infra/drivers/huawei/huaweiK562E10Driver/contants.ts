@@ -1,8 +1,14 @@
 export const ENDPOINT = {
   INDEX: '/index.asp',
-  /** Same Huawei `bbsp/common` WAN bundle as {@link HuaweiEG8145V5Driver} / `getWanDynamicData.asp`. */
+  /**
+   * Same Huawei `bbsp/common` WAN bundle as {@link HuaweiEG8145V5Driver} /
+   * `getWanDynamicData.asp`. `internetAP.asp` also pulls `wan_list_ap.asp`
+   * (`../common/wan_list_ap.asp`); some builds expose WAN rows only there, so
+   * {@link HuaweiK562E10Driver.getWanState} merges it with `wan_list.asp`.
+   */
   WAN_LIST_INFO: '/html/bbsp/common/wan_list_info.asp',
   WAN_LIST: '/html/bbsp/common/wan_list.asp',
+  WAN_LIST_AP: '/html/bbsp/common/wan_list_ap.asp',
   WAN_ADDRESS_ACQUIRE: '/html/bbsp/common/wanaddressacquire.asp',
   LAN_ADDRESS: '/html/bbsp/lanaddress/lanaddress.asp',
   MAIN_TOP_AP: '/html/bbsp/maintop/MainTopAP.asp',

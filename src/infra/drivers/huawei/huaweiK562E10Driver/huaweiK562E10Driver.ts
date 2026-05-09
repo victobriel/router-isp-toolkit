@@ -144,8 +144,9 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * WAN summary for the routed Internet PVC — same ASP bundle and `WanIP` / `WanPPP`
-   * parsing as {@link HuaweiEG8145V5Driver.getWanState} (see `docs/HuaweiK562E10/getWanDynamicData.asp`).
+   * WAN summary for the routed Internet PVC — same `WanIP` / `WanPPP` parsing as
+   * {@link HuaweiEG8145V5Driver.getWanState}, plus `wan_list_ap.asp` merged in
+   * (see `docs/HuaweiK562E10/internetAP.asp` / `getWanDynamicData.asp`).
    */
   private async getWanState(): Promise<
     Pick<
@@ -173,17 +174,21 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       linkSpeed: undefined,
     };
 
-    const [info, list, addressAcquire] = await Promise.all([
+    const [info, list, listAp, addressAcquire] = await Promise.all([
       this.fetch(ENDPOINT.WAN_LIST_INFO),
       this.fetch(ENDPOINT.WAN_LIST),
+      this.fetch(ENDPOINT.WAN_LIST_AP),
       this.fetch(ENDPOINT.WAN_ADDRESS_ACQUIRE),
     ]);
 
-    if (!info || !list) return undefinedResult;
+    if (!info) return undefinedResult;
 
-    const wanListBuffer = `${info}\n${list}`;
+    const listCombined = [list, listAp].filter((raw): raw is string => !!raw).join('\n');
+    if (!listCombined) return undefinedResult;
 
-    const wanEntries: Array<{
+    const wanListBuffer = `${info}\n${listCombined}`;
+
+    const wanEntriesRaw: Array<{
       data: Record<string, string>;
       encapMode: 'PPPoE' | 'IPoE';
     }> = [
@@ -196,6 +201,14 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         encapMode: 'IPoE' as const,
       })),
     ];
+
+    const seenDomainEncap = new Set<string>();
+    const wanEntries = wanEntriesRaw.filter((e) => {
+      const key = `${e.encapMode}\t${e.data.domain ?? ''}`;
+      if (seenDomainEncap.has(key)) return false;
+      seenDomainEncap.add(key);
+      return true;
+    });
 
     if (wanEntries.length === 0) return undefinedResult;
 
