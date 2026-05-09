@@ -224,6 +224,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
     const { data, encapMode } = chosen;
 
+    console.log(data);
+
     const internetEnabled = data.Enable === '1';
 
     const pppoeUsername =
