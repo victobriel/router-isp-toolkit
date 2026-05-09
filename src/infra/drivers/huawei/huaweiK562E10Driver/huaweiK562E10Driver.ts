@@ -8,7 +8,6 @@ import {
 } from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
-import { huaweiIpv6AddressModeLabel } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
 import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 
@@ -81,9 +80,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       upnp: function (): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
         return Promise.resolve({ upnpEnabled: undefined });
       },
-      tr069: function (): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
-        return Promise.resolve({ tr069Url: undefined, tr069Enabled: undefined });
-      },
+      tr069: () => this.getTr069State(),
       routerInfo: function (): Promise<Pick<ExtractionResult, 'routerModel' | 'routerVersion'>> {
         return Promise.resolve({ routerModel: undefined, routerVersion: undefined });
       },
@@ -146,7 +143,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   /**
    * WAN summary for the routed Internet PVC — same `WanIP` / `WanPPP` parsing as
    * {@link HuaweiEG8145V5Driver.getWanState}, plus `wan_list_ap.asp` merged in
-   * (see `docs/HuaweiK562E10/internetAP.asp` / `getWanDynamicData.asp`).
+   * (see `docs/HuaweiK562E10/internetAP.asp` / `getWanDynamicData.asp`). Also loads
+   * `tr069.asp` in the same round-trip for `tr069Url` / `tr069Enabled`.
    */
   private async getWanState(): Promise<
     Pick<
@@ -160,6 +158,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       | 'dhcpv6Enabled'
       | 'pdEnabled'
       | 'linkSpeed'
+      | 'tr069Enabled'
     >
   > {
     const undefinedResult = {
@@ -172,13 +171,15 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       dhcpv6Enabled: undefined,
       pdEnabled: undefined,
       linkSpeed: undefined,
+      tr069Enabled: undefined,
     };
 
-    const [info, list, listAp, addressAcquire] = await Promise.all([
+    const [info, list, listAp, ipv6Ap, tr069Raw] = await Promise.all([
       this.fetch(ENDPOINT.WAN_LIST_INFO),
       this.fetch(ENDPOINT.WAN_LIST),
       this.fetch(ENDPOINT.WAN_LIST_AP),
-      this.fetch(ENDPOINT.WAN_ADDRESS_ACQUIRE),
+      this.fetch(ENDPOINT.IPV6_AP),
+      this.fetch(ENDPOINT.TR069_AP),
     ]);
 
     if (!info) return undefinedResult;
@@ -224,96 +225,73 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
     const { data, encapMode } = chosen;
 
-    console.log(data);
-
     const internetEnabled = data.Enable === '1';
 
     const pppoeUsername =
-      encapMode === 'PPPoE' ? (data.Username ? data.Username : undefined) : undefined;
+      encapMode === 'PPPoE' ? (data.MACAddress ? data.MACAddress : undefined) : undefined;
 
-    let ipVersion: string | undefined;
-    if (data.IPv4Enable === '1' && data.IPv6Enable === '1') ipVersion = 'IPv4/IPv6';
-    else if (data.IPv4Enable === '1') ipVersion = 'IPv4';
-    else if (data.IPv6Enable === '1') ipVersion = 'IPv6';
-
-    let dhcpv6Enabled: boolean | undefined;
-    let slaacEnabled: boolean | undefined;
-    let pdEnabled: boolean | undefined;
-    let requestPdEnabled: boolean | undefined;
-    let ipAcquisitionMode: string | undefined;
-
-    if (data.IPv6Enable !== '1') {
-      dhcpv6Enabled = false;
-      pdEnabled = false;
-      requestPdEnabled = false;
-    } else {
-      const lanAddressRaw = await this.fetch(ENDPOINT.LAN_ADDRESS);
-      const raConfig = this.parseHuaweiStructCall(lanAddressRaw, 'RaConfigInfoClass');
-      const managedFlag = raConfig?.ManagedFlag;
-      if (managedFlag === '1' || managedFlag === '0') {
-        slaacEnabled = managedFlag === '0';
-      }
-      const otherConfigFlag = raConfig?.OtherConfigFlag;
-      if (otherConfigFlag === '1' || otherConfigFlag === '0') {
-        dhcpv6Enabled = otherConfigFlag === '1';
-      }
-
-      let prefixItem: Record<string, string> | undefined;
-      let addressItem: Record<string, string> | undefined;
-      if (addressAcquire && data.domain) {
-        const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
-        prefixItem = prefixItems.find(
-          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
-        );
-        const addressItems = [
-          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquireIPItem'),
-          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquirePPPItem'),
-        ];
-        addressItem = addressItems.find(
-          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
-        );
-        const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
-        pdEnabled =
-          prefixOrigin === 'PREFIXDELEGATION' ||
-          prefixOrigin === 'AUTOCONFIGURED' ||
-          prefixOrigin === 'ROUTERADVERTISEMENT';
-      }
-
-      const ipv6AddressModeRaw =
-        data.IPv6AddressMode?.trim() || '' || addressItem?._Origin?.trim() || '';
-      if (ipv6AddressModeRaw !== '') {
-        const label = huaweiIpv6AddressModeLabel(ipv6AddressModeRaw);
-        if (label !== undefined) {
-          ipAcquisitionMode = label;
-        }
-      }
-      const ipv6PrefixModeRaw =
-        data.IPv6PrefixMode?.trim() || '' || prefixItem?._Origin?.trim() || '';
-      if (ipv6PrefixModeRaw !== '') {
-        const u = ipv6PrefixModeRaw.toUpperCase();
-        requestPdEnabled = u === 'PREFIXDELEGATION' || u === 'DHCPV6-PD';
-      }
+    // Same `GetProtocolType()` mapping as {@link HuaweiEG8145V5Driver.getWanState}
+    // (`IPv4Enable` / `IPv6Enable` on `WanIP` / `WanPPP`). If `wan_list_ap.asp` omits
+    // `IPv6Enable`, fall back to the master toggle on `ipv6_ap.asp` (`#ipv6Set`).
+    let ipv6On = data.IPv6Enable === '1';
+    if (data.IPv6Enable !== '1' && data.IPv6Enable !== '0' && ipv6Ap) {
+      const fromIpv6Page = this.parseK562Ipv6MasterToggle(ipv6Ap);
+      if (fromIpv6Page !== undefined) ipv6On = fromIpv6Page;
     }
+    const ipv4On =
+      data.IPv4Enable === '1' || data.IPv4Enable === undefined || data.IPv4Enable === '';
+    let ipVersion: string | undefined;
+    if (ipv4On && ipv6On) ipVersion = 'IPv4/IPv6';
+    else if (ipv4On) ipVersion = 'IPv4';
+    else if (ipv6On) ipVersion = 'IPv6';
+
+    const cwmp = this.parseHuaweiCwmp(tr069Raw);
+    const tr069Enabled = cwmp ? cwmp.EnableCWMP === '1' : undefined;
 
     return {
       internetEnabled,
       pppoeUsername,
       ipVersion,
-      ipAcquisitionMode,
-      requestPdEnabled,
-      slaacEnabled,
-      dhcpv6Enabled,
-      pdEnabled,
+      tr069Enabled,
+      // We dont have this informations in this router.
+      ipAcquisitionMode: undefined,
+      requestPdEnabled: undefined,
+      slaacEnabled: undefined,
+      dhcpv6Enabled: undefined,
+      pdEnabled: undefined,
       linkSpeed: undefined,
     };
   }
 
-  private async getTr069Url(): Promise<string | undefined> {
+  /**
+   * `tr069.asp` embeds `new stCWMP(...)` with `EnableCWMP` / `URL` — same shape as
+   * {@link HuaweiEG8145V5Driver.getTr069State} but under `html/ssmp/tr069/tr069.asp`.
+   */
+  private async getTr069State(): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
     const raw = await this.fetch(ENDPOINT.TR069_AP);
-    if (!raw) return undefined;
-    const value = this.matchInputValueBySelector(raw, this.s.advTr069Url);
-    if (!value) return undefined;
-    return value;
+    return this.parseTr069FromResponse(raw);
+  }
+
+  private parseTr069FromResponse(
+    raw: string | null,
+  ): Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'> {
+    const cwmp = this.parseHuaweiCwmp(raw);
+    if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
+    return {
+      tr069Url: cwmp.URL ? cwmp.URL : undefined,
+      tr069Enabled: cwmp.EnableCWMP === '1',
+    };
+  }
+
+  /** `ipv6_ap.asp` — `#ipv6Set` `dhcpserverflag` / `DHCPServerFlag` reflects any WAN IPv6 on. */
+  private parseK562Ipv6MasterToggle(raw: string): boolean | undefined {
+    const block = /<[^>]*\bid\s*=\s*["']ipv6Set["'][^>]*>/i.exec(raw)?.[0];
+    if (!block) return undefined;
+    const m =
+      /\bdhcpserverflag\s*=\s*["']([01])["']/i.exec(block) ??
+      /\bDHCPServerFlag\s*=\s*["']([01])["']/i.exec(block);
+    if (!m) return undefined;
+    return m[1] === '1';
   }
 
   private async fetch(path: string): Promise<string | null> {
