@@ -15,13 +15,7 @@ import {
 } from '@/domain/schemas/validation';
 import { BaseRouter } from '@/infra/router/BaseRouter';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
-import {
-  HUAWEI_DIAGNOSE_PAGE_ENDPOINT,
-  HUAWEI_PING_POLL_ENDPOINT,
-  HUAWEI_PING_START_ENDPOINT,
-  HUAWEI_WAN_LIST_ENDPOINT,
-  HUAWEI_WAN_LIST_INFO_ENDPOINT,
-} from './HuaweiCommonDriverConstants';
+import { ENDPOINT } from '../HuaweiEG8145V5Driver/contants';
 
 const REGEX_META = /[.*+?^${}()|[\]\\]/g;
 
@@ -172,7 +166,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
     if (!token) return null;
     params['x.X_HW_Token'] = token;
 
-    const started = await this.submitHuaweiCgiForm(HUAWEI_PING_START_ENDPOINT, params);
+    const started = await this.submitHuaweiCgiForm(ENDPOINT.PING_DIAGNOSE, params);
     if (started == null) return null;
 
     // Verify the firmware actually accepted the new target. complex.cgi's
@@ -214,7 +208,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
         'RUNSTATE_FLAG.value': 'TERMIANL',
         'x.X_HW_Token': tokenAfterStart,
       };
-      await this.submitHuaweiCgiForm(HUAWEI_PING_START_ENDPOINT, stopParams);
+      await this.submitHuaweiCgiForm(ENDPOINT.PING_DIAGNOSE, stopParams);
     }
 
     if (!raw) return null;
@@ -451,7 +445,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
    * the diagnose page, immediately before the POST that needs it.
    */
   protected async fetchHuaweiCsrfToken(): Promise<string | null> {
-    const raw = await this.huaweiGet(HUAWEI_DIAGNOSE_PAGE_ENDPOINT);
+    const raw = await this.huaweiGet(ENDPOINT.DIAGNOSE_COMMON);
     return this.matchInputValueById(raw, 'hwonttoken');
   }
 
@@ -464,8 +458,8 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
    */
   protected async findHuaweiInternetWanDomain(): Promise<string | null> {
     const [info, list] = await Promise.all([
-      this.huaweiGet(HUAWEI_WAN_LIST_INFO_ENDPOINT),
-      this.huaweiGet(HUAWEI_WAN_LIST_ENDPOINT),
+      this.huaweiGet(ENDPOINT.WAN_LIST_INFO),
+      this.huaweiGet(ENDPOINT.WAN_LIST),
     ]);
     if (!info && !list) return null;
     const buffer = `${info ?? ''}\n${list ?? ''}`;
@@ -510,7 +504,7 @@ export abstract class HuaweiBaseDriver extends BaseRouter {
   }
 
   private async pollHuaweiPingResult(): Promise<{ raw: string; status: string } | null> {
-    const body = await this.huaweiPostForm(HUAWEI_PING_POLL_ENDPOINT, '');
+    const body = await this.huaweiPostForm(ENDPOINT.GET_PING_RESULT, '');
     if (body == null) return null;
 
     const decoded = this.decodeHuaweiPingExpression(body);

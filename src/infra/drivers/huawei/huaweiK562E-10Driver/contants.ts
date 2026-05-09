@@ -1,4 +1,4 @@
-export const HUAWEI_ENDPOINTS = {
+export const ENDPOINT = {
   INDEX: '/index.asp',
   MAIN_TOP_AP: '/html/bbsp/maintop/MainTopAP.asp',
   INTERNET_AP: '/html/bbsp/internet/InternetAP.asp',

@@ -5,26 +5,8 @@ import { HuaweiEG8145V5Selectors } from './HuaweiEG8145V5Selectors';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ExtractionFilter } from '@/application/types';
-import {
-  HUAWEI_TR069_ENDPOINT,
-  HUAWEI_UPNP_ENDPOINT,
-  HUAWEI_ACCESS_CONTROL_ENDPOINT,
-  HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT,
-  HUAWEI_WAN_LIST_ENDPOINT,
-  HUAWEI_WAN_LIST_INFO_ENDPOINT,
-  HUAWEI_WLAN24G_ADVANCED_ENDPOINT,
-  HUAWEI_WLAN24G_ENDPOINT,
-  HUAWEI_WLAN5G_ADVANCED_ENDPOINT,
-  HUAWEI_WLAN5G_ENDPOINT,
-  HUAWEI_OPTICAL_INFO_ENDPOINT,
-  HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT,
-  HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT,
-  HUAWEI_LAN_USER_INFO_ENDPOINT,
-  HUAWEI_LAN_INFO_ENDPOINT,
-  HUAWEI_IPV6_INFO_ENDPOINT,
-  HUAWEI_DEVICE_INFO_ENDPOINT,
-} from '../shared/HuaweiCommonDriverConstants';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
+import { ENDPOINT } from './contants';
 
 /** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
 const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {
@@ -194,7 +176,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   private async getOpticalSignalState(): Promise<Pick<ExtractionResult, 'opticalSignal'>> {
-    const raw = await this.fetch(HUAWEI_OPTICAL_INFO_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.OPTICAL_INFO);
     if (!raw) return { opticalSignal: undefined };
 
     const optic = this.parseStOpticInfo(raw);
@@ -239,9 +221,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private async getTopologyState(): Promise<Pick<ExtractionResult, 'topology'>> {
     const token = HuaweiEG8145V5Driver.tryReadHuaweiCsrfTokenFromDocument();
     const [devInfo, dhcpInfo, lanUserInfo] = await Promise.all([
-      this.fetchLanUserAsp(HUAWEI_GET_LAN_USER_DEV_INFO_ENDPOINT, token),
-      this.fetchLanUserAsp(HUAWEI_GET_LAN_USER_DHCP_INFO_ENDPOINT, token),
-      this.fetchLanUserAsp(HUAWEI_LAN_USER_INFO_ENDPOINT, token),
+      this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DEV_INFO, token),
+      this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DHCP_INFO, token),
+      this.fetchLanUserAsp(ENDPOINT.LAN_USER_INFO, token),
     ]);
     const raw = [devInfo, dhcpInfo, lanUserInfo].filter((s): s is string => !!s).join('\n');
     if (!raw) return { topology: undefined };
@@ -615,9 +597,9 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     };
 
     const [info, list, addressAcquire] = await Promise.all([
-      this.fetch(HUAWEI_WAN_LIST_INFO_ENDPOINT),
-      this.fetch(HUAWEI_WAN_LIST_ENDPOINT),
-      this.fetch(HUAWEI_WAN_ADDRESS_ACQUIRE_ENDPOINT),
+      this.fetch(ENDPOINT.WAN_LIST_INFO),
+      this.fetch(ENDPOINT.WAN_LIST),
+      this.fetch(ENDPOINT.WAN_ADDRESS_ACQUIRE),
     ]);
 
     if (!info || !list) return undefinedResult;
@@ -682,7 +664,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       pdEnabled = false;
       requestPdEnabled = false;
     } else {
-      const lanAddressRaw = await this.fetch(HUAWEI_IPV6_INFO_ENDPOINT);
+      const lanAddressRaw = await this.fetch(ENDPOINT.LAN_ADDRESS);
       const raConfig = this.parseHuaweiStructCall(lanAddressRaw, 'RaConfigInfoClass');
       const managedFlag = raConfig?.ManagedFlag;
       if (managedFlag === '1' || managedFlag === '0') {
@@ -758,10 +740,10 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     >
   > {
     const [wlanBasic2g, wlanBasic5g, wlanAdvance2g, wlanAdvance5g] = await Promise.all([
-      this.fetch(HUAWEI_WLAN24G_ENDPOINT),
-      this.fetch(HUAWEI_WLAN5G_ENDPOINT),
-      this.fetch(HUAWEI_WLAN24G_ADVANCED_ENDPOINT),
-      this.fetch(HUAWEI_WLAN5G_ADVANCED_ENDPOINT),
+      this.fetch(ENDPOINT.WLAN_BASIC_2G),
+      this.fetch(ENDPOINT.WLAN_BASIC_5G),
+      this.fetch(ENDPOINT.WLAN_ADVANCED_2G),
+      this.fetch(ENDPOINT.WLAN_ADVANCED_5G),
     ]);
 
     const allRaw = [wlanBasic2g, wlanBasic5g, wlanAdvance2g, wlanAdvance5g]
@@ -892,7 +874,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private async getRemoteAccessState(): Promise<
     Pick<ExtractionResult, 'remoteAccessIpv4Enabled' | 'remoteAccessIpv6Enabled'>
   > {
-    const raw = await this.fetch(HUAWEI_ACCESS_CONTROL_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.NEW_ACL);
     if (!raw) {
       return { remoteAccessIpv4Enabled: undefined, remoteAccessIpv6Enabled: undefined };
     }
@@ -927,7 +909,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       | 'dhcpLeaseTimeMode'
     >
   > {
-    const raw = await this.fetch(HUAWEI_LAN_INFO_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.DHCP);
     if (!raw) {
       return {
         dhcpEnabled: undefined,
@@ -996,7 +978,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   private async getUpnpState(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
-    const raw = await this.fetch(HUAWEI_UPNP_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.UPNP);
     if (!raw) return { upnpEnabled: undefined };
     const main = this.matchHuaweiScriptVar(raw, 'enblMainUpnp');
     const slave = this.matchHuaweiScriptVar(raw, 'enblSlvUpnp');
@@ -1005,7 +987,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   }
 
   private async getTr069State(): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
-    const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.TR069);
     const cwmp = this.parseHuaweiCwmp(raw);
     if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
     return {
@@ -1017,7 +999,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private async getRouterInfoState(): Promise<
     Pick<ExtractionResult, 'routerModel' | 'routerVersion'>
   > {
-    const raw = await this.fetch(HUAWEI_DEVICE_INFO_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.DEVICE_INFO);
     if (!raw) return { routerModel: undefined, routerVersion: undefined };
     // Firmware usually leaves `#td1_2` / `#td5_2` empty in the raw ASP and fills them
     // from `deviceInfo` in on-page script (`deviceinfo.asp`); values are in `new stDeviceInfo(...)`.

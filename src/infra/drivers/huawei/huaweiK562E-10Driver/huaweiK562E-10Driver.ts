@@ -5,7 +5,7 @@ import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/valid
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
 import { HuaweiK562E10Selectors } from './huaweiK562E-10Selectors';
 import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
-import { HUAWEI_TR069_ENDPOINT } from '../shared/HuaweiCommonDriverConstants';
+import { ENDPOINT } from './contants';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
@@ -87,7 +87,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   private async getTr069Url(): Promise<string | undefined> {
-    const raw = await this.fetch(HUAWEI_TR069_ENDPOINT);
+    const raw = await this.fetch(ENDPOINT.TR069_AP);
     if (!raw) return undefined;
     const value = this.matchInputValueBySelector(raw, this.s.advTr069Url);
     if (!value) return undefined;
