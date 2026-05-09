@@ -15,7 +15,7 @@ import {
 } from '@/domain/schemas/validation';
 import { BaseRouter } from '@/infra/router/BaseRouter';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
-import { ENDPOINT } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/contants';
+import { ENDPOINT } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
 
 const REGEX_META = /[.*+?^${}()|[\]\\]/g;
 

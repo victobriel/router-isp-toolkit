@@ -6,111 +6,26 @@ import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ExtractionFilter } from '@/application/types';
 import type { TopologyClient } from '@/infra/drivers/shared/types';
-import { ENDPOINT } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/contants';
-
-/** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
-const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {
-  '0': 'Auto',
-  '1': '20MHz',
-  '2': '40MHz',
-  '3': 'Auto',
-};
-
-/** Huawei `mode` / `X_HW_Standard` codes → display label */
-const HUAWEI_WLAN_MODE_LABELS: Partial<Record<string, string>> = {
-  '11b': '802.11b',
-  '11g': '802.11g',
-  '11bg': '802.11b/g',
-  '11bgn': '802.11b/g/n',
-  '11a': '802.11a',
-  '11na': '802.11a/n',
-  '11ac': '802.11a/n/ac',
-};
-
-const HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS: Partial<Record<string, string>> = {
-  Basic: 'Open',
-  WPA: 'WPA',
-  '11i': 'WPA2',
-  WPAand11i: 'WPA/WPA2',
-};
-
-const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>> = {
-  AESEncryption: 'AES',
-  TKIPEncryption: 'TKIP',
-  TKIPandAESEncryption: 'TKIP&AES',
-};
-
-/**
- * Positional layout from `function USERDevice(Domain,IpAddr,MacAddr,…)` in
- * `GetLanUserDevInfo.asp` — used when the server returns `new USERDevice(…)`
- * rows without a constructor signature (typical of POST/AJAX snippets).
- */
-const HUAWEI_USER_DEVICE_PARAM_ORDER = [
-  'Domain',
-  'IpAddr',
-  'MacAddr',
-  'Port',
-  'IpType',
-  'DevType',
-  'DevStatus',
-  'PortType',
-  'Time',
-  'HostName',
-  'IPv4Enabled',
-  'IPv6Enabled',
-  'DeviceType',
-  'UserDevAlias',
-  'UserSpecifiedDeviceType',
-  'LeaseTimeRemaining',
-] as const;
-
-/**
- * `opticinfo.asp` declares two `stOpticInfo` shapes (GPON vs RF ONT). Map the
- * `new stOpticInfo(...)` positional args after decoding — do not rely on
- * `parseHuaweiStructCall`, which would bind to the first `function stOpticInfo`
- * in the HTML and mis-align when the firmware uses the longer constructor.
- */
-const HUAWEI_ST_OPTIC_INFO_KEYS_12 = [
-  'domain',
-  'LinkStatus',
-  'transOpticPower',
-  'revOpticPower',
-  'voltage',
-  'temperature',
-  'bias',
-  'rfRxPower',
-  'rfOutputPower',
-  'VendorName',
-  'VendorSN',
-] as const;
-
-const HUAWEI_ST_OPTIC_INFO_KEYS_16 = [
-  ...HUAWEI_ST_OPTIC_INFO_KEYS_12,
-  'DateCode',
-  'TxWaveLength',
-  'RxWaveLength',
-  'MaxTxDistance',
-  'LosStatus',
-] as const;
-
-/** Same literal pattern as {@link HuaweiBaseDriver}'s `parseHuaweiStructCall`. */
-const HUAWEI_JS_STRING_LITERAL = /"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g;
-
-/**
- * `wan.asp` IP acquisition radios — `value` on `#IPv6AddressMode1`…`4` → visible label
- * (`docs/wan-example.asp`).
- */
-const HUAWEI_IPV6_ADDRESS_MODE_LABEL: Record<string, string> = {
-  DHCPV6: 'DHCPv6',
-  AUTOCONFIGURED: 'Automatic',
-  STATIC: 'Static',
-  NONE: 'None',
-};
-
-function huaweiIpv6AddressModeLabel(raw: string): string | undefined {
-  const key = raw.trim().toUpperCase();
-  return HUAWEI_IPV6_ADDRESS_MODE_LABEL[key];
-}
+import {
+  ENDPOINT,
+  HUAWEI_COLON_MAC,
+  HUAWEI_JS_STRING_LITERAL,
+  HUAWEI_ST_OPTIC_INFO_KEYS_12,
+  HUAWEI_ST_OPTIC_INFO_KEYS_16,
+  HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS,
+  HUAWEI_WLAN_BANDWIDTH_LABELS,
+  HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
+  HUAWEI_WLAN_MODE_LABELS,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import {
+  fetchWithMethod,
+  huaweiIpv6AddressModeLabel,
+  normalizeMac,
+  parseHuaweiWlanConfigurationIndex,
+  parseUserDeviceRowsPositional,
+  resolveWifiBandForUserDevice,
+  tryReadHuaweiCsrfTokenFromDocument,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 
 export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
@@ -219,7 +134,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
    * (same rule as {@link getWlanState}).
    */
   private async getTopologyState(): Promise<Pick<ExtractionResult, 'topology'>> {
-    const token = HuaweiEG8145V5Driver.tryReadHuaweiCsrfTokenFromDocument();
+    const token = tryReadHuaweiCsrfTokenFromDocument();
     const [devInfo, dhcpInfo, lanUserInfo] = await Promise.all([
       this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DEV_INFO, token),
       this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DHCP_INFO, token),
@@ -250,7 +165,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       if (portType === 'ETH') {
         cable.push(client);
       } else if (portType === 'WIFI') {
-        const band = HuaweiEG8145V5Driver.resolveWifiBandForUserDevice(row, byMac, byIp);
+        const band = resolveWifiBandForUserDevice(row, byMac, byIp);
         if (band === '5ghz') clients5.push(client);
         else clients24.push(client);
       }
@@ -301,7 +216,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   private parseAllUserDeviceRows(raw: string): Record<string, string>[] {
     const fromSignature = this.parseHuaweiStructCallAll(raw, 'USERDevice');
     if (fromSignature.length > 0) return fromSignature;
-    return HuaweiEG8145V5Driver.parseUserDeviceRowsPositional(raw);
+    return parseUserDeviceRowsPositional(raw);
   }
 
   private buildWlanAssociationLookup(raw: string): {
@@ -313,11 +228,11 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const modes = this.parseHuaweiStructCallAll(raw, 'stWifiWorkingMode');
     for (const m of modes) {
       const domain = m.domain ?? m.Domain ?? '';
-      const idx = HuaweiEG8145V5Driver.parseHuaweiWlanConfigurationIndex(domain);
+      const idx = parseHuaweiWlanConfigurationIndex(domain);
       if (idx == null) continue;
       const macRaw = m.MacAddress ?? m.macAddress ?? '';
-      const mac = HuaweiEG8145V5Driver.normalizeMac(macRaw);
-      if (mac && HuaweiEG8145V5Driver.COLON_MAC.test(mac)) {
+      const mac = normalizeMac(macRaw);
+      if (mac && HUAWEI_COLON_MAC.test(mac)) {
         byMac.set(mac.toLowerCase(), idx);
       }
       const ip = (m.IPAddress ?? m.IPAddr ?? m.ipAddress ?? '').trim();
@@ -335,8 +250,8 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       row.physAddress ??
       row.mac ??
       '';
-    const mac = HuaweiEG8145V5Driver.normalizeMac(macRaw);
-    if (!mac || !HuaweiEG8145V5Driver.COLON_MAC.test(mac)) return null;
+    const mac = normalizeMac(macRaw);
+    if (!mac || !HUAWEI_COLON_MAC.test(mac)) return null;
 
     const ip =
       row.IpAddr?.trim() ||
@@ -376,161 +291,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
       mac,
       signal,
     };
-  }
-
-  private static readonly COLON_MAC = /^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/;
-
-  private static normalizeMac(s: string): string {
-    const t = s.replace(/-/g, ':').trim();
-    if (HuaweiEG8145V5Driver.COLON_MAC.test(t)) return t.toLowerCase();
-    const compact = t.replace(/:/g, '');
-    if (compact.length === 12 && /^[0-9A-Fa-f]{12}$/i.test(compact)) {
-      return compact
-        .toLowerCase()
-        .match(/.{1,2}/g)!
-        .join(':');
-    }
-    return t.toLowerCase();
-  }
-
-  /** Same index convention as {@link getWlanState} (`WLANConfiguration.N`). */
-  private static parseHuaweiWlanConfigurationIndex(domain: string): number | null {
-    const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
-    if (!match) return null;
-    const index = Number.parseInt(match[1], 10);
-    return Number.isNaN(index) ? null : index;
-  }
-
-  private static resolveWifiBandForUserDevice(
-    row: Record<string, string>,
-    byMac: Map<string, number>,
-    byIp: Map<string, number>,
-  ): '24ghz' | '5ghz' {
-    const mac = HuaweiEG8145V5Driver.normalizeMac(
-      row.MacAddr ?? row.MACAddress ?? row.MacAddress ?? row.mac ?? '',
-    );
-    const ip = (row.IpAddr ?? row.IPAddress ?? row.IPAddr ?? '').trim();
-    let wlanIdx: number | null = null;
-    if (mac && HuaweiEG8145V5Driver.COLON_MAC.test(mac)) {
-      wlanIdx = byMac.get(mac.toLowerCase()) ?? null;
-    }
-    if (wlanIdx == null && ip) wlanIdx = byIp.get(ip) ?? null;
-    if (wlanIdx == null) {
-      wlanIdx = HuaweiEG8145V5Driver.parseHuaweiWlanConfigurationIndex(
-        row.Domain ?? row.domain ?? '',
-      );
-    }
-    if (wlanIdx != null && wlanIdx >= 5) return '5ghz';
-    return '24ghz';
-  }
-
-  /**
-   * When the ASP response is a POST/AJAX fragment, it may contain `new USERDevice("…")`
-   * rows without `function USERDevice` — {@link HuaweiBaseDriver.parseHuaweiStructCallAll}
-   * would return []. Parse arguments positionally instead.
-   */
-  private static parseUserDeviceRowsPositional(raw: string): Record<string, string>[] {
-    const records: Record<string, string>[] = [];
-    const re = /new\s+USERDevice\s*\(/gi;
-    let match: RegExpExecArray | null;
-    while ((match = re.exec(raw)) !== null) {
-      const afterParen = match.index + match[0].length;
-      const strings = HuaweiEG8145V5Driver.scanUserDeviceCallStringArgs(raw, afterParen);
-      if (strings == null || strings.length < 8) continue;
-      const record: Record<string, string> = {};
-      for (let i = 0; i < HUAWEI_USER_DEVICE_PARAM_ORDER.length && i < strings.length; i++) {
-        record[HUAWEI_USER_DEVICE_PARAM_ORDER[i]] = strings[i];
-      }
-      records.push(record);
-    }
-    return records;
-  }
-
-  /** Reads comma-separated `null` / quoted string arguments until the closing `)`. */
-  private static scanUserDeviceCallStringArgs(raw: string, start: number): string[] | null {
-    const strings: string[] = [];
-    let pos = start;
-    while (true) {
-      while (pos < raw.length && /\s/.test(raw[pos]!)) pos++;
-      if (pos >= raw.length) return null;
-      if (raw[pos] === ')') return strings;
-      const atNull = raw.startsWith('null', pos) && !/[A-Za-z0-9_$]/.test(raw[pos + 4] ?? '');
-      if (atNull) {
-        strings.push('');
-        pos += 4;
-      } else if (raw[pos] === '"' || raw[pos] === "'") {
-        const parsed = HuaweiEG8145V5Driver.consumeJsStringLiteral(raw, pos);
-        if (!parsed) return null;
-        strings.push(parsed.value);
-        pos = parsed.next;
-      } else {
-        return null;
-      }
-      while (pos < raw.length && /\s/.test(raw[pos]!)) pos++;
-      if (pos < raw.length && raw[pos] === ',') {
-        pos++;
-        continue;
-      }
-      if (pos < raw.length && raw[pos] === ')') return strings;
-      return null;
-    }
-  }
-
-  private static consumeJsStringLiteral(
-    raw: string,
-    start: number,
-  ): { value: string; next: number } | null {
-    const q = raw[start];
-    if (q !== '"' && q !== "'") return null;
-    let pos = start + 1;
-    let value = '';
-    while (pos < raw.length) {
-      const c = raw[pos]!;
-      if (c === '\\') {
-        pos++;
-        if (pos >= raw.length) return null;
-        const n = raw[pos]!;
-        if (n === 'x' && pos + 2 < raw.length) {
-          const hex = raw.slice(pos + 1, pos + 3);
-          if (!/^[0-9a-fA-F]{2}$/.test(hex)) return null;
-          value += String.fromCharCode(Number.parseInt(hex, 16));
-          pos += 3;
-        } else if (n === 'u' && pos + 4 < raw.length) {
-          const hex = raw.slice(pos + 1, pos + 5);
-          if (!/^[0-9a-fA-F]{4}$/.test(hex)) return null;
-          value += String.fromCharCode(Number.parseInt(hex, 16));
-          pos += 5;
-        } else if (n === 'n') {
-          value += '\n';
-          pos++;
-        } else if (n === 'r') {
-          value += '\r';
-          pos++;
-        } else if (n === 't') {
-          value += '\t';
-          pos++;
-        } else {
-          value += n;
-          pos++;
-        }
-      } else if (c === q) {
-        return { value, next: pos + 1 };
-      } else {
-        value += c;
-        pos++;
-      }
-    }
-    return null;
-  }
-
-  private static tryReadHuaweiCsrfTokenFromDocument(): string | null {
-    if (typeof document === 'undefined') return null;
-    const selectors = ['#hwonttoken', '[name="onttoken"]'];
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el instanceof HTMLInputElement && el.value.trim()) return el.value.trim();
-    }
-    return null;
   }
 
   private formatOpticalSignalSummary(
@@ -763,14 +523,6 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
     const bandSteeringEnabled =
       this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(wlanAdvance5g);
 
-    const parseWlanIndex = (domain: string | undefined): number | null => {
-      if (!domain) return null;
-      const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
-      if (!match) return null;
-      const index = Number.parseInt(match[1], 10);
-      return Number.isNaN(index) ? null : index;
-    };
-
     const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
     const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
 
@@ -793,7 +545,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
         return {
           domain,
-          index: parseWlanIndex(domain),
+          index: parseHuaweiWlanConfigurationIndex(domain ?? ''),
           enabled: row.enable ?? row.Enable,
           mode: modeLabel,
           channel: row.channel ?? row.Channel,
@@ -817,7 +569,7 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
 
       return {
         domain,
-        index: parseWlanIndex(domain),
+        index: parseHuaweiWlanConfigurationIndex(domain ?? ''),
         enabled: row.enable ?? row.Enable,
         ssid: row.ssid ?? row.SSID,
         ssidHideMode: !row.wlHide,
@@ -1028,35 +780,10 @@ export class HuaweiEG8145V5Driver extends HuaweiBaseDriver {
   /** Prefer POST (matches live `GetLanUserDevInfo.asp` usage); fall back to GET. */
   private async fetchLanUserAsp(path: string, csrfToken: string | null): Promise<string | null> {
     const postBody = csrfToken ? `x.X_HW_Token=${encodeURIComponent(csrfToken)}` : '';
-    const post = await HuaweiEG8145V5Driver.fetchWithMethod(path, 'POST', postBody);
+    const post = await fetchWithMethod(path, 'POST', postBody);
     if (post && /new\s+USERDevice\s*\(/i.test(post)) return post;
-    const get = await HuaweiEG8145V5Driver.fetchWithMethod(path, 'GET');
+    const get = await fetchWithMethod(path, 'GET');
     if (get && /new\s+USERDevice\s*\(/i.test(get)) return get;
     return post ?? get;
-  }
-
-  private static async fetchWithMethod(
-    path: string,
-    method: 'GET' | 'POST',
-    body?: string,
-  ): Promise<string | null> {
-    try {
-      const init: RequestInit = {
-        method,
-        credentials: 'include',
-        cache: 'no-store',
-      };
-      if (method === 'POST') {
-        init.headers = {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        };
-        init.body = body ?? '';
-      }
-      const response = await fetch(path, init);
-      if (!response.ok) return null;
-      return await response.text();
-    } catch {
-      return null;
-    }
   }
 }
