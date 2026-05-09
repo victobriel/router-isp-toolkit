@@ -105,9 +105,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       upnp: function (): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
         return Promise.resolve({ upnpEnabled: undefined });
       },
-      tr069: function (): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
-        return Promise.resolve({ tr069Url: undefined, tr069Enabled: undefined });
-      },
+      tr069: async () => ({ tr069Url: await this.getTr069Url() }),
       routerInfo: function (): Promise<Pick<ExtractionResult, 'routerModel' | 'routerVersion'>> {
         return Promise.resolve({ routerModel: undefined, routerVersion: undefined });
       },
