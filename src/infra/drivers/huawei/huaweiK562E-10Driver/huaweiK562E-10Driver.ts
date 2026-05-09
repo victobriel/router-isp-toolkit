@@ -53,7 +53,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
   public buttonElementConfig(): ButtonConfig | null {
     return {
-      targetSelector: '#logininfo',
+      targetSelector: '#loginWrapper',
       text: 'Run data extraction',
       style: `
         position: absolute;
@@ -61,14 +61,14 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         left: 27px;
         z-index: 10000;
         padding: 8px;
-        color: white;
+        color: #181717;
         border: none;
         cursor: pointer;
         background-color: transparent;
       `,
       extLogoStyle: `
         font-size: 9px;
-        color: #FFFFFF90;
+        color: gray;
         margin-left: 4px;
       `,
     };

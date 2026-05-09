@@ -1,0 +1,15 @@
+export const HUAWEI_ENDPOINTS = {
+  INDEX: '/index.asp',
+  MAIN_TOP_AP: '/html/bbsp/maintop/MainTopAP.asp',
+  INTERNET_AP: '/html/bbsp/internet/InternetAP.asp',
+  SIMPLE_WIFI_CONFIG_AP: '/html/amp/wlanbasic/simplewificfgAP.asp',
+  USER_DEVICE_INFO_SMART: '/html/bbsp/terminaldevinfo/userdevinfosmart.asp',
+  CONFIG_INDEX: '/configindex.asp',
+  DEVICE_INFO_AP: '/html/ssmp/deviceinfo/deviceinfo_ap.asp',
+  WLAN_ADVANCE_DEST_AP: '/html/amp/wlanadv/wlanadvanceDestAP.asp',
+  LAN_DHCP_AP: '/html/bbsp/landhcp/landhcp_ap.asp',
+  IPV6_AP: '/html/bbsp/ipv6/ipv6_ap.asp',
+  UPNP_AP: '/html/bbsp/upnp/upnp_ap.asp',
+  TR069_AP: '/html/ssmp/tr069/tr069.asp',
+  DIAGNOSE_COMMON: '/html/bbsp/maintenance/diagnosecommon.asp',
+};
