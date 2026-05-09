@@ -6,4 +6,6 @@ export const HuaweiK562E10Selectors = {
   username: '#txtUserName, input[type="text"]',
   password: '#txtPassword, input[type="password"]',
   submit: '#loginbutton',
+
+  indexPage: '#indexPage',
 } as const;

@@ -149,11 +149,9 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   public override isAuthenticated(): boolean {
+    const indexPage = this.domService.getHTMLElement(this.s.indexPage, HTMLElement);
     const onLoginPage = this.isLoginPage();
-    const hasTopFrame =
-      this.domService.getHTMLElement('#functioncontent', HTMLElement) != null ||
-      this.domService.getHTMLElement('#name_MainPage', HTMLElement) != null;
-    return !onLoginPage && hasTopFrame;
+    return !onLoginPage && !!indexPage;
   }
 
   public override async reboot(): Promise<{ success: boolean; message?: string }> {
