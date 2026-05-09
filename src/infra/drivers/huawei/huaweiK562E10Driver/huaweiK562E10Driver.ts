@@ -8,6 +8,7 @@ import {
 } from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
+import { huaweiIpv6AddressModeLabel } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
 import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 
@@ -24,32 +25,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           topology: undefined,
         });
       },
-      wan: function (): Promise<
-        Pick<
-          ExtractionResult,
-          | 'internetEnabled'
-          | 'pppoeUsername'
-          | 'ipVersion'
-          | 'ipAcquisitionMode'
-          | 'requestPdEnabled'
-          | 'slaacEnabled'
-          | 'dhcpv6Enabled'
-          | 'pdEnabled'
-          | 'linkSpeed'
-        >
-      > {
-        return Promise.resolve({
-          internetEnabled: undefined,
-          pppoeUsername: undefined,
-          ipVersion: undefined,
-          ipAcquisitionMode: undefined,
-          requestPdEnabled: undefined,
-          slaacEnabled: undefined,
-          dhcpv6Enabled: undefined,
-          pdEnabled: undefined,
-          linkSpeed: undefined,
-        });
-      },
+      wan: () => this.getWanState(),
       remoteAccess: function (): Promise<
         Pick<ExtractionResult, 'remoteAccessIpv4Enabled' | 'remoteAccessIpv6Enabled'>
       > {
@@ -165,6 +141,156 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
    */
   public override async ping(_ip: string): Promise<PingTestResult | null> {
     return null;
+  }
+
+  /**
+   * WAN summary for the routed Internet PVC — same ASP bundle and `WanIP` / `WanPPP`
+   * parsing as {@link HuaweiEG8145V5Driver.getWanState} (see `docs/HuaweiK562E10/getWanDynamicData.asp`).
+   */
+  private async getWanState(): Promise<
+    Pick<
+      ExtractionResult,
+      | 'internetEnabled'
+      | 'pppoeUsername'
+      | 'ipVersion'
+      | 'ipAcquisitionMode'
+      | 'requestPdEnabled'
+      | 'slaacEnabled'
+      | 'dhcpv6Enabled'
+      | 'pdEnabled'
+      | 'linkSpeed'
+    >
+  > {
+    const undefinedResult = {
+      internetEnabled: undefined,
+      pppoeUsername: undefined,
+      ipVersion: undefined,
+      ipAcquisitionMode: undefined,
+      requestPdEnabled: undefined,
+      slaacEnabled: undefined,
+      dhcpv6Enabled: undefined,
+      pdEnabled: undefined,
+      linkSpeed: undefined,
+    };
+
+    const [info, list, addressAcquire] = await Promise.all([
+      this.fetch(ENDPOINT.WAN_LIST_INFO),
+      this.fetch(ENDPOINT.WAN_LIST),
+      this.fetch(ENDPOINT.WAN_ADDRESS_ACQUIRE),
+    ]);
+
+    if (!info || !list) return undefinedResult;
+
+    const wanListBuffer = `${info}\n${list}`;
+
+    const wanEntries: Array<{
+      data: Record<string, string>;
+      encapMode: 'PPPoE' | 'IPoE';
+    }> = [
+      ...this.parseHuaweiStructCallAll(wanListBuffer, 'WanPPP').map((data) => ({
+        data,
+        encapMode: 'PPPoE' as const,
+      })),
+      ...this.parseHuaweiStructCallAll(wanListBuffer, 'WanIP').map((data) => ({
+        data,
+        encapMode: 'IPoE' as const,
+      })),
+    ];
+
+    if (wanEntries.length === 0) return undefinedResult;
+
+    const isInternet = (e: { data: Record<string, string> }) =>
+      (e.data.ServiceList ?? '').toUpperCase().includes('INTERNET');
+    const isRouted = (e: { data: Record<string, string> }) =>
+      (e.data.Mode ?? '').toUpperCase().includes('ROUTED');
+
+    const chosen =
+      wanEntries.find((e) => isInternet(e) && isRouted(e)) ??
+      wanEntries.find(isInternet) ??
+      wanEntries[0];
+
+    const { data, encapMode } = chosen;
+
+    const internetEnabled = data.Enable === '1';
+
+    const pppoeUsername =
+      encapMode === 'PPPoE' ? (data.Username ? data.Username : undefined) : undefined;
+
+    let ipVersion: string | undefined;
+    if (data.IPv4Enable === '1' && data.IPv6Enable === '1') ipVersion = 'IPv4/IPv6';
+    else if (data.IPv4Enable === '1') ipVersion = 'IPv4';
+    else if (data.IPv6Enable === '1') ipVersion = 'IPv6';
+
+    let dhcpv6Enabled: boolean | undefined;
+    let slaacEnabled: boolean | undefined;
+    let pdEnabled: boolean | undefined;
+    let requestPdEnabled: boolean | undefined;
+    let ipAcquisitionMode: string | undefined;
+
+    if (data.IPv6Enable !== '1') {
+      dhcpv6Enabled = false;
+      pdEnabled = false;
+      requestPdEnabled = false;
+    } else {
+      const lanAddressRaw = await this.fetch(ENDPOINT.LAN_ADDRESS);
+      const raConfig = this.parseHuaweiStructCall(lanAddressRaw, 'RaConfigInfoClass');
+      const managedFlag = raConfig?.ManagedFlag;
+      if (managedFlag === '1' || managedFlag === '0') {
+        slaacEnabled = managedFlag === '0';
+      }
+      const otherConfigFlag = raConfig?.OtherConfigFlag;
+      if (otherConfigFlag === '1' || otherConfigFlag === '0') {
+        dhcpv6Enabled = otherConfigFlag === '1';
+      }
+
+      let prefixItem: Record<string, string> | undefined;
+      let addressItem: Record<string, string> | undefined;
+      if (addressAcquire && data.domain) {
+        const prefixItems = this.parseHuaweiStructCallAll(addressAcquire, 'PrefixAcquireItem');
+        prefixItem = prefixItems.find(
+          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+        );
+        const addressItems = [
+          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquireIPItem'),
+          ...this.parseHuaweiStructCallAll(addressAcquire, 'IPAddressAcquirePPPItem'),
+        ];
+        addressItem = addressItems.find(
+          (item) => typeof item._domain === 'string' && item._domain.includes(data.domain),
+        );
+        const prefixOrigin = (prefixItem?._Origin ?? '').toUpperCase();
+        pdEnabled =
+          prefixOrigin === 'PREFIXDELEGATION' ||
+          prefixOrigin === 'AUTOCONFIGURED' ||
+          prefixOrigin === 'ROUTERADVERTISEMENT';
+      }
+
+      const ipv6AddressModeRaw =
+        data.IPv6AddressMode?.trim() || '' || addressItem?._Origin?.trim() || '';
+      if (ipv6AddressModeRaw !== '') {
+        const label = huaweiIpv6AddressModeLabel(ipv6AddressModeRaw);
+        if (label !== undefined) {
+          ipAcquisitionMode = label;
+        }
+      }
+      const ipv6PrefixModeRaw =
+        data.IPv6PrefixMode?.trim() || '' || prefixItem?._Origin?.trim() || '';
+      if (ipv6PrefixModeRaw !== '') {
+        const u = ipv6PrefixModeRaw.toUpperCase();
+        requestPdEnabled = u === 'PREFIXDELEGATION' || u === 'DHCPV6-PD';
+      }
+    }
+
+    return {
+      internetEnabled,
+      pppoeUsername,
+      ipVersion,
+      ipAcquisitionMode,
+      requestPdEnabled,
+      slaacEnabled,
+      dhcpv6Enabled,
+      pdEnabled,
+      linkSpeed: undefined,
+    };
   }
 
   private async getTr069Url(): Promise<string | undefined> {
