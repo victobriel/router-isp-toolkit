@@ -3,7 +3,7 @@ import { ExtractionFilter } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionResult, ExtractionResultSchema } from '@/domain/schemas/validation';
 import { ITopologySectionParser } from '../../shared/TopologySectionParser';
-import { HuaweiK562E10Selectors } from './huaweiK562E-10Selectors';
+import { HuaweiK562E10Selectors } from './huaweiK562E10Selectors';
 import { HuaweiBaseDriver } from '../shared/HuaweiBaseDriver';
 import { ENDPOINT } from './contants';
 
