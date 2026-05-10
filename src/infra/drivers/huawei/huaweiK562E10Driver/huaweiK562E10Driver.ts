@@ -267,19 +267,12 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
    * `tr069.asp` embeds `new stCWMP(...)` with `EnableCWMP` / `URL` — same shape as
    * {@link HuaweiEG8145V5Driver.getTr069State} but under `html/ssmp/tr069/tr069.asp`.
    */
-  private async getTr069State(): Promise<Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'>> {
+  private async getTr069State(): Promise<Pick<ExtractionResult, 'tr069Url'>> {
     const raw = await this.fetch(ENDPOINT.TR069_AP);
-    return this.parseTr069FromResponse(raw);
-  }
-
-  private parseTr069FromResponse(
-    raw: string | null,
-  ): Pick<ExtractionResult, 'tr069Url' | 'tr069Enabled'> {
     const cwmp = this.parseHuaweiCwmp(raw);
-    if (!cwmp) return { tr069Url: undefined, tr069Enabled: undefined };
+    if (!cwmp) return { tr069Url: undefined };
     return {
       tr069Url: cwmp.URL ? cwmp.URL : undefined,
-      tr069Enabled: cwmp.EnableCWMP === '1',
     };
   }
 
