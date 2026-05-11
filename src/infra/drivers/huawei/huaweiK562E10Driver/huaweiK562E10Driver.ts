@@ -287,6 +287,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       dhcpPrimaryDns: undefined,
       dhcpSecondaryDns: undefined,
       dhcpLeaseTimeMode: undefined,
+      dhcpLeaseTime: undefined,
     };
 
     const raw = await this.fetch(ENDPOINT.LAN_DHCP_AP);
@@ -308,7 +309,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       dhcpEndIp: dhcpMain?.endip?.trim() || undefined,
       dhcpPrimaryDns: undefined,
       dhcpSecondaryDns: undefined,
-      dhcpLeaseTimeMode: dhcpMain?.leasetime?.trim() || undefined,
+      dhcpLeaseTimeMode: undefined,
+      dhcpLeaseTime: dhcpMain?.leasetime?.trim() || undefined,
     };
   }
 
