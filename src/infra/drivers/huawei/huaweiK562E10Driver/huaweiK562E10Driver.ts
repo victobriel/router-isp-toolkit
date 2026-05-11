@@ -375,6 +375,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
     const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
     const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
+    const live2gChannel = this.readHuaweiSelectValueFromDom('#Channel');
+    const live5gChannel = this.readHuaweiSelectValueFromDom('#Channel5g');
 
     type WlanWifiRow = {
       domain?: string;
@@ -419,7 +421,9 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         index,
         enabled: row.enable ?? row.Enable,
         mode: modeLabel,
-        channel: this.extractHuaweiWlanChannel(row, index, channelRaw),
+        channel:
+          (is5gIndex(index) ? live5gChannel : live2gChannel) ??
+          this.extractHuaweiWlanChannel(row, index, channelRaw),
         transmittingPower,
         bandWidth: bandWidthLabel,
       };
@@ -451,7 +455,9 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           index: idx,
           enabled: radio === '1' ? '1' : '0',
           mode: modeLabel,
-          channel: this.extractHuaweiWlanChannel(row, idx, channelRaw, channelSelectId),
+          channel:
+            (channelSelectId === 'Channel5g' ? live5gChannel : live2gChannel) ??
+            this.extractHuaweiWlanChannel(row, idx, channelRaw, channelSelectId),
           transmittingPower: pwr ? `${pwr}%` : undefined,
           bandWidth: bwLabel,
         });
@@ -551,6 +557,32 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     return null;
   }
 
+  private readHuaweiSelectValueFromDom(selector: string): string | undefined {
+    const value =
+      this.domService.getElementValue(selector)?.trim() ??
+      this.readHuaweiSelectValueFromDocument(document, selector);
+    if (!value) return undefined;
+    return this.normalizeHuaweiChannelValue(value);
+  }
+
+  private readHuaweiSelectValueFromDocument(doc: Document, selector: string): string | undefined {
+    const select = doc.querySelector(selector);
+    if (select instanceof HTMLSelectElement && select.value.trim()) return select.value.trim();
+
+    for (const frame of Array.from(doc.querySelectorAll('iframe'))) {
+      try {
+        const frameDoc = frame.contentDocument;
+        if (!frameDoc) continue;
+        const value = this.readHuaweiSelectValueFromDocument(frameDoc, selector);
+        if (value) return value;
+      } catch {
+        // Ignore cross-origin frames; router pages are same-origin when accessible.
+      }
+    }
+
+    return undefined;
+  }
+
   private extractHuaweiWlanChannel(
     row: Record<string, string>,
     index: number | null,
@@ -569,7 +601,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       'ChannelNumber',
       'X_HW_Channel',
     ]);
-    if (fromRow) return fromRow;
+    if (fromRow) return this.normalizeHuaweiChannelValue(fromRow);
 
     const is5g = index != null && index >= 5;
     const selectIds = preferredSelectId
@@ -582,7 +614,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       const fromSelect =
         this.matchHuaweiSelectValueById(raw, id) ??
         this.matchHuaweiElementValueAssignmentById(raw, id);
-      if (fromSelect) return fromSelect;
+      if (fromSelect) return this.normalizeHuaweiChannelValue(fromSelect);
     }
 
     const scriptVars = is5g
@@ -590,10 +622,16 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       : ['Channel', 'Channel2g', 'WlanChannel', 'WlanChannel2g', 'CurrentChannel'];
     for (const name of scriptVars) {
       const value = this.matchHuaweiScriptVar(raw, name);
-      if (value) return value;
+      if (value) return this.normalizeHuaweiChannelValue(value);
     }
 
     return undefined;
+  }
+
+  private normalizeHuaweiChannelValue(value: string): string {
+    const trimmed = value.trim();
+    if (trimmed === '0' || trimmed === '-1') return 'Auto';
+    return trimmed;
   }
 
   private firstHuaweiRowValue(row: Record<string, string>, keys: string[]): string | undefined {
