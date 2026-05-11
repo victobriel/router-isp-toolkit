@@ -20,3 +20,13 @@ export function unescapeHuaweiHex(value: string): string {
     String.fromCharCode(Number.parseInt(hex, 16)),
   );
 }
+
+/**
+ * Parse `InternetGatewayDevice...WLANConfiguration.N` instance index from TR-069 domain strings.
+ */
+export function parseHuaweiWlanConfigurationIndex(domain: string): number | null {
+  const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
+  if (!match) return null;
+  const index = Number.parseInt(match[1], 10);
+  return Number.isNaN(index) ? null : index;
+}

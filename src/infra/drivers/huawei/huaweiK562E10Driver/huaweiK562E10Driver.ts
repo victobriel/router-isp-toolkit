@@ -13,10 +13,12 @@ import {
   HUAWEI_WLAN_BANDWIDTH_LABELS,
   HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
   HUAWEI_WLAN_MODE_LABELS,
-} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
-import { parseHuaweiWlanConfigurationIndex } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
+} from '@/infra/drivers/huawei/shared/constants';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
-import { escapeRegExp } from '@/infra/drivers/huawei/shared/utils';
+import {
+  escapeRegExp,
+  parseHuaweiWlanConfigurationIndex,
+} from '@/infra/drivers/huawei/shared/utils';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
@@ -293,8 +295,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         (bandWidthKey === '4' ? 'Auto 20/40/80/160 MHz' : bandWidthKey);
 
       const mode = row.mode ?? row.X_HW_Standard;
-      const modeKey =
-        mode !== undefined && mode !== null && mode !== '' ? String(mode) : undefined;
+      const modeKey = mode !== undefined && mode !== null && mode !== '' ? String(mode) : undefined;
       const modeLabel =
         (modeKey ? HUAWEI_WLAN_MODE_LABELS[modeKey] : undefined) ??
         (modeKey === '11ax' ? '802.11ax' : modeKey);
@@ -338,8 +339,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         const modeLabel =
           HUAWEI_WLAN_MODE_LABELS[modeKey] ?? (modeKey === '11ax' ? '802.11ax' : modeKey);
         const bwLabel =
-          HUAWEI_WLAN_BANDWIDTH_LABELS[bwKey] ??
-          (bwKey === '4' ? 'Auto 20/40/80/160 MHz' : bwKey);
+          HUAWEI_WLAN_BANDWIDTH_LABELS[bwKey] ?? (bwKey === '4' ? 'Auto 20/40/80/160 MHz' : bwKey);
         wlanWifiRows.push({
           domain,
           index: idx,
@@ -409,7 +409,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           ssidName: row.ssid?.trim() || undefined,
           ssidPassword: password,
           ssidHideMode: row.SSIDAdvertisementEnabled === '0',
-          wpa2SecurityType: [authModeLabel, encryptModeLabel].filter(Boolean).join('-') || undefined,
+          wpa2SecurityType:
+            [authModeLabel, encryptModeLabel].filter(Boolean).join('-') || undefined,
           maxClients: Number.isNaN(maxClients) ? undefined : maxClients,
         };
       });
@@ -478,8 +479,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const routerModel =
       (fromJs?.ModelName?.trim() || this.matchHuaweiTdTextById(raw, 'td1_2')) ?? undefined;
     const routerVersion =
-      (fromJs?.SoftwareVersion?.trim() || this.matchHuaweiTdTextById(raw, 'td5_2')) ??
-      undefined;
+      (fromJs?.SoftwareVersion?.trim() || this.matchHuaweiTdTextById(raw, 'td5_2')) ?? undefined;
     return { routerModel, routerVersion };
   }
 

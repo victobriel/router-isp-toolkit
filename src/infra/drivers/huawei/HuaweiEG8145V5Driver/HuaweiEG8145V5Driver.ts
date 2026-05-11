@@ -1,7 +1,5 @@
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
-import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
-import { HuaweiEG8145V5Selectors } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Selectors';
+import { ExtractionFilter } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import {
   ExtractionResult,
@@ -9,8 +7,6 @@ import {
   PingTestResult,
   PingTestResultSchema,
 } from '@/domain/schemas/validation';
-import { ExtractionFilter } from '@/application/types';
-import type { TopologyClient } from '@/infra/drivers/shared/types';
 import {
   ENDPOINT,
   HUAWEI_COLON_MAC,
@@ -28,22 +24,28 @@ import {
   HUAWEI_PING_STATS_LINE,
   HUAWEI_ST_OPTIC_INFO_KEYS_12,
   HUAWEI_ST_OPTIC_INFO_KEYS_16,
-  HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS,
-  HUAWEI_WLAN_BANDWIDTH_LABELS,
-  HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
-  HUAWEI_WLAN_MODE_LABELS,
 } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import { HuaweiEG8145V5Selectors } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/HuaweiEG8145V5Selectors';
 import {
   decodeJsEscape,
   fetchWithMethod,
   huaweiIpv6AddressModeLabel,
   isPrivateOrLocalIPv4,
   normalizeMac,
-  parseHuaweiWlanConfigurationIndex,
   parseUserDeviceRowsPositional,
   resolveWifiBandForUserDevice,
   tryReadHuaweiCsrfTokenFromDocument,
 } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
+import {
+  HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS,
+  HUAWEI_WLAN_BANDWIDTH_LABELS,
+  HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
+  HUAWEI_WLAN_MODE_LABELS,
+} from '@/infra/drivers/huawei/shared/constants';
+import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
+import { parseHuaweiWlanConfigurationIndex } from '@/infra/drivers/huawei/shared/utils';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import type { TopologyClient } from '@/infra/drivers/shared/types';
 
 /**
  * HUAWEI EG8145V5 ONT: WAN/WLAN/LAN/topology extraction and IP ping diagnostics

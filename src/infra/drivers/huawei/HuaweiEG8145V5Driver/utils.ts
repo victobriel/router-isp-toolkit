@@ -1,8 +1,9 @@
 import {
+  HUAWEI_COLON_MAC,
   HUAWEI_IPV6_ADDRESS_MODE_LABEL,
   HUAWEI_USER_DEVICE_PARAM_ORDER,
-  HUAWEI_COLON_MAC,
 } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import { parseHuaweiWlanConfigurationIndex } from '@/infra/drivers/huawei/shared/utils';
 
 export function huaweiIpv6AddressModeLabel(raw: string): string | undefined {
   const key = raw.trim().toUpperCase();
@@ -20,14 +21,6 @@ export function normalizeMac(s: string): string {
       .join(':');
   }
   return t.toLowerCase();
-}
-
-/** Same index convention as WLAN extraction (`InternetGatewayDevice...WLANConfiguration.N`). */
-export function parseHuaweiWlanConfigurationIndex(domain: string): number | null {
-  const match = /\.WLANConfiguration\.(\d+)/.exec(domain);
-  if (!match) return null;
-  const index = Number.parseInt(match[1], 10);
-  return Number.isNaN(index) ? null : index;
 }
 
 export function resolveWifiBandForUserDevice(

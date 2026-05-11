@@ -86,38 +86,6 @@ export const HUAWEI_PING_RTT_LINE = /min\/avg\/max\s*=\s*([\d.]+)\/([\d.]+)\/([\
 /** `PING 1.2.3.4 (1.2.3.4): 56 data bytes`. */
 export const HUAWEI_PING_HEADER_LINE = /^PING\s+\S+\s+\(\S+\):\s+(\d+)\s+data\s+bytes/i;
 
-/** Huawei `stWlanWifi` channel width / `X_HW_HT20` codes → display label */
-export const HUAWEI_WLAN_BANDWIDTH_LABELS: Partial<Record<string, string>> = {
-  '0': 'Auto',
-  '1': '20MHz',
-  '2': '40MHz',
-  '3': 'Auto',
-};
-
-/** Huawei `mode` / `X_HW_Standard` codes → display label */
-export const HUAWEI_WLAN_MODE_LABELS: Partial<Record<string, string>> = {
-  '11b': '802.11b',
-  '11g': '802.11g',
-  '11bg': '802.11b/g',
-  '11bgn': '802.11b/g/n',
-  '11a': '802.11a',
-  '11na': '802.11a/n',
-  '11ac': '802.11a/n/ac',
-};
-
-export const HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS: Partial<Record<string, string>> = {
-  Basic: 'Open',
-  WPA: 'WPA',
-  '11i': 'WPA2',
-  WPAand11i: 'WPA/WPA2',
-};
-
-export const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>> = {
-  AESEncryption: 'AES',
-  TKIPEncryption: 'TKIP',
-  TKIPandAESEncryption: 'TKIP&AES',
-};
-
 /**
  * Positional layout from `function USERDevice(Domain,IpAddr,MacAddr,…)` in
  * `GetLanUserDevInfo.asp` — used when the server returns `new USERDevice(…)`
