@@ -15,6 +15,10 @@ export const ENDPOINT = {
   INTERNET_AP: '/html/bbsp/internet/InternetAP.asp',
   SIMPLE_WIFI_CONFIG_AP: '/html/amp/wlanbasic/simplewificfgAP.asp',
   USER_DEVICE_INFO_SMART: '/html/bbsp/terminaldevinfo/userdevinfosmart.asp',
+  /** Same `bbsp/common` LAN client scripts as {@link HuaweiEG8145V5Driver.getTopologyState}. */
+  GET_LAN_USER_DEV_INFO: '/html/bbsp/common/GetLanUserDevInfo.asp',
+  GET_LAN_USER_DHCP_INFO: '/html/bbsp/common/GetLanUserDhcpInfo.asp',
+  LAN_USER_INFO: '/html/bbsp/common/lanuserinfo.asp',
   CONFIG_INDEX: '/configindex.asp',
   DEVICE_INFO_AP: '/html/ssmp/deviceinfo/deviceinfo_ap.asp',
   WLAN_ADVANCE_DEST_AP: '/html/amp/wlanadv/wlanadvanceDestAP.asp',

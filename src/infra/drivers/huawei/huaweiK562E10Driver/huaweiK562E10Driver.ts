@@ -14,12 +14,21 @@ import {
   HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
   HUAWEI_WLAN_MODE_LABELS,
 } from '@/infra/drivers/huawei/shared/constants';
+import { HUAWEI_COLON_MAC } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import {
+  fetchWithMethod,
+  normalizeMac,
+  parseUserDeviceRowsPositional,
+  resolveWifiBandForUserDevice,
+  tryReadHuaweiCsrfTokenFromDocument,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
 import {
   escapeRegExp,
   parseHuaweiWlanConfigurationIndex,
 } from '@/infra/drivers/huawei/shared/utils';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import type { TopologyClient } from '@/infra/drivers/shared/types';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
@@ -29,11 +38,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
       opticalSignal: async () => Promise.resolve({ opticalSignal: undefined }),
-      topology: function (): Promise<Pick<ExtractionResult, 'topology'>> {
-        return Promise.resolve({
-          topology: undefined,
-        });
-      },
+      topology: () => this.getTopologyState(),
       wan: () => this.getWanState(),
       remoteAccess: async () =>
         Promise.resolve({
@@ -555,6 +560,233 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       /\bDHCPServerFlag\s*=\s*["']([01])["']/i.exec(block);
     if (!m) return undefined;
     return m[1] === '1';
+  }
+
+  /**
+   * `userdevinfosmart.asp` loads clients via the same `GetLanUserDevInfo.asp` POST
+   * path as {@link HuaweiEG8145V5Driver.getTopologyState}. The smart page also embeds
+   * `staInfo` JSON (`station_mac` + `link` `2.4G` / `5G`) used here when
+   * `stWifiWorkingMode` is absent from the ASP bundle.
+   */
+  private async getTopologyState(): Promise<Pick<ExtractionResult, 'topology'>> {
+    const smartRaw = await this.fetch(ENDPOINT.USER_DEVICE_INFO_SMART);
+    const token =
+      tryReadHuaweiCsrfTokenFromDocument() ?? this.parseK562TokenFromSmartPage(smartRaw);
+    const [devInfo, dhcpInfo, lanUserInfo] = await Promise.all([
+      this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DEV_INFO, token),
+      this.fetchLanUserAsp(ENDPOINT.GET_LAN_USER_DHCP_INFO, token),
+      this.fetchLanUserAsp(ENDPOINT.LAN_USER_INFO, token),
+    ]);
+    const raw = [devInfo, dhcpInfo, lanUserInfo].filter((s): s is string => !!s).join('\n');
+    if (!raw) return { topology: undefined };
+
+    const staBandByMac = this.parseStaInfoWifiBandMap(smartRaw);
+    const topology = this.parseTopologyFromLanUserBundle(raw, staBandByMac);
+    return { topology: topology ?? undefined };
+  }
+
+  /** Prefer POST with `x.X_HW_Token` (matches `userdevinfosmart.asp` jQuery calls). */
+  private async fetchLanUserAsp(path: string, csrfToken: string | null): Promise<string | null> {
+    const postBody = csrfToken ? `x.X_HW_Token=${encodeURIComponent(csrfToken)}` : '';
+    const post = await fetchWithMethod(path, 'POST', postBody);
+    if (post && /new\s+USERDevice\s*\(/i.test(post)) return post;
+    const get = await fetchWithMethod(path, 'GET');
+    if (get && /new\s+USERDevice\s*\(/i.test(get)) return get;
+    return post ?? get;
+  }
+
+  /** `userdevinfosmart.asp` embeds `var token = '…'` for `x.X_HW_Token` POST bodies. */
+  private parseK562TokenFromSmartPage(raw: string | null): string | null {
+    if (!raw) return null;
+    const m = /var\s+token\s*=\s*'((?:\\.|[^'\\])*)'\s*;/i.exec(raw);
+    if (!m) return null;
+    const decoded = m[1].replace(/\\x([0-9a-fA-F]{2})/g, (_, hex) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    );
+    return decoded.trim() || null;
+  }
+
+  /**
+   * Parses `staInfo` / mesh JSON embedded in `userdevinfosmart.asp` (see
+   * `station_mac` + `link` fields in the doc example).
+   */
+  private parseStaInfoWifiBandMap(raw: string | null): Map<string, '24ghz' | '5ghz'> {
+    const out = new Map<string, '24ghz' | '5ghz'>();
+    if (!raw) return out;
+    const re = /"station_mac"\s*:\s*"([0-9a-fA-F]{12})"[\s\S]{0,600}?"link"\s*:\s*"([^"]+)"/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(raw)) !== null) {
+      const mac = normalizeMac(m[1] ?? '');
+      if (!mac || !HUAWEI_COLON_MAC.test(mac)) continue;
+      const link = (m[2] ?? '').trim().toUpperCase();
+      if (link === 'ETHERNET' || link === 'LAN' || link === 'PLC') continue;
+      if (link.includes('5G') || link === '6G') out.set(mac.toLowerCase(), '5ghz');
+      else if (link.includes('2.4') || link.includes('2_4')) out.set(mac.toLowerCase(), '24ghz');
+    }
+    return out;
+  }
+
+  private parseTopologyFromLanUserBundle(
+    raw: string,
+    staBandByMac: Map<string, '24ghz' | '5ghz'>,
+  ): ExtractionResult['topology'] | null {
+    const rows = this.collectUserDeviceRowsForTopology(raw);
+    if (rows.length === 0) return null;
+
+    const { byMac, byIp } = this.buildWlanAssociationLookup(raw);
+
+    const cable: TopologyClient[] = [];
+    const clients24: TopologyClient[] = [];
+    const clients5: TopologyClient[] = [];
+
+    for (const row of rows) {
+      const client = this.userDeviceRowToTopologyClient(row);
+      if (!client) continue;
+
+      const portType = (row.PortType ?? row.portType ?? '').toUpperCase();
+      if (portType === 'ETH') {
+        cable.push(client);
+      } else if (portType === 'WIFI') {
+        const band = this.resolveK562WifiBand(row, staBandByMac, byMac, byIp);
+        if (band === '5ghz') clients5.push(client);
+        else clients24.push(client);
+      }
+    }
+
+    if (cable.length === 0 && clients24.length === 0 && clients5.length === 0) return null;
+
+    return {
+      '24ghz': { clients: clients24, totalClients: clients24.length },
+      '5ghz': { clients: clients5, totalClients: clients5.length },
+      cable: { clients: cable, totalClients: cable.length },
+    };
+  }
+
+  private collectUserDeviceRowsForTopology(raw: string): Record<string, string>[] {
+    const parsed = this.parseAllUserDeviceRows(raw);
+    const ipv4 = this.dedupeUserDevicesByDomainForTopology(
+      parsed,
+      (row) =>
+        (row.IPv4Enabled ?? '').trim() === '1' && this.isUserDeviceOnlineForTopology(row),
+    );
+    if (ipv4.length > 0) return ipv4;
+    return this.dedupeUserDevicesByDomainForTopology(parsed, (row) =>
+      this.isUserDeviceOnlineForTopology(row),
+    );
+  }
+
+  private isUserDeviceOnlineForTopology(row: Record<string, string>): boolean {
+    const status = (row.DevStatus ?? row.devStatus ?? row.Status ?? row.status ?? '').trim();
+    if (!status) return true;
+    return status.toUpperCase() === 'ONLINE';
+  }
+
+  private dedupeUserDevicesByDomainForTopology(
+    rows: Record<string, string>[],
+    keep: (row: Record<string, string>) => boolean,
+  ): Record<string, string>[] {
+    const byDomain = new Map<string, Record<string, string>>();
+    for (const row of rows) {
+      const domain = (row.Domain ?? row.domain ?? '').trim();
+      if (!domain || !keep(row)) continue;
+      if (!byDomain.has(domain)) byDomain.set(domain, row);
+    }
+    return [...byDomain.values()];
+  }
+
+  private parseAllUserDeviceRows(raw: string): Record<string, string>[] {
+    const fromSignature = this.parseHuaweiStructCallAll(raw, 'USERDevice');
+    if (fromSignature.length > 0) return fromSignature;
+    return parseUserDeviceRowsPositional(raw);
+  }
+
+  private buildWlanAssociationLookup(raw: string): {
+    byMac: Map<string, number>;
+    byIp: Map<string, number>;
+  } {
+    const byMac = new Map<string, number>();
+    const byIp = new Map<string, number>();
+    const modes = this.parseHuaweiStructCallAll(raw, 'stWifiWorkingMode');
+    for (const m of modes) {
+      const domain = m.domain ?? m.Domain ?? '';
+      const idx = parseHuaweiWlanConfigurationIndex(domain);
+      if (idx == null) continue;
+      const macRaw = m.MacAddress ?? m.macAddress ?? '';
+      const mac = normalizeMac(macRaw);
+      if (mac && HUAWEI_COLON_MAC.test(mac)) {
+        byMac.set(mac.toLowerCase(), idx);
+      }
+      const ip = (m.IPAddress ?? m.IPAddr ?? m.ipAddress ?? '').trim();
+      if (ip) byIp.set(ip, idx);
+    }
+    return { byMac, byIp };
+  }
+
+  private userDeviceRowToTopologyClient(row: Record<string, string>): TopologyClient | null {
+    const macRaw =
+      row.MacAddr ??
+      row.PhysAddress ??
+      row.MACAddress ??
+      row.MacAddress ??
+      row.physAddress ??
+      row.mac ??
+      '';
+    const mac = normalizeMac(macRaw);
+    if (!mac || !HUAWEI_COLON_MAC.test(mac)) return null;
+
+    const ip =
+      row.IpAddr?.trim() ||
+      row.IPAddress?.trim() ||
+      row.IPAddr?.trim() ||
+      row.ipAddress?.trim() ||
+      row.IP?.trim() ||
+      row.ip?.trim() ||
+      '';
+
+    const host =
+      row.HostName?.trim() ||
+      row.hostname?.trim() ||
+      row.UserDevAlias?.trim() ||
+      row.Alias?.trim() ||
+      row.DeviceName?.trim() ||
+      row.DevName?.trim() ||
+      '';
+
+    const portType = (row.PortType ?? row.portType ?? '').toUpperCase();
+    const rssiText =
+      row.RSSI?.trim() ||
+      row.Rssi?.trim() ||
+      row.rssi?.trim() ||
+      row.Signal?.trim() ||
+      row.signal?.trim() ||
+      '';
+    let signal = 0;
+    if (portType === 'WIFI' && rssiText) {
+      const m = rssiText.match(/-?\d+/);
+      if (m) signal = Number.parseInt(m[0], 10) || 0;
+    }
+
+    return {
+      name: host || mac,
+      ip,
+      mac,
+      signal,
+    };
+  }
+
+  private resolveK562WifiBand(
+    row: Record<string, string>,
+    staBandByMac: Map<string, '24ghz' | '5ghz'>,
+    byMac: Map<string, number>,
+    byIp: Map<string, number>,
+  ): '24ghz' | '5ghz' {
+    const macRaw = row.MacAddr ?? row.MACAddress ?? row.MacAddress ?? row.mac ?? '';
+    const mac = normalizeMac(macRaw);
+    if (mac && HUAWEI_COLON_MAC.test(mac)) {
+      const fromSta = staBandByMac.get(mac.toLowerCase());
+      if (fromSta) return fromSta;
+    }
+    return resolveWifiBandForUserDevice(row, byMac, byIp);
   }
 
   private async fetch(path: string): Promise<string | null> {
