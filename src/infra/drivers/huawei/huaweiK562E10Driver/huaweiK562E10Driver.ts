@@ -51,9 +51,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       lan: () => this.getLanState(),
       upnp: () => this.getUpnpState(),
       tr069: () => this.getTr069State(),
-      routerInfo: function (): Promise<Pick<ExtractionResult, 'routerModel' | 'routerVersion'>> {
-        return Promise.resolve({ routerModel: undefined, routerVersion: undefined });
-      },
+      routerInfo: () => this.getRouterInfoState(),
     };
 
     const keys = filter?.length ? filter : Object.keys(extractors);
@@ -260,6 +258,25 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   /**
+   * `deviceinfo_ap.asp` embeds `new stDeviceInfo(...)` with `ModelName` and
+   * `SoftwareVersion` (see `docs/HuaweiK562E10/deviceinfo_ap.asp`). Same fallback
+   * as {@link HuaweiEG8145V5Driver.getRouterInfoState} when cells are pre-filled in HTML.
+   */
+  private async getRouterInfoState(): Promise<
+    Pick<ExtractionResult, 'routerModel' | 'routerVersion'>
+  > {
+    const raw = await this.fetch(ENDPOINT.DEVICE_INFO_AP);
+    if (!raw) return { routerModel: undefined, routerVersion: undefined };
+    const fromJs = this.parseHuaweiStructCall(raw, 'stDeviceInfo');
+    const routerModel =
+      (fromJs?.ModelName?.trim() || this.matchHuaweiTdTextById(raw, 'td1_2')) ?? undefined;
+    const routerVersion =
+      (fromJs?.SoftwareVersion?.trim() || this.matchHuaweiTdTextById(raw, 'td5_2')) ??
+      undefined;
+    return { routerModel, routerVersion };
+  }
+
+  /**
    * `landhcp_ap.asp` exposes only the primary DHCP pool and LAN IP details on
    * this model. Relay, subnet mask, and DNS fields are not available here.
    */
@@ -275,6 +292,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       | 'dhcpPrimaryDns'
       | 'dhcpSecondaryDns'
       | 'dhcpLeaseTimeMode'
+      | 'dhcpLeaseTime'
     >
   > {
     const undefinedResult = {
