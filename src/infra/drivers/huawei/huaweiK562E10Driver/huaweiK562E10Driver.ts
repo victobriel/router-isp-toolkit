@@ -371,6 +371,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const preSharedRows = this.parseHuaweiStructCallAll(simpleRaw, 'stPreSharedKey');
 
     const advanceForWifi = destAdv ?? '';
+    const channelRaw = [destAdv, simpleRaw].filter(Boolean).join('\n');
 
     const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
     const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
@@ -385,7 +386,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       bandWidth: string | undefined;
     };
 
-    const wlanWifiRows: WlanWifiRow[] = this.parseHuaweiStructCallAll(
+    const wlanWifiRows: WlanWifiRow[] = this.parseHuaweiStructCallAllLoose(
       advanceForWifi,
       'stWlanWifi',
     ).map((row) => {
@@ -418,14 +419,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         index,
         enabled: row.enable ?? row.Enable,
         mode: modeLabel,
-        channel:
-          row.channel ??
-          row.Channel ??
-          this.matchHuaweiSelectValueById(
-            destAdv,
-            is5gIndex(index) ? 'Channel5g' : 'Channel',
-          ) ??
-          undefined,
+        channel: this.extractHuaweiWlanChannel(row, index, channelRaw),
         transmittingPower,
         bandWidth: bandWidthLabel,
       };
@@ -436,7 +430,6 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       const r1 = this.matchHuaweiScriptVar(simpleRaw, 'RadioEnable1');
       const pwr2 = this.matchHuaweiScriptVar(simpleRaw, 'WlanTransmitPower');
       const pwr5 = this.matchHuaweiScriptVar(simpleRaw, 'WlanTransmitPower5g');
-      const advChannelRaw = destAdv;
 
       const pushSynthetic = (
         row: (typeof wlanRows)[0] | undefined,
@@ -458,7 +451,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           index: idx,
           enabled: radio === '1' ? '1' : '0',
           mode: modeLabel,
-          channel: this.matchHuaweiSelectValueById(advChannelRaw, channelSelectId) ?? undefined,
+          channel: this.extractHuaweiWlanChannel(row, idx, channelRaw, channelSelectId),
           transmittingPower: pwr ? `${pwr}%` : undefined,
           bandWidth: bwLabel,
         });
@@ -491,7 +484,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const findBandConfig = (isBandIndex: (idx: number | null) => boolean) => {
       const row = wlanWifiRows.find((item) => isBandIndex(item.index));
       if (!row) return undefined;
-      let bandWidthLabel = row.bandWidth
+      const bandWidthLabel = row.bandWidth
         ? row.bandWidth.startsWith('Auto')
           ? 'Auto'
           : row.bandWidth
@@ -556,6 +549,156 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const value = selectedOption?.match(/\bvalue=["']([^"']*)["']/i)?.[1];
     if (value !== undefined) return this.unescapeHuaweiHex(value);
     return null;
+  }
+
+  private extractHuaweiWlanChannel(
+    row: Record<string, string>,
+    index: number | null,
+    raw: string | null,
+    preferredSelectId?: string,
+  ): string | undefined {
+    const fromRow = this.firstHuaweiRowValue(row, [
+      'channel',
+      'Channel',
+      'wlanChannel',
+      'WlanChannel',
+      'WLANChannel',
+      'currentChannel',
+      'CurrentChannel',
+      'channelNumber',
+      'ChannelNumber',
+      'X_HW_Channel',
+    ]);
+    if (fromRow) return fromRow;
+
+    const is5g = index != null && index >= 5;
+    const selectIds = preferredSelectId
+      ? [preferredSelectId]
+      : is5g
+        ? ['Channel5g', 'WlanChannel5g', 'Wlan5gChannel', 'Channel_5G']
+        : ['Channel', 'Channel2g', 'WlanChannel', 'WlanChannel2g', 'Wlan2gChannel', 'Channel_2G'];
+
+    for (const id of selectIds) {
+      const fromSelect =
+        this.matchHuaweiSelectValueById(raw, id) ??
+        this.matchHuaweiElementValueAssignmentById(raw, id);
+      if (fromSelect) return fromSelect;
+    }
+
+    const scriptVars = is5g
+      ? ['Channel5g', 'WlanChannel5g', 'Wlan5gChannel', 'CurrentChannel5g']
+      : ['Channel', 'Channel2g', 'WlanChannel', 'WlanChannel2g', 'CurrentChannel'];
+    for (const name of scriptVars) {
+      const value = this.matchHuaweiScriptVar(raw, name);
+      if (value) return value;
+    }
+
+    return undefined;
+  }
+
+  private firstHuaweiRowValue(row: Record<string, string>, keys: string[]): string | undefined {
+    for (const key of keys) {
+      const value = row[key]?.trim();
+      if (value) return value;
+    }
+    return undefined;
+  }
+
+  private matchHuaweiElementValueAssignmentById(raw: string | null, id: string): string | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    const elementExpr = String.raw`(?:document\.getElementById\(["']${escapedId}["']\)|getElement\(["']${escapedId}["']\)|getElById\(["']${escapedId}["']\)|\$\(["']${escapedId}["']\))`;
+    const direct = new RegExp(
+      `${elementExpr}\\s*\\.value\\s*=\\s*(["'])([\\s\\S]*?)\\1`,
+      'i',
+    ).exec(raw);
+    if (direct) return this.unescapeHuaweiHex(direct[2]);
+
+    const variable = new RegExp(`${elementExpr}\\s*\\.value\\s*=\\s*([A-Za-z_$][\\w$]*)`, 'i').exec(
+      raw,
+    )?.[1];
+    return variable ? this.matchHuaweiScriptVar(raw, variable) : null;
+  }
+
+  /**
+   * Some K562E10 WLAN constructors mix quoted strings and bare numeric args. The
+   * shared Huawei parser intentionally reads quoted literals only, which drops
+   * unquoted channel values and shifts later fields.
+   */
+  private parseHuaweiStructCallAllLoose(
+    raw: string | null,
+    structName: string,
+  ): Record<string, string>[] {
+    if (!raw) return [];
+    const escaped = escapeRegExp(structName);
+    const sig = new RegExp(`function\\s+${escaped}\\s*\\(([\\s\\S]*?)\\)`).exec(raw);
+    if (!sig) return [];
+
+    const params = sig[1]
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (!params.length) return [];
+
+    const callRegex = new RegExp(`new\\s+${escaped}\\s*\\(([\\s\\S]*?)\\)`, 'g');
+    const records: Record<string, string>[] = [];
+    for (const match of raw.matchAll(callRegex)) {
+      const values = this.parseHuaweiConstructorArgsLoose(match[1]);
+      if (!values.length) continue;
+
+      const record: Record<string, string> = {};
+      const len = Math.min(params.length, values.length);
+      for (let i = 0; i < len; i++) record[params[i]] = values[i];
+      records.push(record);
+    }
+    return records;
+  }
+
+  private parseHuaweiConstructorArgsLoose(args: string): string[] {
+    const values: string[] = [];
+    let current = '';
+    let quote: '"' | "'" | null = null;
+    let escaped = false;
+
+    const push = () => {
+      const value = current.trim();
+      values.push(this.unescapeHuaweiHex(value));
+      current = '';
+    };
+
+    for (const ch of args) {
+      if (escaped) {
+        current += `\\${ch}`;
+        escaped = false;
+        continue;
+      }
+
+      if (ch === '\\' && quote) {
+        escaped = true;
+        continue;
+      }
+
+      if (quote) {
+        if (ch === quote) quote = null;
+        else current += ch;
+        continue;
+      }
+
+      if (ch === '"' || ch === "'") {
+        quote = ch;
+        continue;
+      }
+
+      if (ch === ',') {
+        push();
+        continue;
+      }
+
+      current += ch;
+    }
+
+    push();
+    return values;
   }
 
   /**
