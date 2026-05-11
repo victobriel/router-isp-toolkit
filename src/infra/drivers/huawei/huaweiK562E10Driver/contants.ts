@@ -13,11 +13,7 @@ export const ENDPOINT = {
   LAN_ADDRESS: '/html/bbsp/lanaddress/lanaddress.asp',
   MAIN_TOP_AP: '/html/bbsp/maintop/MainTopAP.asp',
   INTERNET_AP: '/html/bbsp/internet/InternetAP.asp',
-  /**
-   * On K562E-10 Desk AP builds, SSID / `stWlan` / `stPreSharedKey` data is served from this
-   * script (see `docs/HuaweiK562E10/getWanDynamicData.asp`); it is not under `simplewificfgAP.asp`.
-   */
-  GET_WAN_DYNAMIC_DATA: '/html/bbsp/common/getWanDynamicData.asp',
+  SIMPLE_WIFI_CONFIG_AP: '/html/amp/wlanbasic/simplewificfgAP.asp',
   USER_DEVICE_INFO_SMART: '/html/bbsp/terminaldevinfo/userdevinfosmart.asp',
   CONFIG_INDEX: '/configindex.asp',
   DEVICE_INFO_AP: '/html/ssmp/deviceinfo/deviceinfo_ap.asp',

@@ -223,9 +223,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * Desk AP WLAN: SSID rows from `getWanDynamicData.asp` (`stWlan` / `stPreSharedKey`),
-   * radio/channel from `wlanadvanceDestAP.asp` (`stWlanWifi` and/or `#Channel` / `#Channel5g`).
-   * This firmware does not expose `WlanAdvance.asp?2G|5G`.
+   * Desk AP WLAN: SSID/security from `simplewificfgAP.asp`; radio/channel/advanced UI from
+   * `wlanadvanceDestAP.asp` only (this model has no `WlanAdvance.asp?2G|5G` paths).
    */
   private async getWlanState(): Promise<
     Pick<
@@ -252,24 +251,19 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       bandSteeringEnabled: undefined,
     };
 
-    const [ssidRaw, destAdv] = await Promise.all([
-      this.fetch(ENDPOINT.GET_WAN_DYNAMIC_DATA),
+    const [simpleRaw, destAdv] = await Promise.all([
+      this.fetch(ENDPOINT.SIMPLE_WIFI_CONFIG_AP),
       this.fetch(ENDPOINT.WLAN_ADVANCE_DEST_AP),
     ]);
 
-    let wlanRows = ssidRaw ? this.parseHuaweiStructCallAll(ssidRaw, 'stWlan') : [];
-    if (wlanRows.length === 0 && destAdv) {
-      wlanRows = this.parseHuaweiStructCallAll(destAdv, 'stWlan');
-    }
+    if (!simpleRaw) return empty;
+
+    const wlanRows = this.parseHuaweiStructCallAll(simpleRaw, 'stWlan');
     if (wlanRows.length === 0) return empty;
 
-    let preSharedRows = ssidRaw ? this.parseHuaweiStructCallAll(ssidRaw, 'stPreSharedKey') : [];
-    if (preSharedRows.length === 0 && destAdv) {
-      preSharedRows = this.parseHuaweiStructCallAll(destAdv, 'stPreSharedKey');
-    }
+    const preSharedRows = this.parseHuaweiStructCallAll(simpleRaw, 'stPreSharedKey');
 
     const advanceForWifi = destAdv ?? '';
-    const scriptSource = [ssidRaw, destAdv].filter((s): s is string => !!s).join('\n');
 
     const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
     const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
@@ -324,10 +318,10 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     });
 
     if (wlanWifiRows.length === 0) {
-      const r0 = this.matchHuaweiScriptVar(scriptSource, 'RadioEnable0');
-      const r1 = this.matchHuaweiScriptVar(scriptSource, 'RadioEnable1');
-      const pwr2 = this.matchHuaweiScriptVar(scriptSource, 'WlanTransmitPower');
-      const pwr5 = this.matchHuaweiScriptVar(scriptSource, 'WlanTransmitPower5g');
+      const r0 = this.matchHuaweiScriptVar(simpleRaw, 'RadioEnable0');
+      const r1 = this.matchHuaweiScriptVar(simpleRaw, 'RadioEnable1');
+      const pwr2 = this.matchHuaweiScriptVar(simpleRaw, 'WlanTransmitPower');
+      const pwr5 = this.matchHuaweiScriptVar(simpleRaw, 'WlanTransmitPower5g');
       const advChannelRaw = destAdv;
 
       const pushSynthetic = (
@@ -346,11 +340,10 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         const bwLabel =
           HUAWEI_WLAN_BANDWIDTH_LABELS[bwKey] ??
           (bwKey === '4' ? 'Auto 20/40/80/160 MHz' : bwKey);
-        const radioOn = radio != null ? radio === '1' : row.Enable === '1';
         wlanWifiRows.push({
           domain,
           index: idx,
-          enabled: radioOn ? '1' : '0',
+          enabled: radio === '1' ? '1' : '0',
           mode: modeLabel,
           channel: this.matchHuaweiSelectValueById(advChannelRaw, channelSelectId) ?? undefined,
           transmittingPower: pwr ? `${pwr}%` : undefined,
@@ -370,7 +363,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
     let bandSteeringEnabled = this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(destAdv);
     if (bandSteeringEnabled === undefined) {
-      const isSplit = this.matchHuaweiScriptVar(scriptSource, 'IsSplit');
+      const isSplit = this.matchHuaweiScriptVar(simpleRaw, 'IsSplit');
       const row2g = wlanRows.find((r) =>
         is2gIndex(parseHuaweiWlanConfigurationIndex(r.domain ?? '')),
       );
