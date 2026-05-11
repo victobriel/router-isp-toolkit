@@ -8,14 +8,14 @@ import {
 } from '@/application/types';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { Credentials, ExtractionResult } from '@/domain/schemas/validation';
-import { BaseRouter } from '@/infra/router/BaseRouter';
-import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 import { INPUT_VALUE_ATTR, JS_STRING_LITERAL } from '@/infra/drivers/huawei/shared/constants';
 import {
   escapeRegExp,
   extractIdsFromCommaSelector,
   unescapeHuaweiHex,
 } from '@/infra/drivers/huawei/shared/utils';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import { BaseRouter } from '@/infra/router/BaseRouter';
 
 /**
  * Shared Huawei HTML/`stXxx(...)` parsing helpers (`matchInputValueById`,

@@ -1,11 +1,9 @@
-import {
-  EXTRACTION_FILTER_STORAGE_KEY,
-  lastAuthCredentialsStorageKey,
-} from '@/application/contants';
+import { EXTRACTION_FILTER_STORAGE_KEY } from '@/application/constants';
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IStorage } from '@/application/ports/IStorage';
+import type { CollectResponse } from '@/application/types';
 import { normalizeExtractionFilter } from '@/application/types';
-import type { CollectResponse } from '@/application/types/index';
+import { lastAuthCredentialsStorageKey } from '@/application/utils';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
 import {
   CollectMessageAction,

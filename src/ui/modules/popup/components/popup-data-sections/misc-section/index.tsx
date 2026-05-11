@@ -1,14 +1,14 @@
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 import { ExtractionResult } from '@/domain/schemas/validation';
+import { translator } from '@/infra/i18n/I18nService';
 import { Collapsible } from '@/ui/components/ui/collapsible';
 import { val } from '@/ui/lib/utils';
-import { Router } from 'lucide-react';
 import {
   PopupDataRow,
   PopupDataRowProps,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
-import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import { Router } from 'lucide-react';
 
 interface MiscSectionProps {
   data: ExtractionResult;

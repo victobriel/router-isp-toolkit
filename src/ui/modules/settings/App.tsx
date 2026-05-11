@@ -4,7 +4,7 @@ import {
   EXTRACTION_FILTER_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
   SETTINGS_EXPORT_SCHEMA_VERSION,
-} from '@/application/contants';
+} from '@/application/constants';
 import type {
   ExtractionFilter,
   ExtractionFilterKey,

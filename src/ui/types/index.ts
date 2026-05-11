@@ -1,5 +1,5 @@
-export type { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 export type { CredentialBookmark, ModelBookmarks } from '@/application/types';
+export type { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 
 export enum Band {
   GHz24 = '24gHz',

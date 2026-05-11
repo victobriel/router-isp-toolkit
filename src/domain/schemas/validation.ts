@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
+import { RouterPage, RouterPageKey } from '@/application/types';
 import {
   routerStateShape,
   topologySchema,
   wlanSsidExtractionEntrySchema,
 } from '@/domain/schemas/router-state-schema';
-import { RouterPage, RouterPageKey } from '@/application/types';
 
 export type ValidationIssue = z.ZodIssue;
 

@@ -1,6 +1,6 @@
-import type { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
-import type { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { ExtractionFilter, GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import type { ButtonConfig } from '@/domain/ports/IRouter.types';
+import type { Credentials, ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 
 /**
  * Port for router adapter: domain contract for authentication and data extraction.

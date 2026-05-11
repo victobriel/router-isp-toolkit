@@ -1,4 +1,4 @@
-import { ROUTER_MODEL_STORAGE_KEY } from '@/application/contants';
+import { ROUTER_MODEL_STORAGE_KEY } from '@/application/constants';
 import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';

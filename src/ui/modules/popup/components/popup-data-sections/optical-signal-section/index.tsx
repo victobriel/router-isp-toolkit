@@ -2,13 +2,13 @@ import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types'
 import { ExtractionResult } from '@/domain/schemas/validation';
 import { translator } from '@/infra/i18n/I18nService';
 import { Collapsible } from '@/ui/components/ui/collapsible';
-import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { Signal } from 'lucide-react';
+import { val } from '@/ui/lib/utils';
 import {
   PopupDataRow,
   PopupDataRowProps,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
-import { val } from '@/ui/lib/utils';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
+import { Signal } from 'lucide-react';
 
 interface OpticalSignalSectionProps {
   data: ExtractionResult;

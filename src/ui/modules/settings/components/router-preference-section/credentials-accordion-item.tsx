@@ -1,8 +1,8 @@
+import { RouterPreferencesStore } from '@/application/types';
+import { translator } from '@/infra/i18n/I18nService';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/ui/components/ui/accordion';
 import { TextPref } from '@/ui/modules/settings/components/router-preference-section/pref-fields';
-import { RouterPreferencesStore } from '@/application/types';
 import { Dispatch, SetStateAction } from 'react';
-import { translator } from '@/infra/i18n/I18nService';
 
 type Props = {
   localPrefs: RouterPreferencesStore;

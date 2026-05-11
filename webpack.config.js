@@ -2,6 +2,9 @@ import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 
+/** Warn if an entry’s initial assets or any single file exceed this (browser extension, minified). */
+const MAX_BUNDLE_BYTES = 1024 * 1024;
+
 export default {
   mode: 'production',
   entry: {
@@ -64,7 +67,7 @@ export default {
   },
   performance: {
     hints: 'warning',
-    maxEntrypointSize: 800000,
-    maxAssetSize: 800000,
+    maxEntrypointSize: MAX_BUNDLE_BYTES,
+    maxAssetSize: MAX_BUNDLE_BYTES,
   },
 };

@@ -1,5 +1,6 @@
 import type { ModelBookmarks, RouterPreferencesStore } from '@/application/types';
 import { translator } from '@/infra/i18n/I18nService';
+import { Accordion } from '@/ui/components/ui/accordion';
 import { Button } from '@/ui/components/ui/button';
 import { Input } from '@/ui/components/ui/input';
 import {
@@ -9,16 +10,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/ui/components/ui/select';
-import { Accordion } from '@/ui/components/ui/accordion';
-import { Save } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
 import { UNSELECTED_MODEL_VALUE } from '@/ui/modules/settings/components/router-preference-section/constants';
+import { CredentialsAccordionItem } from '@/ui/modules/settings/components/router-preference-section/credentials-accordion-item';
 import { DhcpAccordionItem } from '@/ui/modules/settings/components/router-preference-section/dhcp-accordion-item';
+import { OpticalSignalAccordionItem } from '@/ui/modules/settings/components/router-preference-section/optical-signal-accordion-item';
 import { OtherAccordionItem } from '@/ui/modules/settings/components/router-preference-section/other-accordion-item';
 import { WlanBandAccordionItem } from '@/ui/modules/settings/components/router-preference-section/wlan-band-accordion-item';
 import { Band } from '@/ui/types';
-import { CredentialsAccordionItem } from '@/ui/modules/settings/components/router-preference-section/credentials-accordion-item';
-import { OpticalSignalAccordionItem } from '@/ui/modules/settings/components/router-preference-section/optical-signal-accordion-item';
+import { Save } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 export interface RouterPreferenceSectionProps {
   bookmarkEntries: Array<[string, ModelBookmarks]>;

@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { Input } from '@/ui/components/ui/input';
 import { CredentialBookmark } from '@/application/types';
-import { Button } from '@/ui/components/ui/button';
-import { BookmarkIcon, ChevronDown, ChevronUp, KeyRound, Save, Trash2 } from 'lucide-react';
-import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
-import { Badge } from '@/ui/components/ui/badge';
 import { translator } from '@/infra/i18n/I18nService';
+import { Badge } from '@/ui/components/ui/badge';
+import { Button } from '@/ui/components/ui/button';
+import { Input } from '@/ui/components/ui/input';
+import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
+import { BookmarkIcon, ChevronDown, ChevronUp, KeyRound, Save, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface PopupCredentialsProps {
   tabId: number;

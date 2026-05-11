@@ -2,14 +2,11 @@ import type { IDomGateway } from '@/application/ports/IDomGateway';
 import type { IRouterFactory } from '@/application/ports/IRouterFactory';
 import type { IStorage } from '@/application/ports/IStorage';
 
-import {
-  BOOKMARKS_STORAGE_KEY,
-  lastAuthCredentialsStorageKey,
-  PENDING_AUTH_ERROR_STORAGE_KEY,
-} from '@/application/contants';
+import { BOOKMARKS_STORAGE_KEY, PENDING_AUTH_ERROR_STORAGE_KEY } from '@/application/constants';
+import { lastAuthCredentialsStorageKey } from '@/application/utils';
 
 import { CollectionService } from '@/application/CollectionService';
-import type { BookmarkStore } from '@/application/types/index';
+import type { BookmarkStore } from '@/application/types';
 import type { IRouter as Router } from '@/domain/ports/IRouter';
 import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import { CollectMessageAction } from '@/domain/schemas/validation';

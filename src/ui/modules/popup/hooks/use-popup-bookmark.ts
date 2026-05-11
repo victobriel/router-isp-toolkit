@@ -1,8 +1,8 @@
 import { CredentialBookmark, PopupStatusType } from '@/application/types';
-import { useCallback, useEffect, useState } from 'react';
-import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+import { useCallback, useEffect, useState } from 'react';
 
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;

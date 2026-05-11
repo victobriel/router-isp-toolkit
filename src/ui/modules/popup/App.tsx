@@ -1,35 +1,12 @@
-import { useEffect, useState } from 'react';
-import { DiagnosticsMode } from '@/ui/types';
+import { GoToPageOptions, PopupStatusType, RouterPage, RouterPageKey } from '@/application/types';
+import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/components/ui/tabs';
 import {
-  Play,
-  Router,
-  Activity,
-  DatabaseIcon,
-  LucideIcon,
-  Network,
-  Settings,
-  MoreVertical,
-  Copy,
-  RefreshCw,
-  Trash,
-  Power,
-} from 'lucide-react';
-import { PopupHeader } from '@/ui/modules/popup/components/popup-header';
-import { PopupCredentials } from '@/ui/modules/popup/components/popup-credentials';
-import { AppTabProvider } from '@/ui/modules/popup/components/app-tab-provider';
-import { PopupDataProvider } from '@/ui/modules/popup/components/popup-data-provider';
-import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { PopupStatus } from '@/ui/modules/popup/components/popup-status';
-import { WanSection } from '@/ui/modules/popup/components/popup-data-sections/wan-section';
-import { RemoteAccessSection } from '@/ui/modules/popup/components/popup-data-sections/remote-access-section';
-import { WlanBandSection } from '@/ui/modules/popup/components/popup-data-sections/wlan-band-section';
-import { Band, ExtractionResult, PingTestResult } from '@/ui/types';
-import { TopologySection } from '@/ui/modules/popup/components/popup-data-sections/topology-section';
-import { DhcpSection } from '@/ui/modules/popup/components/popup-data-sections/dhcp-section';
-import { MiscSection } from '@/ui/modules/popup/components/popup-data-sections/misc-section';
-import { PopupDiagnosticsTab } from '@/ui/modules/popup/components/popup-diagnostics-tab';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/ui/components/ui/dropdown-menu';
 import {
   Empty,
   EmptyContent,
@@ -38,24 +15,46 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/ui/components/ui/empty';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/ui/components/ui/dropdown-menu';
-import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
-import { GoToPageOptions, PopupStatusType, RouterPage, RouterPageKey } from '@/application/types';
-import { PopupStatusProvider, usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
-import { copyTextToClipboard } from '@/ui/lib/clipboard';
-import { translator } from '@/infra/i18n/I18nService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/ui/components/ui/tooltip';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
+import { AppTabProvider } from '@/ui/modules/popup/components/app-tab-provider';
+import { PopupCredentials } from '@/ui/modules/popup/components/popup-credentials';
+import { PopupDataProvider } from '@/ui/modules/popup/components/popup-data-provider';
+import { DhcpSection } from '@/ui/modules/popup/components/popup-data-sections/dhcp-section';
+import { MiscSection } from '@/ui/modules/popup/components/popup-data-sections/misc-section';
 import { OpticalSignalSection } from '@/ui/modules/popup/components/popup-data-sections/optical-signal-section';
+import { RemoteAccessSection } from '@/ui/modules/popup/components/popup-data-sections/remote-access-section';
+import { TopologySection } from '@/ui/modules/popup/components/popup-data-sections/topology-section';
+import { WanSection } from '@/ui/modules/popup/components/popup-data-sections/wan-section';
+import { WlanBandSection } from '@/ui/modules/popup/components/popup-data-sections/wlan-band-section';
+import { PopupDiagnosticsTab } from '@/ui/modules/popup/components/popup-diagnostics-tab';
+import { PopupHeader } from '@/ui/modules/popup/components/popup-header';
+import { PopupStatus } from '@/ui/modules/popup/components/popup-status';
+import { usePopupBookmark } from '@/ui/modules/popup/hooks/use-popup-bookmark';
+import { PopupStatusProvider, usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
+import { Band, DiagnosticsMode, ExtractionResult, PingTestResult } from '@/ui/types';
+import {
+  Activity,
+  Copy,
+  DatabaseIcon,
+  LucideIcon,
+  MoreVertical,
+  Network,
+  Play,
+  Power,
+  RefreshCw,
+  Router,
+  Settings,
+  Trash,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 function PopupContent({
   tabId,

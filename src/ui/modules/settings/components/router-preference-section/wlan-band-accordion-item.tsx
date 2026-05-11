@@ -17,8 +17,8 @@ import {
   wlanTransmittingPowerSelectToStored,
   wlanTransmittingPowerToSelectValue,
 } from '@/ui/modules/settings/components/router-preference-section/pref-fields';
-import { SetStateAction, Dispatch, useMemo } from 'react';
 import { Band } from '@/ui/types';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 
 type Props = {
   accordionValue: Band;

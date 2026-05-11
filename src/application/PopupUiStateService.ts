@@ -1,6 +1,6 @@
-import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from '@/application/contants';
+import { LAST_DATA_STORAGE_KEY, UI_STATE_STORAGE_KEY } from '@/application/constants';
 import type { IStorage } from '@/application/ports/IStorage';
-import type { PopupStatusType } from '@/application/types/index';
+import type { PopupStatusType } from '@/application/types';
 import type { ExtractionResult } from '@/domain/schemas/validation';
 
 export interface PopupStatusState {

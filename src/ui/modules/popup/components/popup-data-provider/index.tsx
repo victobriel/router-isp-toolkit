@@ -4,10 +4,9 @@ import {
   LAST_EXTERNAL_IP_STORAGE_KEY,
   LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
   LAST_INTERNAL_PING_TEST_STORAGE_KEY,
-  lastAuthCredentialsStorageKey,
   PENDING_AUTH_ERROR_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
-} from '@/application/contants';
+} from '@/application/constants';
 import type {
   CollectResponse,
   GoToPageOptions,
@@ -16,6 +15,7 @@ import type {
   RouterPreferencesStore,
 } from '@/application/types';
 import { PopupStatusType } from '@/application/types';
+import { lastAuthCredentialsStorageKey } from '@/application/utils';
 import {
   CollectMessageAction,
   ExtractionResultSchema,

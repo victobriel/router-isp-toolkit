@@ -1,18 +1,4 @@
-import {
-  PingTestResultSchema,
-  type Credentials,
-  type ExtractionResult,
-  type PingTestResult,
-} from '@/domain/schemas/validation';
-import type { IRouter } from '@/domain/ports/IRouter';
-import {
-  DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
-  DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
-  DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,
-  DEFAULT_MAX_WAIT_AFTER_INPUT_POPULATED_MS,
-} from '@/infra/drivers/shared/constants';
 import { IDomGateway } from '@/application/ports/IDomGateway';
-import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import {
   ExtractionFilter,
   GoToPageOptions,
@@ -20,6 +6,20 @@ import {
   RouterPageKey,
   RouterSelectors,
 } from '@/application/types';
+import type { IRouter } from '@/domain/ports/IRouter';
+import { ButtonConfig } from '@/domain/ports/IRouter.types';
+import {
+  PingTestResultSchema,
+  type Credentials,
+  type ExtractionResult,
+  type PingTestResult,
+} from '@/domain/schemas/validation';
+import {
+  DEFAULT_MAX_WAIT_AFTER_CLICK_MS,
+  DEFAULT_MAX_WAIT_AFTER_DISAPPEARANCE_MS,
+  DEFAULT_MAX_WAIT_AFTER_ELEMENT_MS,
+  DEFAULT_MAX_WAIT_AFTER_INPUT_POPULATED_MS,
+} from '@/infra/drivers/shared/constants';
 
 /**
  * Abstract base for router adapters: shared DOM waiting/click behavior.

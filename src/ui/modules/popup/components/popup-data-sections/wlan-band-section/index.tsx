@@ -1,18 +1,18 @@
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 import { ExtractionResult } from '@/domain/schemas/validation';
+import { translator } from '@/infra/i18n/I18nService';
 import { Badge } from '@/ui/components/ui/badge';
 import { Collapsible } from '@/ui/components/ui/collapsible';
-import { ChevronLeft, ChevronRight, Wifi } from 'lucide-react';
+import { Separator } from '@/ui/components/ui/separator';
+import { val } from '@/ui/lib/utils';
 import {
   PopupDataRow,
   PopupDataRowProps,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
-import { val } from '@/ui/lib/utils';
-import { Separator } from '@/ui/components/ui/separator';
-import { useState } from 'react';
-import { Band } from '@/ui/types';
-import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import { Band } from '@/ui/types';
+import { ChevronLeft, ChevronRight, Wifi } from 'lucide-react';
+import { useState } from 'react';
 
 /** SSID list from extraction; same element shape for 2.4 GHz and 5 GHz. */
 type WlanExtractedSsidList = NonNullable<ExtractionResult['wlan24GhzSsids']>;

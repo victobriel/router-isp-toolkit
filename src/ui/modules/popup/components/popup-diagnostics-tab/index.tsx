@@ -1,4 +1,4 @@
-import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/contants';
+import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/constants';
 import { PopupStatusType } from '@/application/types';
 import { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 import { services } from '@/index';

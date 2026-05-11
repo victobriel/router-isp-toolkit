@@ -1,13 +1,6 @@
+import { PopupStatusType } from '@/application/types';
 import { translator } from '@/infra/i18n/I18nService';
 import { Button } from '@/ui/components/ui/button';
-import {
-  PopupBoolBadge,
-  PopupCompareBadge,
-} from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
-import { copyTextToClipboard } from '@/ui/lib/clipboard';
-import { ArrowUpRight, Copy, EllipsisVertical, LucideIcon } from 'lucide-react';
-import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
-import { PopupStatusType } from '@/application/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +8,13 @@ import {
   DropdownMenuTrigger,
 } from '@/ui/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/components/ui/tooltip';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
+import {
+  PopupBoolBadge,
+  PopupCompareBadge,
+} from '@/ui/modules/popup/components/popup-data-sections/popup-bool-badge';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+import { ArrowUpRight, Copy, EllipsisVertical, LucideIcon } from 'lucide-react';
 
 export interface PopupDataRowProps {
   label: string;

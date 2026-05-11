@@ -1,15 +1,15 @@
+import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
 import { ExtractionResult } from '@/domain/schemas/validation';
+import { translator } from '@/infra/i18n/I18nService';
 import { Collapsible } from '@/ui/components/ui/collapsible';
-import { Network } from 'lucide-react';
+import { Separator } from '@/ui/components/ui/separator';
+import { val } from '@/ui/lib/utils';
 import {
   PopupDataRow,
   PopupDataRowProps,
 } from '@/ui/modules/popup/components/popup-data-sections/popup-data-row';
-import { val } from '@/ui/lib/utils';
-import { Separator } from '@/ui/components/ui/separator';
-import { translator } from '@/infra/i18n/I18nService';
 import type { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
-import { GoToPageOptions, RouterPage, RouterPageKey } from '@/application/types';
+import { Network } from 'lucide-react';
 
 interface WanSectionProps {
   data: ExtractionResult;
