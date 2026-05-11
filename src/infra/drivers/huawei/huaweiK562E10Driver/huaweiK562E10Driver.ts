@@ -390,6 +390,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       'stWlanWifi',
     ).map((row) => {
       const domain = row.domain ?? row.Domain;
+      const index = parseHuaweiWlanConfigurationIndex(domain ?? '');
       const bandWidth = row.channelWidth ?? row.X_HW_HT20;
       const bandWidthKey =
         bandWidth !== undefined && bandWidth !== null && bandWidth !== ''
@@ -414,10 +415,17 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           : undefined;
       return {
         domain,
-        index: parseHuaweiWlanConfigurationIndex(domain ?? ''),
+        index,
         enabled: row.enable ?? row.Enable,
         mode: modeLabel,
-        channel: row.channel ?? row.Channel,
+        channel:
+          row.channel ??
+          row.Channel ??
+          this.matchHuaweiSelectValueById(
+            destAdv,
+            is5gIndex(index) ? 'Channel5g' : 'Channel',
+          ) ??
+          undefined,
         transmittingPower,
         bandWidth: bandWidthLabel,
       };
@@ -544,8 +552,9 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       'i',
     ).exec(raw);
     if (!m) return null;
-    const selected = /<option\b[^>]*\bselected\b[^>]*\bvalue=["']([^"']*)["']/i.exec(m[1]);
-    if (selected) return this.unescapeHuaweiHex(selected[1]);
+    const selectedOption = m[1].match(/<option\b[^>]*\bselected\b[^>]*>/i)?.[0];
+    const value = selectedOption?.match(/\bvalue=["']([^"']*)["']/i)?.[1];
+    if (value !== undefined) return this.unescapeHuaweiHex(value);
     return null;
   }
 
