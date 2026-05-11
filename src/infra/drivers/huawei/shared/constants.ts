@@ -47,4 +47,6 @@ export const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>>
   AESEncryption: 'AES',
   TKIPEncryption: 'TKIP',
   TKIPandAESEncryption: 'TKIP&AES',
+  PSKAuthentication: 'PSK',
+  PSKandSAEAuthentication: 'PSK&SAE',
 };
