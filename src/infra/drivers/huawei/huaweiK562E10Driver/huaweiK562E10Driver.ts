@@ -378,6 +378,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const findBandConfig = (isBandIndex: (idx: number | null) => boolean) => {
       const row = wlanWifiRows.find((item) => isBandIndex(item.index));
       if (!row) return undefined;
+      console.log('row', row);
       return {
         enabled: row.enabled === '1',
         channel: row.channel || undefined,
@@ -392,6 +393,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         isBandIndex(parseHuaweiWlanConfigurationIndex(row.domain ?? '')),
       );
       if (!bandRows.length) return undefined;
+      console.log('bandRows', bandRows);
       return bandRows.map((row) => {
         const keyRow = preSharedRows.find((key) => key.domain?.includes(row.domain ?? ''));
         const password = keyRow?.psk || keyRow?.kpp || undefined;
