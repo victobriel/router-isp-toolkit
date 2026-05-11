@@ -8,7 +8,15 @@ import {
 } from '@/domain/schemas/validation';
 import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
+import {
+  HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS,
+  HUAWEI_WLAN_BANDWIDTH_LABELS,
+  HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
+  HUAWEI_WLAN_MODE_LABELS,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import { parseHuaweiWlanConfigurationIndex } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
+import { escapeRegExp } from '@/infra/drivers/huawei/shared/utils';
 import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
@@ -30,24 +38,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           remoteAccessIpv4Enabled: undefined,
           remoteAccessIpv6Enabled: undefined,
         }),
-      wlan: function (): Promise<
-        Pick<
-          ExtractionResult,
-          | 'wlan24GhzConfig'
-          | 'wlan5GhzConfig'
-          | 'wlan24GhzSsids'
-          | 'wlan5GhzSsids'
-          | 'bandSteeringEnabled'
-        >
-      > {
-        return Promise.resolve({
-          wlan24GhzConfig: undefined,
-          wlan5GhzConfig: undefined,
-          wlan24GhzSsids: undefined,
-          wlan5GhzSsids: undefined,
-          bandSteeringEnabled: undefined,
-        });
-      },
+      wlan: () => this.getWlanState(),
       lan: () => this.getLanState(),
       upnp: () => this.getUpnpState(),
       tr069: () => this.getTr069State(),
@@ -229,6 +220,229 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       pdEnabled: undefined,
       linkSpeed: undefined,
     };
+  }
+
+  /**
+   * Desk AP WLAN: SSID rows from `getWanDynamicData.asp` (`stWlan` / `stPreSharedKey`),
+   * radio/channel from `wlanadvanceDestAP.asp` (`stWlanWifi` and/or `#Channel` / `#Channel5g`).
+   * This firmware does not expose `WlanAdvance.asp?2G|5G`.
+   */
+  private async getWlanState(): Promise<
+    Pick<
+      ExtractionResult,
+      | 'wlan24GhzConfig'
+      | 'wlan5GhzConfig'
+      | 'wlan24GhzSsids'
+      | 'wlan5GhzSsids'
+      | 'bandSteeringEnabled'
+    >
+  > {
+    const empty: Pick<
+      ExtractionResult,
+      | 'wlan24GhzConfig'
+      | 'wlan5GhzConfig'
+      | 'wlan24GhzSsids'
+      | 'wlan5GhzSsids'
+      | 'bandSteeringEnabled'
+    > = {
+      wlan24GhzConfig: undefined,
+      wlan5GhzConfig: undefined,
+      wlan24GhzSsids: undefined,
+      wlan5GhzSsids: undefined,
+      bandSteeringEnabled: undefined,
+    };
+
+    const [ssidRaw, destAdv] = await Promise.all([
+      this.fetch(ENDPOINT.GET_WAN_DYNAMIC_DATA),
+      this.fetch(ENDPOINT.WLAN_ADVANCE_DEST_AP),
+    ]);
+
+    let wlanRows = ssidRaw ? this.parseHuaweiStructCallAll(ssidRaw, 'stWlan') : [];
+    if (wlanRows.length === 0 && destAdv) {
+      wlanRows = this.parseHuaweiStructCallAll(destAdv, 'stWlan');
+    }
+    if (wlanRows.length === 0) return empty;
+
+    let preSharedRows = ssidRaw ? this.parseHuaweiStructCallAll(ssidRaw, 'stPreSharedKey') : [];
+    if (preSharedRows.length === 0 && destAdv) {
+      preSharedRows = this.parseHuaweiStructCallAll(destAdv, 'stPreSharedKey');
+    }
+
+    const advanceForWifi = destAdv ?? '';
+    const scriptSource = [ssidRaw, destAdv].filter((s): s is string => !!s).join('\n');
+
+    const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
+    const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
+
+    type WlanWifiRow = {
+      domain?: string;
+      index: number | null;
+      enabled: string | undefined;
+      mode: string | undefined;
+      channel: string | undefined;
+      transmittingPower: string | undefined;
+      bandWidth: string | undefined;
+    };
+
+    const wlanWifiRows: WlanWifiRow[] = this.parseHuaweiStructCallAll(
+      advanceForWifi,
+      'stWlanWifi',
+    ).map((row) => {
+      const domain = row.domain ?? row.Domain;
+      const bandWidth = row.channelWidth ?? row.X_HW_HT20;
+      const bandWidthKey =
+        bandWidth !== undefined && bandWidth !== null && bandWidth !== ''
+          ? String(bandWidth)
+          : undefined;
+      const bandWidthLabel =
+        (bandWidthKey ? HUAWEI_WLAN_BANDWIDTH_LABELS[bandWidthKey] : undefined) ??
+        (bandWidthKey === '4' ? 'Auto 20/40/80/160 MHz' : bandWidthKey);
+
+      const mode = row.mode ?? row.X_HW_Standard;
+      const modeKey =
+        mode !== undefined && mode !== null && mode !== '' ? String(mode) : undefined;
+      const modeLabel =
+        (modeKey ? HUAWEI_WLAN_MODE_LABELS[modeKey] : undefined) ??
+        (modeKey === '11ax' ? '802.11ax' : modeKey);
+
+      const tpRaw = row.TransmitPower ?? row.power ?? row.transmittingPower;
+      const transmittingPower =
+        tpRaw !== undefined && tpRaw !== null && tpRaw !== ''
+          ? String(tpRaw).endsWith('%')
+            ? String(tpRaw)
+            : `${tpRaw}%`
+          : undefined;
+      return {
+        domain,
+        index: parseHuaweiWlanConfigurationIndex(domain ?? ''),
+        enabled: row.enable ?? row.Enable,
+        mode: modeLabel,
+        channel: row.channel ?? row.Channel,
+        transmittingPower,
+        bandWidth: bandWidthLabel,
+      };
+    });
+
+    if (wlanWifiRows.length === 0) {
+      const r0 = this.matchHuaweiScriptVar(scriptSource, 'RadioEnable0');
+      const r1 = this.matchHuaweiScriptVar(scriptSource, 'RadioEnable1');
+      const pwr2 = this.matchHuaweiScriptVar(scriptSource, 'WlanTransmitPower');
+      const pwr5 = this.matchHuaweiScriptVar(scriptSource, 'WlanTransmitPower5g');
+      const advChannelRaw = destAdv;
+
+      const pushSynthetic = (
+        row: (typeof wlanRows)[0] | undefined,
+        radio: string | null,
+        pwr: string | null,
+        channelSelectId: string,
+      ) => {
+        if (!row) return;
+        const domain = row.domain;
+        const idx = parseHuaweiWlanConfigurationIndex(domain ?? '');
+        const modeKey = row.X_HW_Standard ?? '';
+        const bwKey = row.X_HW_HT20 ?? '';
+        const modeLabel =
+          HUAWEI_WLAN_MODE_LABELS[modeKey] ?? (modeKey === '11ax' ? '802.11ax' : modeKey);
+        const bwLabel =
+          HUAWEI_WLAN_BANDWIDTH_LABELS[bwKey] ??
+          (bwKey === '4' ? 'Auto 20/40/80/160 MHz' : bwKey);
+        const radioOn = radio != null ? radio === '1' : row.Enable === '1';
+        wlanWifiRows.push({
+          domain,
+          index: idx,
+          enabled: radioOn ? '1' : '0',
+          mode: modeLabel,
+          channel: this.matchHuaweiSelectValueById(advChannelRaw, channelSelectId) ?? undefined,
+          transmittingPower: pwr ? `${pwr}%` : undefined,
+          bandWidth: bwLabel,
+        });
+      };
+
+      const row2g = wlanRows.find((r) =>
+        is2gIndex(parseHuaweiWlanConfigurationIndex(r.domain ?? '')),
+      );
+      const row5g = wlanRows.find((r) =>
+        is5gIndex(parseHuaweiWlanConfigurationIndex(r.domain ?? '')),
+      );
+      pushSynthetic(row2g, r0, pwr2, 'Channel');
+      pushSynthetic(row5g, r1, pwr5, 'Channel5g');
+    }
+
+    let bandSteeringEnabled = this.extractHuaweiBandSteeringEnabledFromWlanAdvance5g(destAdv);
+    if (bandSteeringEnabled === undefined) {
+      const isSplit = this.matchHuaweiScriptVar(scriptSource, 'IsSplit');
+      const row2g = wlanRows.find((r) =>
+        is2gIndex(parseHuaweiWlanConfigurationIndex(r.domain ?? '')),
+      );
+      const row5g = wlanRows.find((r) =>
+        is5gIndex(parseHuaweiWlanConfigurationIndex(r.domain ?? '')),
+      );
+      const sameSsid = (row2g?.ssid ?? '').trim() === (row5g?.ssid ?? '').trim();
+      if (isSplit === '1') bandSteeringEnabled = false;
+      else if (isSplit === '0') bandSteeringEnabled = sameSsid ? true : false;
+    }
+
+    const findBandConfig = (isBandIndex: (idx: number | null) => boolean) => {
+      const row = wlanWifiRows.find((item) => isBandIndex(item.index));
+      if (!row) return undefined;
+      return {
+        enabled: row.enabled === '1',
+        channel: row.channel || undefined,
+        mode: row.mode || undefined,
+        bandWidth: row.bandWidth || undefined,
+        transmittingPower: row.transmittingPower || undefined,
+      };
+    };
+
+    const buildSsids = (isBandIndex: (idx: number | null) => boolean) => {
+      const bandRows = wlanRows.filter((row) =>
+        isBandIndex(parseHuaweiWlanConfigurationIndex(row.domain ?? '')),
+      );
+      if (!bandRows.length) return undefined;
+      return bandRows.map((row) => {
+        const keyRow = preSharedRows.find((key) => key.domain?.includes(row.domain ?? ''));
+        const password = keyRow?.psk || keyRow?.kpp || undefined;
+        const maxClients = Number.parseInt(row.X_HW_AssociateNum ?? '', 10);
+        const authenticationMode = row.BeaconType;
+        const encryptionMode = row.X_HW_WPAand11iEncryptionModes;
+        const authModeLabel = authenticationMode
+          ? HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS[authenticationMode]
+          : undefined;
+        const encryptModeLabel = encryptionMode
+          ? HUAWEI_WLAN_ENCRYPTION_MODE_LABELS[encryptionMode]
+          : undefined;
+        return {
+          enabled: row.Enable === '1',
+          ssidName: row.ssid?.trim() || undefined,
+          ssidPassword: password,
+          ssidHideMode: row.SSIDAdvertisementEnabled === '0',
+          wpa2SecurityType: [authModeLabel, encryptModeLabel].filter(Boolean).join('-') || undefined,
+          maxClients: Number.isNaN(maxClients) ? undefined : maxClients,
+        };
+      });
+    };
+
+    return {
+      wlan24GhzConfig: findBandConfig(is2gIndex),
+      wlan5GhzConfig: findBandConfig(is5gIndex),
+      wlan24GhzSsids: buildSsids(is2gIndex),
+      wlan5GhzSsids: buildSsids(is5gIndex),
+      bandSteeringEnabled,
+    };
+  }
+
+  /** Selected `<option>` on a Huawei `<select id="…">` (current channel, etc.). */
+  private matchHuaweiSelectValueById(raw: string | null, id: string): string | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    const m = new RegExp(
+      `<select\\b[^>]*\\bid=["']${escapedId}["'][^>]*>([\\s\\S]*?)<\\/select>`,
+      'i',
+    ).exec(raw);
+    if (!m) return null;
+    const selected = /<option\b[^>]*\bselected\b[^>]*\bvalue=["']([^"']*)["']/i.exec(m[1]);
+    if (selected) return this.unescapeHuaweiHex(selected[1]);
+    return null;
   }
 
   /**
