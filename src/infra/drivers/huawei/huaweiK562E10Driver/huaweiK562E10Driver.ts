@@ -49,9 +49,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         });
       },
       lan: () => this.getLanState(),
-      upnp: function (): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
-        return Promise.resolve({ upnpEnabled: undefined });
-      },
+      upnp: () => this.getUpnpState(),
       tr069: () => this.getTr069State(),
       routerInfo: function (): Promise<Pick<ExtractionResult, 'routerModel' | 'routerVersion'>> {
         return Promise.resolve({ routerModel: undefined, routerVersion: undefined });
@@ -233,6 +231,19 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       pdEnabled: undefined,
       linkSpeed: undefined,
     };
+  }
+
+  /**
+   * `upnp_ap.asp` sets `enblMainUpnp` / `enblSlvUpnp`; the UI treats UPnP as on when
+   * both are `1` (see `LoadFrame` in `docs/HuaweiK562E10/upnp_ap.asp`).
+   */
+  private async getUpnpState(): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
+    const raw = await this.fetch(ENDPOINT.UPNP_AP);
+    if (!raw) return { upnpEnabled: undefined };
+    const main = this.matchHuaweiScriptVar(raw, 'enblMainUpnp');
+    const slave = this.matchHuaweiScriptVar(raw, 'enblSlvUpnp');
+    if (main == null || slave == null) return { upnpEnabled: undefined };
+    return { upnpEnabled: main === '1' && slave === '1' };
   }
 
   /**
