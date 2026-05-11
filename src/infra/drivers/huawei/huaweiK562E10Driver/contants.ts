@@ -37,4 +37,10 @@ export const ENDPOINT = {
     '&RUNSTATE_FLAG=Ping' +
     '&RequestFile=html/bbsp/maintenance/diagnosecommon.asp',
   GET_PING_RESULT: '/html/bbsp/maintenance/GetPingResult.asp',
+  /**
+   * TR-069 `InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ResetBoard` — same action as
+   * {@link HuaweiEG8145V5Driver}'s reboot, but this UI POSTs root `set.cgi`
+   * (`docs/HuaweiK562E10/index.asp` `onReboot()`), not `/CustomApp/set.cgi`.
+   */
+  RESET_BOARD: '/set.cgi?x=InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ResetBoard',
 };

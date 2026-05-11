@@ -109,8 +109,33 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     return !onLoginPage && !!indexPage;
   }
 
+  /**
+   * Reboot via TR-069 `InternetGatewayDevice.X_HW_DEBUG.SMP.DM.ResetBoard`, matching
+   * the stock UI (`docs/HuaweiK562E10/index.asp` `onReboot()`):
+   *
+   *     POST /set.cgi?x=…ResetBoard
+   *     x.X_HW_Token=<onttoken>
+   *
+   * Same CSRF / iframe constraints as {@link HuaweiEG8145V5Driver.reboot}:
+   * fetch a fresh `#hwonttoken` from `index.asp` immediately before the POST;
+   * submit through {@link submitCgiForm} so the request uses a real navigation
+   * where required. After accept, the device often tears the connection down
+   * mid-response — a normal outcome; we do not require a body from `submitCgiForm`.
+   */
   public override async reboot(): Promise<{ success: boolean; message?: string }> {
-    return { success: false, message: 'Method not implemented.' };
+    const token = await this.fetchHuaweiCsrfToken(ENDPOINT.INDEX);
+    if (!token) {
+      return {
+        success: false,
+        message: 'Missing onttoken on index.asp (session expired or device unreachable)',
+      };
+    }
+
+    await this.submitCgiForm(ENDPOINT.RESET_BOARD, {
+      'x.X_HW_Token': token,
+    });
+
+    return { success: true };
   }
 
   /**
