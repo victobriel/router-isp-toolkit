@@ -39,6 +39,8 @@ export const HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS: Partial<Record<string, stri
   WPA: 'WPA',
   '11i': 'WPA2',
   WPAand11i: 'WPA/WPA2',
+  WPA3: 'WPA3',
+  'WPA2/WPA3': 'WPA2/WPA3',
 };
 
 export const HUAWEI_WLAN_ENCRYPTION_MODE_LABELS: Partial<Record<string, string>> = {
