@@ -358,9 +358,12 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       bandSteeringEnabled: undefined,
     };
 
-    const [simpleRaw, destAdv] = await Promise.all([
+    const [simpleRaw, destAdv, destAdvApi, advComApi, wlanListRaw] = await Promise.all([
       this.fetch(ENDPOINT.SIMPLE_WIFI_CONFIG_AP),
       this.fetch(ENDPOINT.WLAN_ADVANCE_DEST_AP),
+      this.fetch(ENDPOINT.WLAN_ADVANCE_DEST_AP_API),
+      this.fetch(ENDPOINT.WLAN_ADVANCE_COM_API),
+      this.fetch(ENDPOINT.WLAN_LIST_AP),
     ]);
 
     if (!simpleRaw) return empty;
@@ -370,8 +373,10 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
     const preSharedRows = this.parseHuaweiStructCallAll(simpleRaw, 'stPreSharedKey');
 
-    const advanceForWifi = destAdv ?? '';
-    const channelRaw = [destAdv, simpleRaw].filter(Boolean).join('\n');
+    const advanceForWifi = [destAdv, destAdvApi, advComApi, wlanListRaw]
+      .filter((raw): raw is string => !!raw)
+      .join('\n');
+    const channelRaw = [advanceForWifi, simpleRaw].filter(Boolean).join('\n');
 
     const is2gIndex = (index: number | null): boolean => index != null && index <= 4;
     const is5gIndex = (index: number | null): boolean => index != null && index >= 5;
@@ -613,7 +618,8 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     for (const id of selectIds) {
       const fromSelect =
         this.matchHuaweiSelectValueById(raw, id) ??
-        this.matchHuaweiElementValueAssignmentById(raw, id);
+        this.matchHuaweiElementValueAssignmentById(raw, id) ??
+        this.matchHuaweiSelectHelperValue(raw, id);
       if (fromSelect) return this.normalizeHuaweiChannelValue(fromSelect);
     }
 
@@ -652,10 +658,62 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     ).exec(raw);
     if (direct) return this.unescapeHuaweiHex(direct[2]);
 
-    const variable = new RegExp(`${elementExpr}\\s*\\.value\\s*=\\s*([A-Za-z_$][\\w$]*)`, 'i').exec(
+    const expression = new RegExp(`${elementExpr}\\s*\\.value\\s*=\\s*([^;\n\r]+)`, 'i').exec(
       raw,
     )?.[1];
-    return variable ? this.matchHuaweiScriptVar(raw, variable) : null;
+    return expression ? this.resolveHuaweiJsValueExpression(raw, expression) : null;
+  }
+
+  private matchHuaweiSelectHelperValue(raw: string | null, id: string): string | null {
+    if (!raw) return null;
+    const escapedId = escapeRegExp(id);
+    const helperCall = new RegExp(
+      String.raw`\b(?:setSelect|setSelectValue|setSelectVal|SelectSet)\s*\(\s*["']${escapedId}["']\s*,\s*([^)]+?)\s*\)`,
+      'i',
+    ).exec(raw);
+    if (!helperCall) return null;
+
+    return this.resolveHuaweiJsValueExpression(raw, helperCall[1]);
+  }
+
+  private resolveHuaweiJsValueExpression(raw: string | null, expression: string): string | null {
+    if (!raw) return null;
+    const value = expression.trim();
+
+    const literal = /^["']([\s\S]*?)["']$/.exec(value);
+    if (literal) return this.unescapeHuaweiHex(literal[1]);
+    if (/^-?\d+$/.test(value)) return value;
+
+    const variable = /^[A-Za-z_$][\w$]*$/.exec(value)?.[0];
+    if (variable) return this.matchHuaweiScriptVar(raw, variable);
+
+    const property = /^([A-Za-z_$][\w$]*)(?:\[\d+\])?\.([A-Za-z_$][\w$]*)$/.exec(value);
+    if (property) return this.matchHuaweiObjectProperty(raw, property[1], property[2]);
+
+    return null;
+  }
+
+  private matchHuaweiObjectProperty(
+    raw: string | null,
+    objectName: string,
+    propertyName: string,
+  ): string | null {
+    if (!raw) return null;
+    const obj = escapeRegExp(objectName);
+    const prop = escapeRegExp(propertyName);
+    const assignment = new RegExp(
+      String.raw`\b${obj}\.${prop}\s*=\s*(?:(["'])([\s\S]*?)\1|([^;\n\r]+))`,
+      'i',
+    ).exec(raw);
+    if (!assignment) return null;
+
+    const quoted = assignment[2];
+    if (quoted !== undefined) return this.unescapeHuaweiHex(quoted);
+
+    const bare = assignment[3]?.trim();
+    if (!bare) return null;
+    if (/^-?\d+$/.test(bare)) return bare;
+    return this.matchHuaweiScriptVar(raw, bare);
   }
 
   /**
