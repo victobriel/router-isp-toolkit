@@ -379,11 +379,17 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       const row = wlanWifiRows.find((item) => isBandIndex(item.index));
       if (!row) return undefined;
       console.log('row', row);
+      const modeLabel = row.mode ? HUAWEI_WLAN_MODE_LABELS[row.mode] : undefined;
+      let bandWidthLabel = row.bandWidth
+        ? row.bandWidth.startsWith('Auto')
+          ? 'Auto'
+          : row.bandWidth
+        : undefined;
       return {
         enabled: row.enabled === '1',
         channel: row.channel || undefined,
-        mode: row.mode || undefined,
-        bandWidth: row.bandWidth || undefined,
+        mode: modeLabel,
+        bandWidth: bandWidthLabel,
         transmittingPower: row.transmittingPower || undefined,
       };
     };

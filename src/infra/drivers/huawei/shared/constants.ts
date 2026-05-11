@@ -31,6 +31,7 @@ export const HUAWEI_WLAN_MODE_LABELS: Partial<Record<string, string>> = {
   '11a': '802.11a',
   '11na': '802.11a/n',
   '11ac': '802.11a/n/ac',
+  '11ax': '802.11b/g/n/ax',
 };
 
 export const HUAWEI_WLAN_AUTHENTICATION_MODE_LABELS: Partial<Record<string, string>> = {
