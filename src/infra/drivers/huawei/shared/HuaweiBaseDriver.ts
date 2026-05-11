@@ -23,14 +23,14 @@ import {
  * drivers.
  *
  * **Ping:** {@link BaseRouter.ping} is not implemented here; each model supplies
- * its own adapter. The EG8145V5 firmware exposes TR-069
+ * its own adapter. The EG8145V5 and K562E-10 UIs expose TR-069
  * `InternetGatewayDevice.IPPingDiagnostics` through the same `complex.cgi` POST,
  * `GetPingResult.asp` poll loop, and BusyBox-style output as
- * `/html/bbsp/maintenance/diagnosecommon.asp`. That full flow—including CSRF
- * (`onttoken`) refresh rules, optional `x.Interface` WAN binding for public
- * targets, and iframe form submit for `Sec-Fetch-Mode: navigate` gating—lives on
- * {@link HuaweiEG8145V5Driver} (`ping()` and its private helpers). It previously
- * sat on this base class but was moved because only that device surface uses it.
+ * `/html/bbsp/maintenance/diagnosecommon.asp` (see {@link HuaweiEG8145V5Driver}
+ * and {@link HuaweiK562E10Driver}). Shared parsing constants live under
+ * `HuaweiEG8145V5Driver/constants`; CSRF refresh, optional `x.Interface` WAN
+ * binding for public targets, and iframe `complex.cgi` submit mirror the stock
+ * pages.
  */
 export abstract class HuaweiBaseDriver extends BaseRouter {
   protected readonly s: RouterSelectors;

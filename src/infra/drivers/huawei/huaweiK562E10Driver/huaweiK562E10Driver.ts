@@ -4,8 +4,32 @@ import { ButtonConfig } from '@/domain/ports/IRouter.types';
 import {
   ExtractionResult,
   ExtractionResultSchema,
+  PingTestResultSchema,
   type PingTestResult,
 } from '@/domain/schemas/validation';
+import {
+  HUAWEI_COLON_MAC,
+  HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE,
+  HUAWEI_PING_DEFAULT_DSCP,
+  HUAWEI_PING_DEFAULT_REPETITIONS,
+  HUAWEI_PING_DEFAULT_TIMEOUT_MS,
+  HUAWEI_PING_HEADER_LINE,
+  HUAWEI_PING_POLL_GRACE_MS,
+  HUAWEI_PING_POLL_INTERVAL_MS,
+  HUAWEI_PING_REPLY_LINE,
+  HUAWEI_PING_RESULT_DELIMITER,
+  HUAWEI_PING_RTT_LINE,
+  HUAWEI_PING_STATS_LINE,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
+import {
+  decodeJsEscape,
+  fetchWithMethod,
+  isPrivateOrLocalIPv4,
+  normalizeMac,
+  parseUserDeviceRowsPositional,
+  resolveWifiBandForUserDevice,
+  tryReadHuaweiCsrfTokenFromDocument,
+} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
 import {
@@ -14,14 +38,6 @@ import {
   HUAWEI_WLAN_ENCRYPTION_MODE_LABELS,
   HUAWEI_WLAN_MODE_LABELS,
 } from '@/infra/drivers/huawei/shared/constants';
-import { HUAWEI_COLON_MAC } from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/constants';
-import {
-  fetchWithMethod,
-  normalizeMac,
-  parseUserDeviceRowsPositional,
-  resolveWifiBandForUserDevice,
-  tryReadHuaweiCsrfTokenFromDocument,
-} from '@/infra/drivers/huawei/HuaweiEG8145V5Driver/utils';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
 import {
   escapeRegExp,
@@ -98,12 +114,71 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   }
 
   /**
-   * This model’s admin UI does not reuse the EG8145V5 `diagnosecommon.asp` /
-   * `complex.cgi` IPPingDiagnostics path. Returning `null` lets the app show an
-   * unsupported / failed ping state instead of calling the wrong endpoints.
+   * Same TR-069 `InternetGatewayDevice.IPPingDiagnostics` flow as
+   * {@link HuaweiEG8145V5Driver.ping}: POST `complex.cgi` (see
+   * `docs/HuaweiK562E10/diagnosecommon.asp` `OnApply` / `OnStopPing`), poll
+   * `GetPingResult.asp`, parse BusyBox-style output. WAN binding for public
+   * targets merges `wan_list_ap.asp` into the WAN list (same idea as
+   * {@link getWanState}) so routed INTERNET PVC `domain` is found when rows
+   * only appear on the AP script.
    */
-  public override async ping(_ip: string): Promise<PingTestResult | null> {
-    return null;
+  public override async ping(ip: string): Promise<PingTestResult | null> {
+    const params: Record<string, string> = {
+      'x.Host': ip,
+      'x.DiagnosticsState': 'Requested',
+      'x.NumberOfRepetitions': String(HUAWEI_PING_DEFAULT_REPETITIONS),
+      'x.DSCP': String(HUAWEI_PING_DEFAULT_DSCP),
+      'x.DataBlockSize': String(HUAWEI_PING_DEFAULT_DATA_BLOCK_SIZE),
+      'x.Timeout': String(HUAWEI_PING_DEFAULT_TIMEOUT_MS),
+    };
+
+    if (!isPrivateOrLocalIPv4(ip)) {
+      const wanDomain = await this.findInternetWanDomainForPing();
+      if (wanDomain) params['x.Interface'] = wanDomain;
+    }
+
+    params['RUNSTATE_FLAG.value'] = 'START';
+
+    const token = await this.fetchDiagnosePageCsrfToken();
+    if (!token) return null;
+    params['x.X_HW_Token'] = token;
+
+    const started = await this.submitCgiForm(ENDPOINT.PING_DIAGNOSE, params);
+    if (started == null) return null;
+
+    const newState = this.parseHuaweiStructCall(started, 'PingResultClass');
+    if (!newState || (newState.Host ?? '') !== ip) return null;
+
+    const tokenAfterStart = this.matchInputValueById(started, 'hwonttoken') ?? token;
+
+    const deadline =
+      Date.now() +
+      HUAWEI_PING_DEFAULT_REPETITIONS * HUAWEI_PING_DEFAULT_TIMEOUT_MS +
+      HUAWEI_PING_POLL_GRACE_MS;
+
+    let raw = '';
+    let status = 'Requested';
+
+    while (Date.now() < deadline) {
+      await this.delay(HUAWEI_PING_POLL_INTERVAL_MS);
+      const polled = await this.pollPingResult();
+      if (!polled) continue;
+      raw = polled.raw;
+      status = polled.status;
+      if (status !== 'Requested') break;
+    }
+
+    if (status === 'Requested') {
+      const stopParams: Record<string, string> = {
+        'x.Host': ip,
+        'RUNSTATE_FLAG.value': 'TERMIANL',
+        'x.X_HW_Token': tokenAfterStart,
+      };
+      await this.submitCgiForm(ENDPOINT.PING_DIAGNOSE, stopParams);
+    }
+
+    if (!raw) return null;
+    return this.parseBusyBoxPingOutput(raw, ip);
   }
 
   /**
@@ -383,7 +458,6 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const findBandConfig = (isBandIndex: (idx: number | null) => boolean) => {
       const row = wlanWifiRows.find((item) => isBandIndex(item.index));
       if (!row) return undefined;
-      console.log('row', row);
       let bandWidthLabel = row.bandWidth
         ? row.bandWidth.startsWith('Auto')
           ? 'Auto'
@@ -403,7 +477,6 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
         isBandIndex(parseHuaweiWlanConfigurationIndex(row.domain ?? '')),
       );
       if (!bandRows.length) return undefined;
-      console.log('bandRows', bandRows);
       return bandRows.map((row) => {
         const keyRow = preSharedRows.find((key) => key.domain?.includes(row.domain ?? ''));
         const password = keyRow?.psk || keyRow?.kpp || undefined;
@@ -666,8 +739,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     const parsed = this.parseAllUserDeviceRows(raw);
     const ipv4 = this.dedupeUserDevicesByDomainForTopology(
       parsed,
-      (row) =>
-        (row.IPv4Enabled ?? '').trim() === '1' && this.isUserDeviceOnlineForTopology(row),
+      (row) => (row.IPv4Enabled ?? '').trim() === '1' && this.isUserDeviceOnlineForTopology(row),
     );
     if (ipv4.length > 0) return ipv4;
     return this.dedupeUserDevicesByDomainForTopology(parsed, (row) =>
@@ -787,6 +859,277 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
       if (fromSta) return fromSta;
     }
     return resolveWifiBandForUserDevice(row, byMac, byIp);
+  }
+
+  /**
+   * Routed INTERNET WAN `domain` for `x.Interface` on external pings.
+   * Merges `wan_list_ap.asp` with the same `WanIP` / `WanPPP` dedupe as
+   * {@link getWanState} so builds that only list PVCs on the AP page still work.
+   */
+  private async findInternetWanDomainForPing(): Promise<string | null> {
+    const [info, list, listAp] = await Promise.all([
+      this.fetch(ENDPOINT.WAN_LIST_INFO),
+      this.fetch(ENDPOINT.WAN_LIST),
+      this.fetch(ENDPOINT.WAN_LIST_AP),
+    ]);
+    const buffer = [info, list, listAp].filter((s): s is string => !!s).join('\n');
+    if (!buffer) return null;
+
+    const wanEntriesRaw: Array<{ data: Record<string, string>; encapMode: 'PPPoE' | 'IPoE' }> = [
+      ...this.parseHuaweiStructCallAll(buffer, 'WanPPP').map((data) => ({
+        data,
+        encapMode: 'PPPoE' as const,
+      })),
+      ...this.parseHuaweiStructCallAll(buffer, 'WanIP').map((data) => ({
+        data,
+        encapMode: 'IPoE' as const,
+      })),
+    ];
+
+    const seenDomainEncap = new Set<string>();
+    const entries = wanEntriesRaw.filter((e) => {
+      const key = `${e.encapMode}\t${e.data.domain ?? ''}`;
+      if (seenDomainEncap.has(key)) return false;
+      seenDomainEncap.add(key);
+      return true;
+    });
+    if (entries.length === 0) return null;
+
+    const isInternet = (e: { data: Record<string, string> }) =>
+      (e.data.ServiceList ?? '').toUpperCase().includes('INTERNET');
+    const isRouted = (e: { data: Record<string, string> }) =>
+      (e.data.Mode ?? '').toUpperCase().includes('ROUTED');
+    const isEnabled = (e: { data: Record<string, string> }) => (e.data.Enable ?? '') === '1';
+
+    const chosen =
+      entries.find((e) => isInternet(e) && isRouted(e) && isEnabled(e)) ??
+      entries.find((e) => isInternet(e) && isRouted(e)) ??
+      entries.find(isInternet) ??
+      null;
+
+    const domain = chosen?.data.domain?.trim();
+    return domain ? domain : null;
+  }
+
+  private async fetchHuaweiCsrfToken(path: string): Promise<string | null> {
+    const raw = await this.fetch(path);
+    return this.matchInputValueById(raw, 'hwonttoken');
+  }
+
+  private fetchDiagnosePageCsrfToken(): Promise<string | null> {
+    return this.fetchHuaweiCsrfToken(ENDPOINT.DIAGNOSE_COMMON);
+  }
+
+  private async pollPingResult(): Promise<{ raw: string; status: string } | null> {
+    const body = await this.postPingForm(ENDPOINT.GET_PING_RESULT, '');
+    if (body == null) return null;
+
+    const decoded = this.decodeGetPingResultExpression(body);
+    if (decoded == null) return null;
+
+    const idx = decoded.indexOf(HUAWEI_PING_RESULT_DELIMITER);
+    if (idx < 0) return { raw: decoded, status: 'Requested' };
+
+    const raw = decoded.slice(0, idx);
+    const tail = decoded.slice(idx + HUAWEI_PING_RESULT_DELIMITER.length).trim();
+    const status = tail.split(/\s+/)[0] ?? '';
+    return { raw, status };
+  }
+
+  private decodeGetPingResultExpression(src: string): string | null {
+    let pos = 0;
+    while (pos < src.length && src[pos] !== '"' && src[pos] !== "'") pos++;
+
+    const parts: string[] = [];
+    while (pos < src.length) {
+      if (parts.length > 0) {
+        while (pos < src.length && /[\s+;]/.test(src[pos]!)) pos++;
+        if (pos >= src.length) break;
+      }
+
+      const quote = src[pos];
+      if (quote !== '"' && quote !== "'") {
+        return parts.length > 0 ? parts.join('') : null;
+      }
+
+      let i = pos + 1;
+      let chunk = '';
+      let closed = false;
+      while (i < src.length) {
+        const c = src[i]!;
+        if (c === '\\') {
+          if (i + 1 >= src.length) return null;
+          chunk += decodeJsEscape(src, i);
+          i += src[i + 1] === 'x' ? 4 : src[i + 1] === 'u' ? 6 : 2;
+        } else if (c === quote) {
+          closed = true;
+          break;
+        } else {
+          chunk += c;
+          i++;
+        }
+      }
+      if (!closed) return null;
+      parts.push(chunk);
+      pos = i + 1;
+    }
+
+    return parts.length > 0 ? parts.join('') : null;
+  }
+
+  private parseBusyBoxPingOutput(raw: string, ip: string): PingTestResult | null {
+    const lines = raw
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    let bytes: number | undefined;
+    let ttl: number | undefined;
+    const times: number[] = [];
+    const sequences: number[] = [];
+
+    for (const line of lines) {
+      const headerMatch = HUAWEI_PING_HEADER_LINE.exec(line);
+      if (headerMatch) {
+        bytes = Number.parseInt(headerMatch[1]!, 10);
+        continue;
+      }
+      const replyMatch = HUAWEI_PING_REPLY_LINE.exec(line);
+      if (replyMatch) {
+        bytes = Number.parseInt(replyMatch[1]!, 10);
+        sequences.push(Number.parseInt(replyMatch[2]!, 10));
+        ttl = Number.parseInt(replyMatch[3]!, 10);
+        times.push(Number.parseFloat(replyMatch[4]!));
+      }
+    }
+
+    const statsLine = lines.find((line) => HUAWEI_PING_STATS_LINE.test(line));
+    const statsMatch = statsLine ? HUAWEI_PING_STATS_LINE.exec(statsLine) : null;
+    const transmitted = statsMatch ? Number.parseInt(statsMatch[1]!, 10) : undefined;
+    const received = statsMatch ? Number.parseInt(statsMatch[2]!, 10) : undefined;
+    const loss = statsMatch ? Number.parseInt(statsMatch[3]!, 10) : undefined;
+
+    const rttLine = lines.find((line) => HUAWEI_PING_RTT_LINE.test(line));
+    const rttMatch = rttLine ? HUAWEI_PING_RTT_LINE.exec(rttLine) : null;
+    const min = rttMatch ? Number.parseFloat(rttMatch[1]!) : undefined;
+    const avg = rttMatch ? Number.parseFloat(rttMatch[2]!) : undefined;
+    const max = rttMatch ? Number.parseFloat(rttMatch[3]!) : undefined;
+
+    return PingTestResultSchema.parse({
+      ip,
+      bytes,
+      time: times.length > 0 ? times : undefined,
+      sequence: sequences.length > 0 ? sequences : undefined,
+      ttl,
+      packets: { transmitted, received, loss, min, avg, max },
+      message: raw,
+    });
+  }
+
+  private async postPingForm(path: string, body: string): Promise<string | null> {
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body,
+      });
+      if (!response.ok) return null;
+      return await response.text();
+    } catch {
+      return null;
+    }
+  }
+
+  private submitCgiForm(action: string, params: Record<string, string>): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (typeof document === 'undefined' || !document.body) {
+        resolve(null);
+        return;
+      }
+
+      const iframeName = `__huawei_form_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+
+      const iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.setAttribute('aria-hidden', 'true');
+      iframe.setAttribute('sandbox', 'allow-forms allow-same-origin');
+      iframe.style.display = 'none';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = action;
+      form.target = iframeName;
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.style.display = 'none';
+
+      for (const [key, value] of Object.entries(params)) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      }
+      document.body.appendChild(form);
+
+      let settled = false;
+      let timer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        try {
+          form.remove();
+        } catch {
+          /* noop */
+        }
+        try {
+          iframe.remove();
+        } catch {
+          /* noop */
+        }
+      };
+      const finish = (html: string | null) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(html);
+      };
+
+      iframe.addEventListener('load', () => {
+        if (settled) return;
+
+        let url = '';
+        try {
+          url = iframe.contentWindow?.location?.href ?? '';
+        } catch {
+          /* same-origin allowed by sandbox; defensive */
+        }
+        if (!url || url === 'about:blank') return;
+
+        let html: string | null = null;
+        try {
+          html = iframe.contentDocument?.documentElement?.outerHTML ?? null;
+        } catch {
+          html = null;
+        }
+        finish(html);
+      });
+
+      timer = setTimeout(() => finish(null), 30_000);
+
+      try {
+        form.submit();
+      } catch {
+        finish(null);
+      }
+    });
   }
 
   private async fetch(path: string): Promise<string | null> {

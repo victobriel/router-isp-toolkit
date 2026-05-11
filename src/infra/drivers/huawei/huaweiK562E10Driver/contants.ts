@@ -27,4 +27,14 @@ export const ENDPOINT = {
   UPNP_AP: '/html/bbsp/upnp/upnp_ap.asp',
   TR069_AP: '/html/ssmp/tr069/tr069.asp',
   DIAGNOSE_COMMON: '/html/bbsp/maintenance/diagnosecommon.asp',
+  /**
+   * Same IPPingDiagnostics POST target as {@link HuaweiEG8145V5Driver} /
+   * `docs/HuaweiK562E10/diagnosecommon.asp` `OnApply()` (`complex.cgi?…&RUNSTATE_FLAG=Ping`).
+   */
+  PING_DIAGNOSE:
+    '/html/bbsp/maintenance/complex.cgi' +
+    '?x=InternetGatewayDevice.IPPingDiagnostics' +
+    '&RUNSTATE_FLAG=Ping' +
+    '&RequestFile=html/bbsp/maintenance/diagnosecommon.asp',
+  GET_PING_RESULT: '/html/bbsp/maintenance/GetPingResult.asp',
 };
