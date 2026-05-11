@@ -6,10 +6,10 @@ import {
   ExtractionResultSchema,
   type PingTestResult,
 } from '@/domain/schemas/validation';
-import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
+import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
 import { HuaweiK562E10Selectors } from '@/infra/drivers/huawei/huaweiK562E10Driver/huaweiK562E10Selectors';
 import { HuaweiBaseDriver } from '@/infra/drivers/huawei/shared/HuaweiBaseDriver';
-import { ENDPOINT } from '@/infra/drivers/huawei/huaweiK562E10Driver/contants';
+import { ITopologySectionParser } from '@/infra/drivers/shared/TopologySectionParser';
 
 export class HuaweiK562E10Driver extends HuaweiBaseDriver {
   constructor(topologyParser: ITopologySectionParser, domService: IDomGateway) {
@@ -18,21 +18,18 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
 
   public async extract(filter?: ExtractionFilter): Promise<ExtractionResult> {
     const extractors: Record<ExtractionFilter[number], () => Promise<Partial<ExtractionResult>>> = {
-      opticalSignal: async () => ({ opticalSignal: undefined }),
+      opticalSignal: async () => Promise.resolve({ opticalSignal: undefined }),
       topology: function (): Promise<Pick<ExtractionResult, 'topology'>> {
         return Promise.resolve({
           topology: undefined,
         });
       },
       wan: () => this.getWanState(),
-      remoteAccess: function (): Promise<
-        Pick<ExtractionResult, 'remoteAccessIpv4Enabled' | 'remoteAccessIpv6Enabled'>
-      > {
-        return Promise.resolve({
+      remoteAccess: async () =>
+        Promise.resolve({
           remoteAccessIpv4Enabled: undefined,
           remoteAccessIpv6Enabled: undefined,
-        });
-      },
+        }),
       wlan: function (): Promise<
         Pick<
           ExtractionResult,
@@ -51,32 +48,7 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
           bandSteeringEnabled: undefined,
         });
       },
-      lan: function (): Promise<
-        Pick<
-          ExtractionResult,
-          | 'dhcpEnabled'
-          | 'dhcpRelayStatus'
-          | 'dhcpIpAddress'
-          | 'dhcpSubnetMask'
-          | 'dhcpStartIp'
-          | 'dhcpEndIp'
-          | 'dhcpPrimaryDns'
-          | 'dhcpSecondaryDns'
-          | 'dhcpLeaseTimeMode'
-        >
-      > {
-        return Promise.resolve({
-          dhcpEnabled: undefined,
-          dhcpRelayStatus: undefined,
-          dhcpIpAddress: undefined,
-          dhcpSubnetMask: undefined,
-          dhcpStartIp: undefined,
-          dhcpEndIp: undefined,
-          dhcpPrimaryDns: undefined,
-          dhcpSecondaryDns: undefined,
-          dhcpLeaseTimeMode: undefined,
-        });
-      },
+      lan: () => this.getLanState(),
       upnp: function (): Promise<Pick<ExtractionResult, 'upnpEnabled'>> {
         return Promise.resolve({ upnpEnabled: undefined });
       },
@@ -273,6 +245,59 @@ export class HuaweiK562E10Driver extends HuaweiBaseDriver {
     if (!cwmp) return { tr069Url: undefined };
     return {
       tr069Url: cwmp.URL ? cwmp.URL : undefined,
+    };
+  }
+
+  /**
+   * `landhcp_ap.asp` exposes only the primary DHCP pool and LAN IP details on
+   * this model. Relay, subnet mask, and DNS fields are not available here.
+   */
+  private async getLanState(): Promise<
+    Pick<
+      ExtractionResult,
+      | 'dhcpEnabled'
+      | 'dhcpRelayStatus'
+      | 'dhcpIpAddress'
+      | 'dhcpSubnetMask'
+      | 'dhcpStartIp'
+      | 'dhcpEndIp'
+      | 'dhcpPrimaryDns'
+      | 'dhcpSecondaryDns'
+      | 'dhcpLeaseTimeMode'
+    >
+  > {
+    const undefinedResult = {
+      dhcpEnabled: undefined,
+      dhcpRelayStatus: undefined,
+      dhcpIpAddress: undefined,
+      dhcpSubnetMask: undefined,
+      dhcpStartIp: undefined,
+      dhcpEndIp: undefined,
+      dhcpPrimaryDns: undefined,
+      dhcpSecondaryDns: undefined,
+      dhcpLeaseTimeMode: undefined,
+    };
+
+    const raw = await this.fetch(ENDPOINT.LAN_DHCP_AP);
+    if (!raw) return undefinedResult;
+
+    const dhcpMain = this.parseHuaweiStructCall(raw, 'dhcpmainst1');
+    const lanHostInfo = this.parseHuaweiStructCallAll(raw, 'stLanHostInfo').find((row) =>
+      row.domain?.includes('.IPInterface.1'),
+    );
+
+    if (!dhcpMain && !lanHostInfo) return undefinedResult;
+
+    return {
+      dhcpEnabled: dhcpMain ? dhcpMain.enable === '1' : undefined,
+      dhcpRelayStatus: undefined,
+      dhcpIpAddress: lanHostInfo?.ipaddr?.trim() || undefined,
+      dhcpSubnetMask: undefined,
+      dhcpStartIp: dhcpMain?.startip?.trim() || undefined,
+      dhcpEndIp: dhcpMain?.endip?.trim() || undefined,
+      dhcpPrimaryDns: undefined,
+      dhcpSecondaryDns: undefined,
+      dhcpLeaseTimeMode: dhcpMain?.leasetime?.trim() || undefined,
     };
   }
 
