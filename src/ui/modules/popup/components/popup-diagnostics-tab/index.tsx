@@ -1,4 +1,5 @@
-import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/constants';
+import { LAST_EXTERNAL_IP_STORAGE_KEY } from '@/application/contants';
+import { PopupStatusType } from '@/application/types';
 import { ExtractionResult, PingTestResult } from '@/domain/schemas/validation';
 import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
@@ -12,12 +13,11 @@ import {
   SelectValue,
 } from '@/ui/components/ui/select';
 import { ToggleGroup, ToggleGroupItem } from '@/ui/components/ui/toggle-group';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+import { DiagnosticsMode } from '@/ui/types';
 import { Copy, Globe, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
-import { PopupStatusType } from '@/application/types';
-import { copyTextToClipboard } from '@/ui/lib/clipboard';
-import { DiagnosticsMode } from '@/ui/types';
 
 interface PopupDiagnosticsTabProps {
   data: ExtractionResult | null;

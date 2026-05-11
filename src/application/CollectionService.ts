@@ -1,17 +1,19 @@
+import {
+  EXTRACTION_FILTER_STORAGE_KEY,
+  lastAuthCredentialsStorageKey,
+} from '@/application/contants';
+import type { IRouterFactory } from '@/application/ports/IRouterFactory';
+import type { IStorage } from '@/application/ports/IStorage';
+import { normalizeExtractionFilter } from '@/application/types';
 import type { CollectResponse } from '@/application/types/index';
+import type { IRouter as Router } from '@/domain/ports/IRouter';
 import {
   CollectMessageAction,
   CredentialsSchema,
   type CollectMessage,
 } from '@/domain/schemas/validation';
-import type { IRouterFactory } from '@/application/ports/IRouterFactory';
-import type { IStorage } from '@/application/ports/IStorage';
-import type { IRouter as Router } from '@/domain/ports/IRouter';
-import {
-  EXTRACTION_FILTER_STORAGE_KEY,
-  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
-} from '@/application/constants';
-import { normalizeExtractionFilter } from '@/application/types';
+
+export type CollectMessageWithTab = CollectMessage & { tabId?: number };
 
 export class CollectionService {
   constructor(
@@ -20,7 +22,7 @@ export class CollectionService {
     private readonly storage: IStorage,
   ) {}
 
-  public async handleCollect(message: CollectMessage): Promise<CollectResponse> {
+  public async handleCollect(message: CollectMessageWithTab): Promise<CollectResponse> {
     const router = this.routerFactory.create();
     const { action, credentials, ip, goToPageConfig } = message;
 
@@ -77,7 +79,12 @@ export class CollectionService {
           };
         }
 
-        await this.sessionStorage.save(LAST_AUTH_CREDENTIALS_STORAGE_KEY, { username, password });
+        if (message.tabId !== undefined) {
+          await this.sessionStorage.save(lastAuthCredentialsStorageKey(message.tabId), {
+            username,
+            password,
+          });
+        }
 
         return {
           success: true,

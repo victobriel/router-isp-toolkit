@@ -1,34 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PopupStatusType } from '@/application/types';
-import { services } from '@/index';
 import {
-  CollectMessageAction,
-  ExtractionResultSchema,
-  type ExtractionResult,
-  type PingTestResult,
-  type CollectMessage,
-} from '@/domain/schemas/validation';
+  COPY_TEXT_TEMPLATE_STORAGE_KEY,
+  LAST_DATA_STORAGE_KEY,
+  LAST_EXTERNAL_IP_STORAGE_KEY,
+  LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
+  LAST_INTERNAL_PING_TEST_STORAGE_KEY,
+  lastAuthCredentialsStorageKey,
+  PENDING_AUTH_ERROR_STORAGE_KEY,
+  ROUTER_PREFERENCES_STORAGE_KEY,
+} from '@/application/contants';
 import type {
   CollectResponse,
   GoToPageOptions,
   RouterPage,
   RouterPageKey,
+  RouterPreferencesStore,
 } from '@/application/types';
+import { PopupStatusType } from '@/application/types';
 import {
-  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
-  LAST_DATA_STORAGE_KEY,
-  COPY_TEXT_TEMPLATE_STORAGE_KEY,
-  LAST_EXTERNAL_IP_STORAGE_KEY,
-  LAST_INTERNAL_PING_TEST_STORAGE_KEY,
-  LAST_EXTERNAL_PING_TEST_STORAGE_KEY,
-  PENDING_AUTH_ERROR_STORAGE_KEY,
-  ROUTER_PREFERENCES_STORAGE_KEY,
-} from '@/application/constants/index';
-import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
-import type { RouterPreferencesStore } from '@/application/types';
-import { formatTime } from '@/ui/lib/utils';
-import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
+  CollectMessageAction,
+  ExtractionResultSchema,
+  type CollectMessage,
+  type ExtractionResult,
+  type PingTestResult,
+} from '@/domain/schemas/validation';
+import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
+import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
+import { formatTime } from '@/ui/lib/utils';
 import {
   CopyTextValueKey,
   LogEntry,
@@ -41,8 +39,10 @@ import {
   textMatch,
   translateAuthError,
 } from '@/ui/modules/popup/components/popup-data-provider/utils';
-import { DiagnosticsMode } from '@/ui/types';
+import { usePopupStatus } from '@/ui/modules/popup/hooks/use-popup-status';
 import { RouterPreferencesComparison } from '@/ui/modules/popup/types/router-data.types';
+import { DiagnosticsMode } from '@/ui/types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface PopupDataProviderProps {
   tabId: number;
@@ -114,10 +114,10 @@ export const PopupDataProvider = ({ tabId, routerModel, children }: PopupDataPro
 
   const refreshLastAuthAdminCredentials = useCallback(async () => {
     const raw = await services.sessionStorage.get<{ username: string; password: string }>(
-      LAST_AUTH_CREDENTIALS_STORAGE_KEY,
+      lastAuthCredentialsStorageKey(tabId),
     );
     setLastAuthAdminCredentials(raw);
-  }, []);
+  }, [tabId]);
 
   const refreshRouterAuth = useCallback(async () => {
     try {

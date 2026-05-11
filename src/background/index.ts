@@ -1,6 +1,6 @@
-import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '@/application/constants';
-import { ExtractionResultSchema, type ExtractionResult } from '@/domain/schemas/validation';
+import { LAST_DATA_STORAGE_KEY, ROUTER_MODEL_STORAGE_KEY } from '@/application/contants';
 import type { CollectResponse } from '@/application/types';
+import { ExtractionResultSchema, type ExtractionResult } from '@/domain/schemas/validation';
 import { services } from '@/index';
 
 const { tabMessenger, sessionStorage } = services;
@@ -150,6 +150,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           });
         });
       return true;
+    },
+
+    getSenderTabId: () => {
+      sendResponse({ tabId: sender.tab?.id });
+      return false;
     },
   };
 

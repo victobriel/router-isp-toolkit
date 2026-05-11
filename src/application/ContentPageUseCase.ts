@@ -4,9 +4,9 @@ import type { IStorage } from '@/application/ports/IStorage';
 
 import {
   BOOKMARKS_STORAGE_KEY,
-  LAST_AUTH_CREDENTIALS_STORAGE_KEY,
+  lastAuthCredentialsStorageKey,
   PENDING_AUTH_ERROR_STORAGE_KEY,
-} from '@/application/constants/index';
+} from '@/application/contants';
 
 import { CollectionService } from '@/application/CollectionService';
 import type { BookmarkStore } from '@/application/types/index';
@@ -20,6 +20,8 @@ import { translator } from '@/infra/i18n/I18nService';
  * Detects router, persists model, handles post-login redirect, injects UI.
  */
 export class ContentPageUseCase {
+  private contentTabId: number | undefined;
+
   constructor(
     private readonly routerFactory: IRouterFactory,
     private readonly storage: IStorage,
@@ -35,6 +37,14 @@ export class ContentPageUseCase {
     } catch {
       return;
     }
+
+    const tabIdResponse = (await chrome.runtime.sendMessage({ action: 'getSenderTabId' })) as
+      | { tabId?: number }
+      | undefined;
+    this.contentTabId =
+      typeof tabIdResponse?.tabId === 'number' && Number.isFinite(tabIdResponse.tabId)
+        ? tabIdResponse.tabId
+        : undefined;
 
     const result = await chrome.runtime.sendMessage({
       action: 'saveDetectedRouterModel',
@@ -64,7 +74,8 @@ export class ContentPageUseCase {
     await this.fillLoginFields(router);
 
     router.attachPendingNativeLoginCapture((credentials) => {
-      void this.sessionStorage.save(LAST_AUTH_CREDENTIALS_STORAGE_KEY, credentials);
+      if (this.contentTabId === undefined) return;
+      void this.sessionStorage.save(lastAuthCredentialsStorageKey(this.contentTabId), credentials);
     });
   }
 
@@ -88,6 +99,7 @@ export class ContentPageUseCase {
     if (elapsed < 10 * 1000) {
       const result = await this.collectionService.handleCollect({
         action: CollectMessageAction.COLLECT,
+        tabId: this.contentTabId,
       });
 
       if (result.success && result.data) {
@@ -143,6 +155,7 @@ export class ContentPageUseCase {
       const result = await this.collectionService.handleCollect({
         action: CollectMessageAction.AUTHENTICATE,
         credentials,
+        tabId: this.contentTabId,
       });
 
       if (result.success) {

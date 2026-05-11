@@ -1,13 +1,10 @@
-import { useState, useEffect, Fragment } from 'react';
-import { services } from '@/index';
 import {
   BOOKMARKS_STORAGE_KEY,
   COPY_TEXT_TEMPLATE_STORAGE_KEY,
   EXTRACTION_FILTER_STORAGE_KEY,
   ROUTER_PREFERENCES_STORAGE_KEY,
   SETTINGS_EXPORT_SCHEMA_VERSION,
-} from '@/application/constants';
-import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
+} from '@/application/contants';
 import type {
   ExtractionFilter,
   ExtractionFilterKey,
@@ -20,39 +17,42 @@ import {
   RouterPreferencesByModelSchema,
   normalizeExtractionFilter,
 } from '@/application/types';
+import { services } from '@/index';
 import { translator } from '@/infra/i18n/I18nService';
-import { Button } from '@/ui/components/ui/button';
-import { Badge } from '@/ui/components/ui/badge';
-import { Separator } from '@/ui/components/ui/separator';
-import { Collapsible } from '@/ui/components/ui/collapsible';
-import { Trash2, Save, Sun, Moon, Monitor, Copy, Upload, Download, Info } from 'lucide-react';
-import { useAppTheme, type AppThemePreference } from '@/ui/hooks/use-app-theme';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/ui/components/ui/accordion';
-import { copyTextToClipboard } from '@/ui/lib/clipboard';
-import { RouterPreferenceSection } from '@/ui/modules/settings/components/router-preference-section';
-import { cn } from '@/ui/lib/utils';
-import {
-  downloadJsonFile,
-  normalizeImportBookmarkStore,
-  type SettingsConfigSectionKey,
-} from '@/ui/modules/settings/utils/settings-import-export';
-import { SettingsImportExportModal } from '@/ui/modules/settings/components/settings-import-export-modal';
-import {
-  SettingsToastStack,
-  useSettingsToast,
-} from '@/ui/modules/settings/components/settings-toast-stack';
-import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
+import { Badge } from '@/ui/components/ui/badge';
+import { Button } from '@/ui/components/ui/button';
+import { Collapsible } from '@/ui/components/ui/collapsible';
+import { Separator } from '@/ui/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/ui/components/ui/tooltip';
+import { useAppTheme, type AppThemePreference } from '@/ui/hooks/use-app-theme';
+import { copyTextToClipboard } from '@/ui/lib/clipboard';
+import { normalizeRouterPreferencesStorage } from '@/ui/lib/preference-storage';
+import { cn } from '@/ui/lib/utils';
+import { COPY_TEXT_VALUE_KEYS } from '@/ui/modules/popup/components/popup-data-provider/constants';
+import { RouterPreferenceSection } from '@/ui/modules/settings/components/router-preference-section';
+import { SettingsImportExportModal } from '@/ui/modules/settings/components/settings-import-export-modal';
+import {
+  SettingsToastStack,
+  useSettingsToast,
+} from '@/ui/modules/settings/components/settings-toast-stack';
+import {
+  downloadJsonFile,
+  normalizeImportBookmarkStore,
+  type SettingsConfigSectionKey,
+} from '@/ui/modules/settings/utils/settings-import-export';
+import { Copy, Download, Info, Monitor, Moon, Save, Sun, Trash2, Upload } from 'lucide-react';
+import { Fragment, useEffect, useState } from 'react';
 
 // Composition-root wiring for this UI entrypoint.
 const { bookmarksService } = services;

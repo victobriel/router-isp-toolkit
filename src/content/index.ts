@@ -96,7 +96,7 @@ function toggleOverlay(): void {
 }
 
 // --- Message listener ---
-chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, sender, sendResponse) => {
   const action = rawMessage.action;
 
   const overlayActions: Record<string, (() => false) | undefined> = {
@@ -138,8 +138,11 @@ chrome.runtime.onMessage.addListener((rawMessage: ContentPageMessage, _sender, s
     return false;
   }
 
+  const tabId = sender.tab?.id;
   void collectionService
-    .handleCollect(result.data)
+    .handleCollect(
+      tabId === undefined ? result.data : { ...result.data, tabId },
+    )
     .then(sendResponse)
     .catch((error) => {
       if (error instanceof ZodError) {
