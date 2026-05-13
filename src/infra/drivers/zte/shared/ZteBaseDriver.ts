@@ -443,8 +443,15 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
     await this.expandIfCollapsed(this.s.wlanSsidConfigContainer, this.s.wlan24GhzSsidName);
 
-    const wlan24GhzSsids = await this.extractMultiSsidConfigs(0, 4);
-    const wlan5GhzSsids = await this.extractMultiSsidConfigs(4, 4);
+    const unifiedMultiSsid = this.zteUsesUnifiedMultiSsidIndexing();
+    const wlan24GhzSsids = await this.extractMultiSsidConfigsAtIndices(
+      unifiedMultiSsid ? ([0, 1, 2, 3] as const) : ([0] as const),
+      unifiedMultiSsid,
+    );
+    const wlan5GhzSsids = await this.extractMultiSsidConfigsAtIndices(
+      unifiedMultiSsid ? ([4, 5, 6, 7] as const) : ([1] as const),
+      unifiedMultiSsid,
+    );
 
     return {
       wlan24GhzConfig: {
@@ -597,64 +604,81 @@ export abstract class ZteBaseDriver extends BaseRouter {
     return true;
   }
 
-  private async extractMultiSsidConfigs(
-    startIndex: number,
-    count: number,
+  /**
+   * Multi-SSID ZTE builds use global indices 0–3 (2.4 GHz) and 4–7 (5 GHz). Some firmware
+   * exposes only one SSID per radio at indices 0 and 1; probing index 4 avoids mis-reading 5 GHz.
+   */
+  private zteUsesUnifiedMultiSsidIndexing(): boolean {
+    const fourth = `${this.s.wlan24GhzSsidEnabled}4`;
+    if (this.domService.getHTMLElement(fourth, HTMLInputElement)) return true;
+    const fourthName = `${this.s.wlanSsidName}4`;
+    return this.domService.getHTMLElement(fourthName, HTMLElement) !== null;
+  }
+
+  /**
+   * @param keepMissingSlots When true (unified 0–3 / 4–7 layout), push `undefined` for missing
+   * rows so `wlan24GhzSsids.length` stays 4 and the popup 5 GHz `ssidOffset` matches router index 4.
+   */
+  private async extractMultiSsidConfigsAtIndices(
+    indices: readonly number[],
+    keepMissingSlots: boolean,
   ): Promise<ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids']> {
     const results: ExtractionResult['wlan24GhzSsids'] | ExtractionResult['wlan5GhzSsids'] = [];
 
-    for (let offset = 0; offset < count; offset++) {
-      const index = startIndex + offset;
-
-      const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
-      const $enabledElement = this.domService.getHTMLElement(enabledSelector, HTMLInputElement);
-
-      if (!$enabledElement) {
-        results.push(undefined);
+    for (const index of indices) {
+      const slot = await this.readZteSsidSlotAtIndex(index);
+      if (slot === null) {
+        if (keepMissingSlots) results.push(undefined);
         continue;
       }
-
-      const enabled = $enabledElement.checked;
-
-      const ssidNameSelector = `${this.s.wlanSsidName}${index}`;
-      const ssidName = this.domService.getElementValue(ssidNameSelector)?.trim() ?? undefined;
-
-      await this.clickElementAndWait(`${this.s.wlanShowPasswordButton}${index}`);
-
-      const passwordSelector = `${this.s.wlanSsidPassword}${index}`;
-
-      await this.waitForInputPopulated(passwordSelector).catch(() => {});
-
-      const ssidPassword = this.domService.getElementValue(passwordSelector)?.trim() ?? undefined;
-
-      const hideModeInputSelector = `${this.s.wlanSsidHideMode}${index}`;
-      const ssidHideMode = this.domService.getHTMLElement(
-        hideModeInputSelector,
-        HTMLInputElement,
-      )?.checked;
-
-      const wpa2SecuritySelector = `${this.s.wlanSsidWpa2SecurityType}${index}`;
-      const wpa2SecurityType =
-        this.domService.getElementSelectedOptionText(wpa2SecuritySelector) ?? undefined;
-
-      const maxClientsSelector = `${this.s.wlanSsidMaxClients}${index}`;
-      const maxClientsRaw = this.domService.getElementValue(maxClientsSelector) ?? undefined;
-      const maxClientsParsed = Number(maxClientsRaw);
-      const maxClientsField = Number.isFinite(maxClientsParsed)
-        ? { maxClients: maxClientsParsed }
-        : {};
-
-      results.push({
-        enabled,
-        ssidName,
-        ssidPassword,
-        ssidHideMode,
-        wpa2SecurityType,
-        ...maxClientsField,
-      });
+      results.push(slot);
     }
 
     return results;
+  }
+
+  private async readZteSsidSlotAtIndex(
+    index: number,
+  ): Promise<NonNullable<NonNullable<ExtractionResult['wlan24GhzSsids']>[number]> | null> {
+    const enabledSelector = `${this.s.wlan24GhzSsidEnabled}${index}`;
+    const $enabledElement = this.domService.getHTMLElement(enabledSelector, HTMLInputElement);
+    if (!$enabledElement) return null;
+
+    const enabled = $enabledElement.checked;
+    const ssidNameSelector = `${this.s.wlanSsidName}${index}`;
+    const ssidName = this.domService.getElementValue(ssidNameSelector)?.trim() ?? undefined;
+
+    await this.clickElementAndWait(`${this.s.wlanShowPasswordButton}${index}`);
+
+    const passwordSelector = `${this.s.wlanSsidPassword}${index}`;
+    await this.waitForInputPopulated(passwordSelector).catch(() => {});
+    const ssidPassword = this.domService.getElementValue(passwordSelector)?.trim() ?? undefined;
+
+    const hideModeInputSelector = `${this.s.wlanSsidHideMode}${index}`;
+    const ssidHideMode = this.domService.getHTMLElement(
+      hideModeInputSelector,
+      HTMLInputElement,
+    )?.checked;
+
+    const wpa2SecuritySelector = `${this.s.wlanSsidWpa2SecurityType}${index}`;
+    const wpa2SecurityType =
+      this.domService.getElementSelectedOptionText(wpa2SecuritySelector) ?? undefined;
+
+    const maxClientsSelector = `${this.s.wlanSsidMaxClients}${index}`;
+    const maxClientsRaw = this.domService.getElementValue(maxClientsSelector) ?? undefined;
+    const maxClientsParsed = Number(maxClientsRaw);
+    const maxClientsField = Number.isFinite(maxClientsParsed)
+      ? { maxClients: maxClientsParsed }
+      : {};
+
+    return {
+      enabled,
+      ssidName,
+      ssidPassword,
+      ssidHideMode,
+      wpa2SecurityType,
+      ...maxClientsField,
+    };
   }
 
   private readDhcpOctetFields(
