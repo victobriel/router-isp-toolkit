@@ -639,7 +639,10 @@ export abstract class ZteBaseDriver extends BaseRouter {
 
       const maxClientsSelector = `${this.s.wlanSsidMaxClients}${index}`;
       const maxClientsRaw = this.domService.getElementValue(maxClientsSelector) ?? undefined;
-      const maxClients = Number(maxClientsRaw);
+      const maxClientsParsed = Number(maxClientsRaw);
+      const maxClientsField = Number.isFinite(maxClientsParsed)
+        ? { maxClients: maxClientsParsed }
+        : {};
 
       results.push({
         enabled,
@@ -647,7 +650,7 @@ export abstract class ZteBaseDriver extends BaseRouter {
         ssidPassword,
         ssidHideMode,
         wpa2SecurityType,
-        maxClients,
+        ...maxClientsField,
       });
     }
 

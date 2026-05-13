@@ -24,6 +24,9 @@ const wlanExtractionConfigSchema = z.object({
   transmittingPower: z.string(),
 });
 
+/** Slot schema: Chrome message passing JSON-serializes `undefined` array holes to `null`. */
+const wlanSsidExtractionSlotSchema = wlanSsidExtractionEntrySchema.nullish();
+
 const extractionRouterFields = routerStateShape({
   routerAdminPassword: z.string(),
   linkSpeed: z.string(),
@@ -31,8 +34,8 @@ const extractionRouterFields = routerStateShape({
   ipVersion: z.string(),
   ipAcquisitionMode: z.string(),
   tr069Url: z.string(),
-  wlan24GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),
-  wlan5GhzSsids: z.array(wlanSsidExtractionEntrySchema.optional()),
+  wlan24GhzSsids: z.array(wlanSsidExtractionSlotSchema),
+  wlan5GhzSsids: z.array(wlanSsidExtractionSlotSchema),
   dhcpIpAddress: z.string(),
   dhcpSubnetMask: z.string(),
   dhcpStartIp: z.string(),
